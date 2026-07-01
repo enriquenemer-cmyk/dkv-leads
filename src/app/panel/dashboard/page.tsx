@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase, Lead } from '@/lib/supabase'
 import { TagPill } from '@/components/TagPill'
@@ -20,9 +20,27 @@ function exportCSV(leads: Lead[]) {
 
 const card = { background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', padding: '24px' }
 
+type Periodo = '7d' | '30d' | '90d' | 'todo'
+const PERIODOS: { key: Periodo; label: string }[] = [
+  { key: '7d', label: 'Últimos 7 días' },
+  { key: '30d', label: 'Últimos 30 días' },
+  { key: '90d', label: 'Últimos 3 meses' },
+  { key: 'todo', label: 'Todo el tiempo' },
+]
+
+function cutoffDate(periodo: Periodo): Date | null {
+  if (periodo === 'todo') return null
+  const d = new Date()
+  if (periodo === '7d') d.setDate(d.getDate() - 7)
+  else if (periodo === '30d') d.setDate(d.getDate() - 30)
+  else if (periodo === '90d') d.setDate(d.getDate() - 90)
+  return d
+}
+
 export default function DashboardPage() {
-  const [leads, setLeads] = useState<Lead[]>([])
+  const [allLeads, setAllLeads] = useState<Lead[]>([])
   const [showModal, setShowModal] = useState(false)
+  const [periodo, setPeriodo] = useState<Periodo>('todo')
 
   useEffect(() => {
     fetchLeads()
@@ -34,15 +52,21 @@ export default function DashboardPage() {
 
   async function fetchLeads() {
     const { data } = await supabase.from('leads').select('*').order('created_at', { ascending: false })
-    if (data) setLeads(data as Lead[])
+    if (data) setAllLeads(data as Lead[])
   }
+
+  const leads = useMemo(() => {
+    const cutoff = cutoffDate(periodo)
+    if (!cutoff) return allLeads
+    return allLeads.filter(l => new Date(l.created_at) >= cutoff)
+  }, [allLeads, periodo])
 
   const total = leads.length
   const calientes = leads.filter(l => l.tag === 'caliente').length
   const clientes = leads.filter(l => l.tag === 'cliente').length
   const conversion = total > 0 ? Math.round((clientes / total) * 100) : 0
   const hoy = new Date().toISOString().slice(0, 10)
-  const tareasHoy = leads.filter(l => l.recordatorio?.fecha === hoy)
+  const tareasHoy = allLeads.filter(l => l.recordatorio?.fecha === hoy)
   const intereses: Record<string, number> = {}
   leads.forEach(l => { if (l.interes) intereses[l.interes] = (intereses[l.interes] ?? 0) + 1 })
   const maxI = Math.max(1, ...Object.values(intereses))
@@ -52,8 +76,22 @@ export default function DashboardPage() {
   const convForm = formulario > 0 ? Math.round((leads.filter(l => l.fuente === 'formulario' && l.tag === 'cliente').length / formulario) * 100) : 0
   const convManual = manual > 0 ? Math.round((leads.filter(l => l.fuente === 'manual' && l.tag === 'cliente').length / manual) * 100) : 0
 
+  // Comparativa con período anterior
+  const prevLeads = useMemo(() => {
+    if (periodo === 'todo') return []
+    const cutoff = cutoffDate(periodo)!
+    const days = periodo === '7d' ? 7 : periodo === '30d' ? 30 : 90
+    const prevStart = new Date(cutoff); prevStart.setDate(prevStart.getDate() - days)
+    return allLeads.filter(l => {
+      const d = new Date(l.created_at); return d >= prevStart && d < cutoff
+    })
+  }, [allLeads, periodo])
+
+  const prevTotal = prevLeads.length
+  const diffPct = prevTotal > 0 ? Math.round(((total - prevTotal) / prevTotal) * 100) : null
+
   const METRICS = [
-    { label: 'Total leads', value: total, sub: 'Captados', icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
+    { label: 'Total leads', value: total, sub: periodo === 'todo' ? 'Todos los captados' : `En este período`, icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
     { label: 'Leads calientes', value: calientes, sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22' },
     { label: 'Clientes', value: clientes, sub: 'Conversión exitosa', icon: Trophy, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
     { label: 'Tasa de conversión', value: `${conversion}%`, sub: 'Total → Cliente', icon: TrendingUp, bg: '#f8efd9', ic: '#a8741a', dot: '#a8741a' },
@@ -74,7 +112,7 @@ export default function DashboardPage() {
       {showModal && <LeadModal onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); fetchLeads() }} />}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 32 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <p style={{ fontSize: 13, color: '#9aaba5', fontWeight: 500, margin: '0 0 4px' }}>{greeting}</p>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: 0, letterSpacing: '-0.02em' }}>Dashboard</h1>
@@ -89,6 +127,27 @@ export default function DashboardPage() {
             <Plus size={14} /> Nuevo lead
           </button>
         </div>
+      </div>
+
+      {/* Filtro período */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'center', flexWrap: 'wrap' }}>
+        {PERIODOS.map(p => (
+          <button key={p.key} onClick={() => setPeriodo(p.key)}
+            style={{
+              padding: '8px 16px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', fontFamily: 'inherit',
+              background: periodo === p.key ? '#0F7A63' : '#fff',
+              color: periodo === p.key ? '#fff' : '#6b7a76',
+              boxShadow: periodo === p.key ? '0 2px 8px -2px rgba(15,122,99,0.45)' : '0 1px 3px rgba(0,0,0,0.07)',
+              transition: 'all 0.15s',
+            }}>
+            {p.label}
+          </button>
+        ))}
+        {diffPct !== null && (
+          <span style={{ fontSize: 12.5, color: diffPct >= 0 ? '#0F7A63' : '#c23a22', fontWeight: 700, marginLeft: 4 }}>
+            {diffPct >= 0 ? '↑' : '↓'} {Math.abs(diffPct)}% vs período anterior
+          </span>
+        )}
       </div>
 
       {/* Metric cards */}
@@ -131,7 +190,7 @@ export default function DashboardPage() {
         <div style={card}>
           <h2 style={{ fontSize: 15, fontWeight: 700, color: '#16201d', margin: '0 0 20px' }}>Interés por producto</h2>
           {Object.keys(intereses).length === 0
-            ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#9aaba5', fontSize: 14 }}>Sin datos aún</div>
+            ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#9aaba5', fontSize: 14 }}>Sin datos en este período</div>
             : <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {Object.entries(intereses).sort((a,b) => b[1]-a[1]).map(([interes, count]) => (
                   <div key={interes}>
@@ -179,7 +238,7 @@ export default function DashboardPage() {
             <Link href="/panel/leads" style={{ fontSize: 12.5, color: '#0F7A63', fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>Ver todos <ArrowUpRight size={12} /></Link>
           </div>
           {leads.length === 0
-            ? <p style={{ color: '#9aaba5', fontSize: 14, margin: 0 }}>Aún no hay leads.</p>
+            ? <p style={{ color: '#9aaba5', fontSize: 14, margin: 0 }}>Sin leads en este período.</p>
             : <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {leads.slice(0,5).map(l => (
                   <Link key={l.id} href={`/panel/leads/${l.id}`}

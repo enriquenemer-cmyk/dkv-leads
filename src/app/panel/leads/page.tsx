@@ -6,7 +6,7 @@ import { supabase, Lead } from '@/lib/supabase'
 import { TagPill } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
-import { Search, Plus, Download, ChevronRight, Phone, Mail } from 'lucide-react'
+import { Search, Plus, Download, ChevronRight, Phone, Mail, Filter, X } from 'lucide-react'
 
 const TAGS_FILTRO = [
   { key: 'todos', label: 'Todos', color: '#6b7a76', bg: '#f0f4f1' },
@@ -34,6 +34,11 @@ function LeadsContent() {
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('recientes')
   const [filtroTag, setFiltroTag] = useState('todos')
+  const [filtroFuente, setFiltroFuente] = useState('todos')
+  const [filtroRecordatorio, setFiltroRecordatorio] = useState(false)
+  const [fechaDesde, setFechaDesde] = useState('')
+  const [fechaHasta, setFechaHasta] = useState('')
+  const [showFiltros, setShowFiltros] = useState(false)
   const [showModal, setShowModal] = useState(searchParams.get('modal') === 'nuevo')
   const [hovered, setHovered] = useState<string | null>(null)
 
@@ -50,12 +55,29 @@ function LeadsContent() {
     if (data) setLeads(data as Lead[])
   }
 
+  function clearFiltros() {
+    setFiltroFuente('todos'); setFiltroRecordatorio(false); setFechaDesde(''); setFechaHasta('')
+  }
+
+  const hasExtraFiltros = filtroFuente !== 'todos' || filtroRecordatorio || fechaDesde || fechaHasta
+
   const filtered = leads
     .filter(l => filtroTag === 'todos' || l.tag === filtroTag)
+    .filter(l => filtroFuente === 'todos' || l.fuente === filtroFuente)
+    .filter(l => !filtroRecordatorio || !!l.recordatorio)
+    .filter(l => {
+      if (!fechaDesde) return true
+      return new Date(l.created_at) >= new Date(fechaDesde)
+    })
+    .filter(l => {
+      if (!fechaHasta) return true
+      const hasta = new Date(fechaHasta); hasta.setDate(hasta.getDate() + 1)
+      return new Date(l.created_at) < hasta
+    })
     .filter(l => {
       if (!busqueda) return true
       const q = busqueda.toLowerCase()
-      return l.nombre.toLowerCase().includes(q) || (l.email ?? '').toLowerCase().includes(q) || (l.telefono ?? '').includes(q)
+      return l.nombre.toLowerCase().includes(q) || (l.email ?? '').toLowerCase().includes(q) || (l.telefono ?? '').includes(q) || (l.interes ?? '').toLowerCase().includes(q)
     })
     .sort((a, b) => {
       if (orden === 'az') return a.nombre.localeCompare(b.nombre)
@@ -89,11 +111,11 @@ function LeadsContent() {
       </div>
 
       {/* Filters bar */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 280, position: 'relative' }}>
           <Search size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#9aaba5' }} />
           <input value={busqueda} onChange={e => setBusqueda(e.target.value)}
-            placeholder="Buscar por nombre, correo o teléfono…"
+            placeholder="Buscar por nombre, correo, teléfono o interés…"
             style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
         </div>
         <select value={orden} onChange={e => setOrden(e.target.value)}
@@ -102,7 +124,50 @@ function LeadsContent() {
           <option value="az">Nombre A–Z</option>
           <option value="estado">Por estado</option>
         </select>
+        <button onClick={() => setShowFiltros(v => !v)}
+          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 12, border: `1.5px solid ${showFiltros || hasExtraFiltros ? '#0F7A63' : '#e2e8e4'}`, background: showFiltros || hasExtraFiltros ? '#e3f1ec' : '#fff', color: showFiltros || hasExtraFiltros ? '#0F7A63' : '#6b7a76', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', position: 'relative' }}>
+          <Filter size={14} /> Filtros avanzados
+          {hasExtraFiltros && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#0F7A63', position: 'absolute', top: 8, right: 8 }} />}
+        </button>
       </div>
+
+      {/* Filtros avanzados panel */}
+      {showFiltros && (
+        <div style={{ background: '#fff', border: '1.5px solid #e2e8e4', borderRadius: 14, padding: '18px 20px', marginBottom: 14, display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#9aaba5', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fuente</label>
+            <select value={filtroFuente} onChange={e => setFiltroFuente(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+              <option value="todos">Todos</option>
+              <option value="formulario">Formulario (landing)</option>
+              <option value="manual">Alta manual</option>
+            </select>
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#9aaba5', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fecha desde</label>
+            <input type="date" value={fechaDesde} onChange={e => setFechaDesde(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#9aaba5', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Fecha hasta</label>
+            <input type="date" value={fechaHasta} onChange={e => setFechaHasta(e.target.value)}
+              style={{ padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 13.5, outline: 'none', fontFamily: 'inherit' }} />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#9aaba5', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Con recordatorio</label>
+            <button onClick={() => setFiltroRecordatorio(v => !v)}
+              style={{ padding: '9px 14px', borderRadius: 10, border: `1.5px solid ${filtroRecordatorio ? '#0F7A63' : '#e2e8e4'}`, background: filtroRecordatorio ? '#e3f1ec' : '#f8fbf9', color: filtroRecordatorio ? '#0F7A63' : '#6b7a76', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {filtroRecordatorio ? '✓ Activado' : 'Solo con recordatorio'}
+            </button>
+          </div>
+          {hasExtraFiltros && (
+            <button onClick={clearFiltros}
+              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 12px', borderRadius: 10, border: 'none', background: '#fef0ed', color: '#c23a22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <X size={13} /> Limpiar filtros
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Tag chips */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
@@ -125,7 +190,6 @@ function LeadsContent() {
 
       {/* Table */}
       <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', overflow: 'hidden' }}>
-        {/* Header row */}
         <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.3fr 1.3fr 1fr 0.8fr 40px', padding: '12px 20px', background: '#f8fbf9', borderBottom: '1px solid #eaeeed' }}>
           {['Contacto', 'Teléfono', 'Interés', 'Estado', 'Fecha', ''].map(h => (
             <span key={h} style={{ fontSize: 11.5, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
@@ -135,7 +199,7 @@ function LeadsContent() {
         {filtered.length === 0
           ? <div style={{ padding: '60px 20px', textAlign: 'center' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-              <p style={{ color: '#9aaba5', fontSize: 14, fontWeight: 500, margin: 0 }}>No hay leads que coincidan con la búsqueda</p>
+              <p style={{ color: '#9aaba5', fontSize: 14, fontWeight: 500, margin: 0 }}>No hay leads que coincidan con los filtros</p>
             </div>
           : filtered.map(l => (
             <Link key={l.id} href={`/panel/leads/${l.id}`}
@@ -150,7 +214,10 @@ function LeadsContent() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                 <Avatar nombre={l.nombre} size={38} />
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.nombre}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {l.nombre}
+                    {l.recordatorio && <span title="Tiene recordatorio" style={{ fontSize: 10, background: '#f8efd9', color: '#a8741a', padding: '1px 6px', borderRadius: 999, fontWeight: 700, flexShrink: 0 }}>📅</span>}
+                  </div>
                   {l.email && <div style={{ fontSize: 12, color: '#9aaba5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
                     <Mail size={10} style={{ flexShrink: 0 }} />{l.email}
                   </div>}

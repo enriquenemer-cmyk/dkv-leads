@@ -2,10 +2,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle2, ShieldCheck, Clock, Users, Star, ChevronRight, Heart, Building2, Smile, Stethoscope } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Clock, Users, Star, ChevronRight, Heart, Building2, Smile, Stethoscope, ArrowLeft, Check } from 'lucide-react'
 
 const INTERESES = [
-  { value: 'Seguro de salud', label: 'Salud individual', icon: Heart, desc: 'Para ti solo' },
+  { value: 'Salud individual', label: 'Salud individual', icon: Heart, desc: 'Para ti solo' },
   { value: 'Seguro familiar', label: 'Seguro familiar', icon: Users, desc: 'Toda la familia' },
   { value: 'Salud empresa', label: 'Para empresa', icon: Building2, desc: 'Empleados' },
   { value: 'Seguro dental', label: 'Dental', icon: Smile, desc: 'Especialista' },
@@ -25,6 +25,7 @@ function useInView(threshold = 0.15) {
 
 export default function Landing() {
   const router = useRouter()
+  const [step, setStep] = useState(1)
   const [form, setForm] = useState({ nombre: '', telefono: '', email: '', interes: '' })
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
@@ -36,11 +37,19 @@ export default function Landing() {
 
   function set(key: string, v: string) { setForm(f => ({ ...f, [key]: v })); setError('') }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function goStep2() {
+    if (!form.interes) { setError('Selecciona el tipo de seguro para continuar.'); return }
+    setError(''); setStep(2)
+  }
+
+  function goStep3() {
     if (!form.nombre.trim()) { setError('El nombre es obligatorio.'); return }
     if (!form.telefono.trim() && !form.email.trim()) { setError('Incluye al menos tu teléfono o correo.'); return }
-    setSending(true)
+    setError(''); setStep(3)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setSending(true)
     const { error: dbErr } = await supabase.from('leads').insert({
       nombre: form.nombre.trim(), telefono: form.telefono.trim() || null,
       email: form.email.trim() || null, interes: form.interes || null,
@@ -64,59 +73,32 @@ export default function Landing() {
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f1', fontFamily: 'var(--font-jakarta), system-ui, sans-serif' }}>
       <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(28px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        .hero-left { animation: fadeUp 0.7s ease both; }
-        .hero-form { animation: fadeUp 0.7s 0.18s ease both; }
-        .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s ease; }
-        .fade-up.visible { opacity: 1; transform: translateY(0); }
-        .step-card { transition: transform 0.2s, box-shadow 0.2s; }
-        .step-card:hover { transform: translateY(-4px); box-shadow: 0 20px 48px -12px rgba(15,122,99,0.18) !important; }
-        .interest-btn { transition: all 0.15s; cursor: pointer; }
-        .interest-btn:hover { border-color: #0F7A63 !important; background: #f0fbf7 !important; }
-        @media (max-width: 900px) {
-          .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; padding: 48px 0 56px !important; }
-          .hero-form-col { order: -1; }
-          .steps-grid { grid-template-columns: 1fr !important; }
-          .cta-block { flex-direction: column !important; text-align: center; align-items: center !important; }
-          .interest-grid { grid-template-columns: 1fr 1fr !important; }
-        }
-        @media (max-width: 600px) {
-          .hero-stats { gap: 24px !important; }
-          .trust-band { gap: 20px !important; flex-direction: column !important; align-items: flex-start !important; padding: 24px 20px !important; }
-          .logos-band { gap: 24px !important; flex-wrap: wrap !important; }
-          .interest-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-          .hero-padding { padding: 0 20px !important; }
-          .section-padding { padding: 56px 20px !important; }
-          .cta-section { margin: 0 16px 60px !important; padding: 44px 28px !important; border-radius: 22px !important; }
-        }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideIn { from{opacity:0;transform:translateX(18px)} to{opacity:1;transform:translateX(0)} }
+        .hero-left{animation:fadeUp 0.7s ease both}
+        .hero-form{animation:fadeUp 0.7s 0.18s ease both}
+        .step-slide{animation:slideIn 0.3s ease both}
+        .fade-up{opacity:0;transform:translateY(28px);transition:opacity 0.6s ease,transform 0.6s ease}
+        .fade-up.visible{opacity:1;transform:translateY(0)}
+        .step-card{transition:transform 0.2s,box-shadow 0.2s}
+        .step-card:hover{transform:translateY(-4px);box-shadow:0 20px 48px -12px rgba(15,122,99,0.18)!important}
+        .interest-btn{transition:all 0.15s;cursor:pointer}
+        .interest-btn:hover{border-color:#0F7A63!important;background:#f0fbf7!important}
+        @media(max-width:900px){.hero-grid{grid-template-columns:1fr!important;gap:40px!important;padding:48px 0 56px!important}.hero-form-col{order:-1}.steps-grid{grid-template-columns:1fr!important}.cta-block{flex-direction:column!important;text-align:center;align-items:center!important}}
+        @media(max-width:600px){.hero-padding{padding:0 20px!important}.section-padding{padding:56px 20px!important}.cta-section{margin:0 16px 60px!important;padding:44px 28px!important;border-radius:22px!important}}
       `}</style>
 
       {/* ─── HERO ─── */}
       <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 60%, #1a9e7e 100%)', minHeight: 680 }}>
-        {/* Decorative blobs */}
         <div style={{ position: 'absolute', top: -120, right: -120, width: 600, height: 600, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -80, width: 360, height: 360, borderRadius: '50%', background: 'rgba(0,0,0,0.08)', pointerEvents: 'none' }} />
-        {/* Grid lines */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
 
         <div className="hero-padding" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px', position: 'relative', zIndex: 1 }}>
-
-          {/* Nav */}
           <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '28px 0 0' }}>
-            {/* Logo mejorado */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
-                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  <rect x="9" y="2" width="4" height="18" rx="2" fill="white"/>
-                  <rect x="2" y="9" width="18" height="4" rx="2" fill="white"/>
-                </svg>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="9" y="2" width="4" height="18" rx="2" fill="white"/><rect x="2" y="9" width="18" height="4" rx="2" fill="white"/></svg>
               </div>
               <div>
                 <div style={{ fontWeight: 900, fontSize: 21, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>DKV</div>
@@ -129,26 +111,19 @@ export default function Landing() {
             </div>
           </nav>
 
-          {/* Hero grid */}
           <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center', padding: '72px 0 80px', minHeight: 540 }}>
-
             {/* Left */}
             <div className="hero-left">
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px 6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)', marginBottom: 28 }}>
                 <Star size={13} fill="rgba(255,210,100,0.95)" stroke="none" />
                 <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: 12.5, fontWeight: 600 }}>Más de 120.000 familias protegidas</span>
               </div>
-
-              <h1 style={{ fontSize: 'clamp(38px, 5vw, 64px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
-                Tu salud merece<br />
-                <span style={{ color: '#7ee8c8' }}>la mejor cobertura</span>
+              <h1 style={{ fontSize: 'clamp(38px,5vw,64px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
+                Tu salud merece<br /><span style={{ color: '#7ee8c8' }}>la mejor cobertura</span>
               </h1>
-
               <p style={{ fontSize: 17.5, color: 'rgba(255,255,255,0.75)', lineHeight: 1.65, maxWidth: 480, marginBottom: 36 }}>
                 Comparamos los mejores planes de DKV para ti. Un asesor personal sin coste, respuesta garantizada en menos de 24 horas.
               </p>
-
-              {/* Checkmarks */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 48 }}>
                 {['Cobertura inmediata desde el primer día', 'Red de +40.000 especialistas en toda España', 'Sin copagos ocultos, sin permanencia mínima'].map(b => (
                   <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -159,9 +134,7 @@ export default function Landing() {
                   </div>
                 ))}
               </div>
-
-              {/* Stats */}
-              <div className="hero-stats" style={{ display: 'flex', gap: 36 }}>
+              <div style={{ display: 'flex', gap: 36 }}>
                 {[{ v: '+120k', l: 'Asegurados' }, { v: '4.8★', l: 'Valoración Google' }, { v: '<24h', l: 'Tiempo respuesta' }].map(s => (
                   <div key={s.l} style={{ borderLeft: '2px solid rgba(126,232,200,0.3)', paddingLeft: 14 }}>
                     <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>{s.v}</div>
@@ -171,87 +144,137 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Form card */}
+            {/* ── FORMULARIO MULTIPASO ── */}
             <div className="hero-form hero-form-col">
-              <div style={{ background: '#fff', borderRadius: 24, padding: '36px 30px', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.4)', position: 'relative' }}>
-                {/* Top accent */}
+              <div style={{ background: '#fff', borderRadius: 24, padding: '32px 28px', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.4)', position: 'relative' }}>
                 <div style={{ position: 'absolute', top: 0, left: 32, right: 32, height: 3, borderRadius: '0 0 4px 4px', background: 'linear-gradient(90deg, #0F7A63, #7ee8c8)' }} />
 
-                <div style={{ marginBottom: 20 }}>
-                  <h2 style={{ fontSize: 21, fontWeight: 800, color: '#16201d', margin: '0 0 5px', letterSpacing: '-0.02em' }}>Quiero mi presupuesto</h2>
-                  <p style={{ fontSize: 13, color: '#6b7a76', margin: 0 }}>Gratis · Sin compromiso · En menos de 24h</p>
+                {/* Progress dots */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 24 }}>
+                  {[1,2,3].map(s => (
+                    <div key={s} style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: step > s ? '#0F7A63' : step === s ? '#0F7A63' : '#f0f4f1',
+                        color: step >= s ? '#fff' : '#c8d4ce', fontSize: 12, fontWeight: 700, transition: 'all 0.3s',
+                        flexShrink: 0,
+                      }}>
+                        {step > s ? <Check size={13} /> : s}
+                      </div>
+                      {s < 3 && <div style={{ width: 48, height: 2, background: step > s ? '#0F7A63' : '#f0f4f1', transition: 'background 0.3s' }} />}
+                    </div>
+                  ))}
+                  <div style={{ flex: 1 }} />
+                  <span style={{ fontSize: 11.5, color: '#9aaba5', fontWeight: 600 }}>{step} de 3</span>
                 </div>
 
                 {error && (
-                  <div style={{ marginBottom: 14, padding: '11px 14px', borderRadius: 11, background: '#fef0ed', border: '1px solid #fbd4cb', color: '#c23a22', fontSize: 13, fontWeight: 500 }}>
-                    {error}
-                  </div>
+                  <div style={{ marginBottom: 14, padding: '11px 14px', borderRadius: 11, background: '#fef0ed', border: '1px solid #fbd4cb', color: '#c23a22', fontSize: 13, fontWeight: 500 }}>{error}</div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Nombre completo *</label>
-                    <input value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García"
-                      style={inp('nombre')} onFocus={() => setFocused('nombre')} onBlur={() => setFocused(null)} />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Teléfono</label>
-                      <input value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+34 600 000 000"
-                        style={inp('telefono')} onFocus={() => setFocused('telefono')} onBlur={() => setFocused(null)} />
+                {/* PASO 1: Seleccionar tipo */}
+                {step === 1 && (
+                  <div className="step-slide">
+                    <div style={{ marginBottom: 20 }}>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#16201d', margin: '0 0 5px', letterSpacing: '-0.02em' }}>¿Qué tipo de seguro buscas?</h2>
+                      <p style={{ fontSize: 13, color: '#6b7a76', margin: 0 }}>Selecciona la opción que mejor se adapte a ti</p>
                     </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Correo</label>
-                      <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" type="email"
-                        style={inp('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
-                    </div>
-                  </div>
-
-                  {/* SELECTOR VISUAL DE INTERÉS */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 8, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Me interesa</label>
-                    <div className="interest-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 20 }}>
                       {INTERESES.map(({ value, label, icon: Icon, desc }) => {
                         const active = form.interes === value
                         return (
                           <button key={value} type="button" className="interest-btn"
-                            onClick={() => set('interes', active ? '' : value)}
-                            style={{
-                              padding: '10px 6px', borderRadius: 11, border: `1.5px solid ${active ? '#0F7A63' : '#e2e8e4'}`,
-                              background: active ? '#f0fbf7' : '#f8fbf9', display: 'flex', flexDirection: 'column', alignItems: 'center',
-                              gap: 5, fontFamily: 'inherit',
-                            }}>
-                            <div style={{ width: 30, height: 30, borderRadius: 8, background: active ? '#0F7A63' : '#e8f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
-                              <Icon size={14} color={active ? '#fff' : '#0F7A63'} />
+                            onClick={() => { set('interes', value); setError('') }}
+                            style={{ padding: '16px 12px', borderRadius: 14, border: `2px solid ${active ? '#0F7A63' : '#e2e8e4'}`, background: active ? '#f0fbf7' : '#f8fbf9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, fontFamily: 'inherit', textAlign: 'center' }}>
+                            <div style={{ width: 40, height: 40, borderRadius: 12, background: active ? '#0F7A63' : '#e8f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                              <Icon size={18} color={active ? '#fff' : '#0F7A63'} />
                             </div>
-                            <div style={{ fontSize: 10.5, fontWeight: 700, color: active ? '#0F7A63' : '#48574f', textAlign: 'center', lineHeight: 1.2 }}>{label}</div>
-                            <div style={{ fontSize: 9.5, color: '#9aaba5', fontWeight: 500 }}>{desc}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: active ? '#0F7A63' : '#16201d', lineHeight: 1.2 }}>{label}</div>
+                            <div style={{ fontSize: 11.5, color: '#9aaba5', fontWeight: 500 }}>{desc}</div>
                           </button>
                         )
                       })}
                     </div>
+                    <button type="button" onClick={goStep2}
+                      style={{ width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: 'pointer', background: form.interes ? 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)' : '#e2e8e4', color: form.interes ? '#fff' : '#9aaba5', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: form.interes ? '0 8px 28px -6px rgba(15,122,99,0.55)' : 'none', transition: 'all 0.2s' }}>
+                      Continuar <ChevronRight size={17} />
+                    </button>
                   </div>
+                )}
 
-                  <button type="submit" disabled={sending}
-                    style={{
-                      width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: sending ? 'wait' : 'pointer',
-                      background: sending ? '#6b7a76' : 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)',
-                      color: '#fff', fontSize: 15.5, fontWeight: 700, fontFamily: 'inherit',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                      boxShadow: sending ? 'none' : '0 8px 28px -6px rgba(15,122,99,0.55)',
-                      transition: 'all 0.2s', marginTop: 2,
-                    }}>
-                    {sending ? 'Enviando…' : <><span>Quiero que me llamen</span><ChevronRight size={17} /></>}
-                  </button>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
-                    <ShieldCheck size={12} style={{ color: '#0F7A63', flexShrink: 0 }} />
-                    <p style={{ fontSize: 11, color: '#9aaba5', margin: 0, textAlign: 'center', lineHeight: 1.45 }}>
-                      Tus datos están protegidos. Sin spam, solo te contactamos para asesorarte.
-                    </p>
+                {/* PASO 2: Datos de contacto */}
+                {step === 2 && (
+                  <div className="step-slide">
+                    <div style={{ marginBottom: 20 }}>
+                      <button onClick={() => setStep(1)} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#9aaba5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: 10, fontWeight: 600 }}>
+                        <ArrowLeft size={12} /> Volver
+                      </button>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#16201d', margin: '0 0 5px', letterSpacing: '-0.02em' }}>¿Cómo podemos contactarte?</h2>
+                      <p style={{ fontSize: 13, color: '#6b7a76', margin: 0 }}>Solo para que un asesor te llame · Sin spam</p>
+                    </div>
+                    {form.interes && (
+                      <div style={{ padding: '8px 12px', borderRadius: 10, background: '#e3f1ec', border: '1px solid #b6ddd0', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <Check size={13} color="#0F7A63" />
+                        <span style={{ fontSize: 12.5, color: '#0F7A63', fontWeight: 600 }}>{form.interes}</span>
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginBottom: 16 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Nombre completo *</label>
+                        <input value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García"
+                          style={inp('nombre')} onFocus={() => setFocused('nombre')} onBlur={() => setFocused(null)} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Teléfono</label>
+                        <input value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+34 600 000 000"
+                          style={inp('telefono')} onFocus={() => setFocused('telefono')} onBlur={() => setFocused(null)} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Correo electrónico</label>
+                        <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" type="email"
+                          style={inp('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
+                      </div>
+                    </div>
+                    <button type="button" onClick={goStep3}
+                      style={{ width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)', color: '#fff', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 8px 28px -6px rgba(15,122,99,0.55)', transition: 'all 0.2s' }}>
+                      Revisar y enviar <ChevronRight size={17} />
+                    </button>
                   </div>
-                </form>
+                )}
+
+                {/* PASO 3: Confirmación */}
+                {step === 3 && (
+                  <form className="step-slide" onSubmit={handleSubmit}>
+                    <div style={{ marginBottom: 20 }}>
+                      <button onClick={() => setStep(2)} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12.5, color: '#9aaba5', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', padding: 0, marginBottom: 10, fontWeight: 600 }}>
+                        <ArrowLeft size={12} /> Volver
+                      </button>
+                      <h2 style={{ fontSize: 20, fontWeight: 800, color: '#16201d', margin: '0 0 5px', letterSpacing: '-0.02em' }}>Confirma tu solicitud</h2>
+                      <p style={{ fontSize: 13, color: '#6b7a76', margin: 0 }}>Todo listo — revisa y envía</p>
+                    </div>
+                    <div style={{ background: '#f8fbf9', borderRadius: 14, padding: '16px', marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[
+                        { label: 'Seguro', value: form.interes },
+                        { label: 'Nombre', value: form.nombre },
+                        { label: 'Teléfono', value: form.telefono || '—' },
+                        { label: 'Correo', value: form.email || '—' },
+                      ].map(({ label, value }) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                          <span style={{ fontSize: 12.5, color: '#9aaba5', fontWeight: 600 }}>{label}</span>
+                          <span style={{ fontSize: 13, color: '#16201d', fontWeight: 600, textAlign: 'right' }}>{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <button type="submit" disabled={sending}
+                      style={{ width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: sending ? 'wait' : 'pointer', background: sending ? '#6b7a76' : 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)', color: '#fff', fontSize: 15.5, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: sending ? 'none' : '0 8px 28px -6px rgba(15,122,99,0.55)', transition: 'all 0.2s' }}>
+                      {sending ? 'Enviando…' : <><span>Quiero que me llamen</span><ChevronRight size={17} /></>}
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 12 }}>
+                      <ShieldCheck size={12} style={{ color: '#0F7A63', flexShrink: 0 }} />
+                      <p style={{ fontSize: 11, color: '#9aaba5', margin: 0, textAlign: 'center', lineHeight: 1.45 }}>Tus datos están protegidos. Sin spam, solo te contactamos para asesorarte.</p>
+                    </div>
+                  </form>
+                )}
               </div>
             </div>
           </div>
@@ -260,14 +283,8 @@ export default function Landing() {
 
       {/* ─── TRUST BAND ─── */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e8ede9' }}>
-        <div className="trust-band" style={{ maxWidth: 1200, margin: '0 auto', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
-          {[
-            { icon: ShieldCheck, text: '50 años de experiencia' },
-            { icon: Users, text: '+120.000 familias aseguradas' },
-            { icon: Clock, text: 'Respuesta en <24h' },
-            { icon: Star, text: 'Valoración 4,8 / 5 en Google' },
-            { icon: Stethoscope, text: '+40.000 especialistas en España' },
-          ].map(({ icon: Icon, text }) => (
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
+          {[{ icon: ShieldCheck, text: '50 años de experiencia' }, { icon: Users, text: '+120.000 familias aseguradas' }, { icon: Clock, text: 'Respuesta en <24h' }, { icon: Star, text: 'Valoración 4,8 / 5 en Google' }, { icon: Stethoscope, text: '+40.000 especialistas en España' }].map(({ icon: Icon, text }) => (
             <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Icon size={14} style={{ color: '#0F7A63', flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: '#48574f', fontWeight: 500, whiteSpace: 'nowrap' }}>{text}</span>
@@ -276,10 +293,10 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ─── LOGOS MEDIOS / AVALES ─── */}
+      {/* ─── LOGOS ─── */}
       <div ref={logosAnim.ref} className={`fade-up${logosAnim.inView ? ' visible' : ''}`} style={{ background: '#f8fbf9', borderBottom: '1px solid #e8ede9' }}>
-        <div className="logos-band section-padding" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 32px', textAlign: 'center' }}>
-          <p style={{ fontSize: 11.5, fontWeight: 700, color: '#b0bdb8', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, margin: '0 0 20px' }}>Reconocidos por</p>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 32px', textAlign: 'center' }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: '#b0bdb8', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20 }}>Reconocidos por</p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 48, flexWrap: 'wrap', opacity: 0.5 }}>
             {['El País', 'El Mundo', 'Cinco Días', 'Expansión', 'idealista'].map(name => (
               <div key={name} style={{ fontSize: 16, fontWeight: 800, color: '#48574f', letterSpacing: '-0.02em', fontStyle: name === 'idealista' ? 'italic' : 'normal' }}>{name}</div>
@@ -289,19 +306,18 @@ export default function Landing() {
       </div>
 
       {/* ─── HOW IT WORKS ─── */}
-      <div ref={stepsAnim.ref} className={`section-padding${stepsAnim.inView ? '' : ''}`} style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
+      <div ref={stepsAnim.ref} style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
         <div className={`fade-up${stepsAnim.inView ? ' visible' : ''}`} style={{ textAlign: 'center', marginBottom: 52 }}>
           <span style={{ display: 'inline-block', padding: '5px 14px', borderRadius: 999, background: '#e3f1ec', color: '#0F7A63', fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>Proceso</span>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: '#16201d', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Así de fácil funciona</h2>
           <p style={{ fontSize: 16, color: '#6b7a76', maxWidth: 460, margin: '0 auto' }}>Sin burocracia, sin esperas. De tu solicitud a tu cobertura en 3 pasos.</p>
         </div>
-
         <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {[
             { n: '01', emoji: '📋', title: 'Solicitas info', desc: 'Rellenas el formulario en menos de 60 segundos con tus datos de contacto.', color: '#0F7A63', delay: '0s' },
             { n: '02', emoji: '📞', title: 'Te llamamos', desc: 'Un asesor personal te contacta antes de 24h para entender tus necesidades.', color: '#0a5b49', delay: '0.1s' },
             { n: '03', emoji: '✅', title: 'Eliges tu plan', desc: 'Recibes opciones personalizadas. Tú decides, sin presiones y sin coste.', color: '#0a2f27', delay: '0.2s' },
-          ].map((step, i) => (
+          ].map(step => (
             <div key={step.n} className={`step-card fade-up${stepsAnim.inView ? ' visible' : ''}`}
               style={{ background: '#fff', borderRadius: 20, padding: '32px 28px', border: '1px solid #e6eae8', position: 'relative', overflow: 'hidden', transitionDelay: step.delay }}>
               <div style={{ position: 'absolute', top: -24, right: -8, fontSize: 88, fontWeight: 900, color: '#f0f4f1', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>{step.n}</div>
@@ -335,23 +351,22 @@ export default function Landing() {
         </div>
       </div>
 
-      {/* ─── CTA FINAL ─── */}
-      <div className="section-padding" style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
-        <div ref={ctaAnim.ref} className={`cta-block cta-section fade-up${ctaAnim.inView ? ' visible' : ''}`}
+      {/* ─── CTA ─── */}
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
+        <div ref={ctaAnim.ref} className={`cta-block fade-up${ctaAnim.inView ? ' visible' : ''}`}
           style={{ background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 100%)', borderRadius: 28, padding: '60px 56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative' }}>
             <h2 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: '0 0 10px', letterSpacing: '-0.02em' }}>¿Listo para proteger tu salud?</h2>
             <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', margin: 0 }}>Sin compromiso · Sin permanencia · Solo cobertura real.</p>
           </div>
-          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          <button onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
             style={{ padding: '17px 40px', borderRadius: 14, background: '#fff', color: '#0F7A63', fontSize: 15.5, fontWeight: 800, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', fontFamily: 'inherit', flexShrink: 0, position: 'relative' }}>
             Solicitar asesoría gratis →
           </button>
         </div>
       </div>
 
-      {/* Footer */}
       <div style={{ borderTop: '1px solid #e6eae8', padding: '24px 32px', textAlign: 'center', background: '#fff' }}>
         <p style={{ fontSize: 12.5, color: '#b0bdb8', margin: 0 }}>
           © 2025 DKV Seguros de Salud · Todos los derechos reservados ·{' '}
