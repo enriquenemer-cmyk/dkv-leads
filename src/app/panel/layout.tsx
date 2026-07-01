@@ -12,13 +12,26 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session && !pathname.includes('/login')) {
+      if (data.session) {
+        setEmail(data.session.user.email ?? null)
+        setChecked(true)
+      } else if (!pathname.includes('/login')) {
         router.replace('/panel/login')
       } else {
-        setEmail(data.session?.user.email ?? null)
         setChecked(true)
       }
     })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setEmail(session.user.email ?? null)
+        setChecked(true)
+      } else if (!pathname.includes('/login')) {
+        router.replace('/panel/login')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [router, pathname])
 
   if (pathname.includes('/login')) return <>{children}</>

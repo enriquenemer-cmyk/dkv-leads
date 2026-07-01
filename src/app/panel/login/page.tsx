@@ -19,7 +19,7 @@ export default function LoginPage() {
     const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (authErr) { setError('Credenciales incorrectas. Verifica tu correo y contraseña.'); return }
-    router.push('/panel/dashboard')
+    window.location.href = '/panel/dashboard'
   }
 
   const inp = (name: string) => ({
