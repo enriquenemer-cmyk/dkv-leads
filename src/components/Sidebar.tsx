@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search
 } from 'lucide-react'
 
 const navItems = [
   { href: '/panel/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/panel/leads', label: 'Leads', icon: Users },
+  { href: '/panel/kanban', label: 'Kanban', icon: Layers },
   { href: '/panel/actividad', label: 'Actividad', icon: Activity },
 ]
 
@@ -67,8 +68,18 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
         </div>
       </div>
 
+      {/* Cmd+K search button */}
+      <div style={{ padding: '12px 12px 0' }}>
+        <button onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }); window.dispatchEvent(e) }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)', cursor: 'pointer', fontFamily: 'inherit', color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
+          <Search size={13} />
+          <span style={{ flex: 1, textAlign: 'left' }}>Buscar…</span>
+          <kbd style={{ fontSize: 10, background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 5, color: 'rgba(255,255,255,0.4)' }}>⌘K</kbd>
+        </button>
+      </div>
+
       {/* Nav */}
-      <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 10px 6px', margin: 0 }}>Gestión</p>
         {navItems.map(({ href, label, icon: Icon }) => navLink(href, label, Icon))}
 

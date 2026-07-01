@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Sidebar } from '@/components/Sidebar'
+import { CommandPalette } from '@/components/CommandPalette'
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -44,6 +45,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen">
+      <CommandPalette />
       <Sidebar userEmail={email} />
       <div className="flex-1 overflow-auto" style={{ background: '#f1f4f2' }}>
         {children}

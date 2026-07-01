@@ -47,6 +47,11 @@ export default function DashboardPage() {
   leads.forEach(l => { if (l.interes) intereses[l.interes] = (intereses[l.interes] ?? 0) + 1 })
   const maxI = Math.max(1, ...Object.values(intereses))
 
+  const formulario = leads.filter(l => l.fuente === 'formulario').length
+  const manual = leads.filter(l => l.fuente === 'manual').length
+  const convForm = formulario > 0 ? Math.round((leads.filter(l => l.fuente === 'formulario' && l.tag === 'cliente').length / formulario) * 100) : 0
+  const convManual = manual > 0 ? Math.round((leads.filter(l => l.fuente === 'manual' && l.tag === 'cliente').length / manual) * 100) : 0
+
   const METRICS = [
     { label: 'Total leads', value: total, sub: 'Captados', icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
     { label: 'Leads calientes', value: calientes, sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22' },
@@ -141,6 +146,29 @@ export default function DashboardPage() {
               </div>
           }
         </div>
+      </div>
+
+      {/* Stats por fuente */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        {[
+          { label: 'Landing pública', fuente: 'formulario', count: formulario, conv: convForm, color: '#0F7A63', bg: '#e3f1ec', icon: '🌐' },
+          { label: 'Alta manual', fuente: 'manual', count: manual, conv: convManual, color: '#2b6fb0', bg: '#eaf3ff', icon: '✏️' },
+        ].map(s => (
+          <div key={s.fuente} style={{ ...card, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{s.icon}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{s.label}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: '#16201d', letterSpacing: '-0.02em' }}>{s.count}</span>
+                <span style={{ fontSize: 13, color: '#9aaba5' }}>leads</span>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.conv}%</div>
+              <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 500 }}>conversión</div>
+            </div>
+          </div>
+        ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
