@@ -1,10 +1,27 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { CheckCircle2, ShieldCheck, Clock, Users, Star, ChevronRight } from 'lucide-react'
+import { CheckCircle2, ShieldCheck, Clock, Users, Star, ChevronRight, Heart, Building2, Smile, Stethoscope } from 'lucide-react'
 
-const INTERESES = ['Seguro de salud', 'Hospitalización', 'Seguro dental', 'Reembolso']
+const INTERESES = [
+  { value: 'Seguro de salud', label: 'Salud individual', icon: Heart, desc: 'Para ti solo' },
+  { value: 'Seguro familiar', label: 'Seguro familiar', icon: Users, desc: 'Toda la familia' },
+  { value: 'Salud empresa', label: 'Para empresa', icon: Building2, desc: 'Empleados' },
+  { value: 'Seguro dental', label: 'Dental', icon: Smile, desc: 'Especialista' },
+]
+
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [inView, setInView] = useState(false)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect() } }, { threshold })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [threshold])
+  return { ref, inView }
+}
 
 export default function Landing() {
   const router = useRouter()
@@ -12,6 +29,10 @@ export default function Landing() {
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
+
+  const stepsAnim = useInView()
+  const logosAnim = useInView()
+  const ctaAnim = useInView()
 
   function set(key: string, v: string) { setForm(f => ({ ...f, [key]: v })); setError('') }
 
@@ -30,149 +51,208 @@ export default function Landing() {
     router.push('/gracias?nombre=' + encodeURIComponent(form.nombre.trim()))
   }
 
-  const inputStyle = (name: string) => ({
-    width: '100%', padding: '14px 16px', borderRadius: 12,
+  const inp = (name: string) => ({
+    width: '100%', padding: '13px 16px', borderRadius: 12,
     border: `1.5px solid ${focused === name ? '#0F7A63' : '#e2e8e4'}`,
     background: focused === name ? '#fff' : '#f8fbf9',
     color: '#16201d', fontSize: 14.5, outline: 'none',
     transition: 'all 0.15s', fontFamily: 'inherit',
     boxShadow: focused === name ? '0 0 0 4px rgba(15,122,99,0.08)' : 'none',
+    boxSizing: 'border-box' as const,
   })
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f1', fontFamily: 'var(--font-jakarta), system-ui, sans-serif' }}>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(28px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .hero-left { animation: fadeUp 0.7s ease both; }
+        .hero-form { animation: fadeUp 0.7s 0.18s ease both; }
+        .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+        .step-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .step-card:hover { transform: translateY(-4px); box-shadow: 0 20px 48px -12px rgba(15,122,99,0.18) !important; }
+        .interest-btn { transition: all 0.15s; cursor: pointer; }
+        .interest-btn:hover { border-color: #0F7A63 !important; background: #f0fbf7 !important; }
+        @media (max-width: 900px) {
+          .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; padding: 48px 0 56px !important; }
+          .hero-form-col { order: -1; }
+          .steps-grid { grid-template-columns: 1fr !important; }
+          .cta-block { flex-direction: column !important; text-align: center; align-items: center !important; }
+          .interest-grid { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 600px) {
+          .hero-stats { gap: 24px !important; }
+          .trust-band { gap: 20px !important; flex-direction: column !important; align-items: flex-start !important; padding: 24px 20px !important; }
+          .logos-band { gap: 24px !important; flex-wrap: wrap !important; }
+          .interest-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+          .hero-padding { padding: 0 20px !important; }
+          .section-padding { padding: 56px 20px !important; }
+          .cta-section { margin: 0 16px 60px !important; padding: 44px 28px !important; border-radius: 22px !important; }
+        }
+      `}</style>
 
       {/* ─── HERO ─── */}
       <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 60%, #1a9e7e 100%)', minHeight: 680 }}>
         {/* Decorative blobs */}
-        <div style={{ position: 'absolute', top: -120, right: -120, width: 500, height: 500, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -120, right: -120, width: 600, height: 600, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -80, left: -80, width: 360, height: 360, borderRadius: '50%', background: 'rgba(0,0,0,0.08)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: 160, left: '38%', width: 2, height: 320, background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
+        {/* Grid lines */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)', backgroundSize: '60px 60px', pointerEvents: 'none' }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px', position: 'relative', zIndex: 1 }}>
+        <div className="hero-padding" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 32px', position: 'relative', zIndex: 1 }}>
 
           {/* Nav */}
           <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '28px 0 0' }}>
+            {/* Logo mejorado */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 11, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 20, color: '#fff', backdropFilter: 'blur(8px)' }}>+</div>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  <rect x="9" y="2" width="4" height="18" rx="2" fill="white"/>
+                  <rect x="2" y="9" width="18" height="4" rx="2" fill="white"/>
+                </svg>
+              </div>
               <div>
-                <div style={{ fontWeight: 800, fontSize: 20, color: '#fff', lineHeight: 1 }}>DKV</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>Seguros de salud</div>
+                <div style={{ fontWeight: 900, fontSize: 21, color: '#fff', lineHeight: 1, letterSpacing: '-0.02em' }}>DKV</div>
+                <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500, letterSpacing: '0.04em' }}>SEGUROS DE SALUD</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <span style={{ padding: '6px 14px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 500 }}>Para empresas</span>
-              <span style={{ padding: '6px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, fontWeight: 600, backdropFilter: 'blur(8px)' }}>Área de asesores</span>
+              <span style={{ padding: '7px 16px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 500 }}>Para empresas</span>
+              <a href="/panel/login" style={{ padding: '7px 16px', borderRadius: 999, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, fontWeight: 600, backdropFilter: 'blur(8px)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)' }}>Área de asesores</a>
             </div>
           </nav>
 
           {/* Hero grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center', padding: '72px 0 80px', minHeight: 540 }}>
+          <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center', padding: '72px 0 80px', minHeight: 540 }}>
 
             {/* Left */}
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px 6px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', marginBottom: 28 }}>
-                <Star size={13} fill="rgba(255,210,100,0.9)" stroke="none" />
-                <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600 }}>Más de 120.000 familias protegidas</span>
+            <div className="hero-left">
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px 6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)', marginBottom: 28 }}>
+                <Star size={13} fill="rgba(255,210,100,0.95)" stroke="none" />
+                <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: 12.5, fontWeight: 600 }}>Más de 120.000 familias protegidas</span>
               </div>
 
-              <h1 style={{ fontSize: 'clamp(38px, 5vw, 62px)', fontWeight: 800, color: '#fff', lineHeight: 1.06, letterSpacing: '-0.03em', margin: '0 0 24px' }}>
+              <h1 style={{ fontSize: 'clamp(38px, 5vw, 64px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
                 Tu salud merece<br />
                 <span style={{ color: '#7ee8c8' }}>la mejor cobertura</span>
               </h1>
 
-              <p style={{ fontSize: 18, color: 'rgba(255,255,255,0.75)', lineHeight: 1.65, maxWidth: 480, marginBottom: 40 }}>
+              <p style={{ fontSize: 17.5, color: 'rgba(255,255,255,0.75)', lineHeight: 1.65, maxWidth: 480, marginBottom: 36 }}>
                 Comparamos los mejores planes de DKV para ti. Un asesor personal sin coste, respuesta garantizada en menos de 24 horas.
               </p>
 
               {/* Checkmarks */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 52 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 48 }}>
                 {['Cobertura inmediata desde el primer día', 'Red de +40.000 especialistas en toda España', 'Sin copagos ocultos, sin permanencia mínima'].map(b => (
                   <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(126,232,200,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <CheckCircle2 size={14} color="#7ee8c8" />
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(126,232,200,0.18)', border: '1px solid rgba(126,232,200,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <CheckCircle2 size={13} color="#7ee8c8" />
                     </div>
-                    <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 500 }}>{b}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.88)', fontSize: 15, fontWeight: 500 }}>{b}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Stats row */}
-              <div style={{ display: 'flex', gap: 40 }}>
-                {[{ v: '+120k', l: 'Asegurados' }, { v: '4.8★', l: 'Valoración' }, { v: '<24h', l: 'Respuesta' }].map(s => (
-                  <div key={s.l}>
-                    <div style={{ fontSize: 26, fontWeight: 800, color: '#fff' }}>{s.v}</div>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginTop: 2 }}>{s.l}</div>
+              {/* Stats */}
+              <div className="hero-stats" style={{ display: 'flex', gap: 36 }}>
+                {[{ v: '+120k', l: 'Asegurados' }, { v: '4.8★', l: 'Valoración Google' }, { v: '<24h', l: 'Tiempo respuesta' }].map(s => (
+                  <div key={s.l} style={{ borderLeft: '2px solid rgba(126,232,200,0.3)', paddingLeft: 14 }}>
+                    <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>{s.v}</div>
+                    <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginTop: 2 }}>{s.l}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Form card */}
-            <div style={{ background: '#fff', borderRadius: 24, padding: '36px 32px', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.35)', position: 'relative' }}>
-              {/* Top accent */}
-              <div style={{ position: 'absolute', top: 0, left: 32, right: 32, height: 3, borderRadius: '0 0 4px 4px', background: 'linear-gradient(90deg, #0F7A63, #1a9e7e)' }} />
+            <div className="hero-form hero-form-col">
+              <div style={{ background: '#fff', borderRadius: 24, padding: '36px 30px', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.4)', position: 'relative' }}>
+                {/* Top accent */}
+                <div style={{ position: 'absolute', top: 0, left: 32, right: 32, height: 3, borderRadius: '0 0 4px 4px', background: 'linear-gradient(90deg, #0F7A63, #7ee8c8)' }} />
 
-              <div style={{ marginBottom: 24 }}>
-                <h2 style={{ fontSize: 22, fontWeight: 800, color: '#16201d', margin: '0 0 6px' }}>Quiero mi presupuesto</h2>
-                <p style={{ fontSize: 13.5, color: '#6b7a76', margin: 0 }}>Gratis · Sin compromiso · En menos de 24h</p>
+                <div style={{ marginBottom: 20 }}>
+                  <h2 style={{ fontSize: 21, fontWeight: 800, color: '#16201d', margin: '0 0 5px', letterSpacing: '-0.02em' }}>Quiero mi presupuesto</h2>
+                  <p style={{ fontSize: 13, color: '#6b7a76', margin: 0 }}>Gratis · Sin compromiso · En menos de 24h</p>
+                </div>
+
+                {error && (
+                  <div style={{ marginBottom: 14, padding: '11px 14px', borderRadius: 11, background: '#fef0ed', border: '1px solid #fbd4cb', color: '#c23a22', fontSize: 13, fontWeight: 500 }}>
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Nombre completo *</label>
+                    <input value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García"
+                      style={inp('nombre')} onFocus={() => setFocused('nombre')} onBlur={() => setFocused(null)} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Teléfono</label>
+                      <input value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+34 600 000 000"
+                        style={inp('telefono')} onFocus={() => setFocused('telefono')} onBlur={() => setFocused(null)} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Correo</label>
+                      <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" type="email"
+                        style={inp('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
+                    </div>
+                  </div>
+
+                  {/* SELECTOR VISUAL DE INTERÉS */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 8, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Me interesa</label>
+                    <div className="interest-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 7 }}>
+                      {INTERESES.map(({ value, label, icon: Icon, desc }) => {
+                        const active = form.interes === value
+                        return (
+                          <button key={value} type="button" className="interest-btn"
+                            onClick={() => set('interes', active ? '' : value)}
+                            style={{
+                              padding: '10px 6px', borderRadius: 11, border: `1.5px solid ${active ? '#0F7A63' : '#e2e8e4'}`,
+                              background: active ? '#f0fbf7' : '#f8fbf9', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                              gap: 5, fontFamily: 'inherit',
+                            }}>
+                            <div style={{ width: 30, height: 30, borderRadius: 8, background: active ? '#0F7A63' : '#e8f0ec', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.15s' }}>
+                              <Icon size={14} color={active ? '#fff' : '#0F7A63'} />
+                            </div>
+                            <div style={{ fontSize: 10.5, fontWeight: 700, color: active ? '#0F7A63' : '#48574f', textAlign: 'center', lineHeight: 1.2 }}>{label}</div>
+                            <div style={{ fontSize: 9.5, color: '#9aaba5', fontWeight: 500 }}>{desc}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <button type="submit" disabled={sending}
+                    style={{
+                      width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: sending ? 'wait' : 'pointer',
+                      background: sending ? '#6b7a76' : 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)',
+                      color: '#fff', fontSize: 15.5, fontWeight: 700, fontFamily: 'inherit',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: sending ? 'none' : '0 8px 28px -6px rgba(15,122,99,0.55)',
+                      transition: 'all 0.2s', marginTop: 2,
+                    }}>
+                    {sending ? 'Enviando…' : <><span>Quiero que me llamen</span><ChevronRight size={17} /></>}
+                  </button>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                    <ShieldCheck size={12} style={{ color: '#0F7A63', flexShrink: 0 }} />
+                    <p style={{ fontSize: 11, color: '#9aaba5', margin: 0, textAlign: 'center', lineHeight: 1.45 }}>
+                      Tus datos están protegidos. Sin spam, solo te contactamos para asesorarte.
+                    </p>
+                  </div>
+                </form>
               </div>
-
-              {error && (
-                <div style={{ marginBottom: 16, padding: '12px 16px', borderRadius: 12, background: '#fef0ed', border: '1px solid #fbd4cb', color: '#c23a22', fontSize: 13, fontWeight: 500 }}>
-                  {error}
-                </div>
-              )}
-
-              <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Nombre completo *</label>
-                  <input value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García"
-                    style={inputStyle('nombre')} onFocus={() => setFocused('nombre')} onBlur={() => setFocused(null)} />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Teléfono</label>
-                    <input value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+34 600 000 000"
-                      style={inputStyle('telefono')} onFocus={() => setFocused('telefono')} onBlur={() => setFocused(null)} />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Correo</label>
-                    <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" type="email"
-                      style={inputStyle('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Me interesa</label>
-                  <select value={form.interes} onChange={e => set('interes', e.target.value)}
-                    style={{ ...inputStyle('interes'), color: form.interes ? '#16201d' : '#9aaba5' }}
-                    onFocus={() => setFocused('interes')} onBlur={() => setFocused(null)}>
-                    <option value="">¿Qué tipo de seguro necesitas?</option>
-                    {INTERESES.map(i => <option key={i} value={i}>{i}</option>)}
-                  </select>
-                </div>
-
-                <button type="submit" disabled={sending}
-                  style={{
-                    width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: sending ? 'wait' : 'pointer',
-                    background: sending ? '#6b7a76' : 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)',
-                    color: '#fff', fontSize: 15.5, fontWeight: 700, fontFamily: 'inherit',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    boxShadow: sending ? 'none' : '0 8px 24px -6px rgba(15,122,99,0.5)',
-                    transition: 'all 0.2s', marginTop: 4,
-                  }}>
-                  {sending ? 'Enviando…' : <><span>Quiero que me llamen</span> <ChevronRight size={18} /></>}
-                </button>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 4 }}>
-                  <ShieldCheck size={13} style={{ color: '#0F7A63' }} />
-                  <p style={{ fontSize: 11.5, color: '#9aaba5', margin: 0, textAlign: 'center' }}>
-                    Tus datos están protegidos. Sin spam, solo te contactamos para asesorarte.
-                  </p>
-                </div>
-              </form>
             </div>
           </div>
         </div>
@@ -180,63 +260,103 @@ export default function Landing() {
 
       {/* ─── TRUST BAND ─── */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e8ede9' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 48, flexWrap: 'wrap' }}>
+        <div className="trust-band" style={{ maxWidth: 1200, margin: '0 auto', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
           {[
-            { icon: ShieldCheck, text: 'Aseguradora con 50 años de experiencia' },
-            { icon: Users, text: '+120.000 familias confían en DKV' },
-            { icon: Clock, text: 'Respuesta garantizada en <24h' },
-            { icon: Star, text: 'Valoración media 4,8 / 5' },
+            { icon: ShieldCheck, text: '50 años de experiencia' },
+            { icon: Users, text: '+120.000 familias aseguradas' },
+            { icon: Clock, text: 'Respuesta en <24h' },
+            { icon: Star, text: 'Valoración 4,8 / 5 en Google' },
+            { icon: Stethoscope, text: '+40.000 especialistas en España' },
           ].map(({ icon: Icon, text }) => (
-            <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Icon size={15} style={{ color: '#0F7A63', flexShrink: 0 }} />
-              <span style={{ fontSize: 13.5, color: '#48574f', fontWeight: 500 }}>{text}</span>
+            <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <Icon size={14} style={{ color: '#0F7A63', flexShrink: 0 }} />
+              <span style={{ fontSize: 13, color: '#48574f', fontWeight: 500, whiteSpace: 'nowrap' }}>{text}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ─── LOGOS MEDIOS / AVALES ─── */}
+      <div ref={logosAnim.ref} className={`fade-up${logosAnim.inView ? ' visible' : ''}`} style={{ background: '#f8fbf9', borderBottom: '1px solid #e8ede9' }}>
+        <div className="logos-band section-padding" style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 32px', textAlign: 'center' }}>
+          <p style={{ fontSize: 11.5, fontWeight: 700, color: '#b0bdb8', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 20, margin: '0 0 20px' }}>Reconocidos por</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 48, flexWrap: 'wrap', opacity: 0.5 }}>
+            {['El País', 'El Mundo', 'Cinco Días', 'Expansión', 'idealista'].map(name => (
+              <div key={name} style={{ fontSize: 16, fontWeight: 800, color: '#48574f', letterSpacing: '-0.02em', fontStyle: name === 'idealista' ? 'italic' : 'normal' }}>{name}</div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ─── HOW IT WORKS ─── */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 52 }}>
-          <span style={{ display: 'inline-block', padding: '5px 14px', borderRadius: 999, background: '#e3f1ec', color: '#0F7A63', fontSize: 12.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 16 }}>Proceso</span>
+      <div ref={stepsAnim.ref} className={`section-padding${stepsAnim.inView ? '' : ''}`} style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
+        <div className={`fade-up${stepsAnim.inView ? ' visible' : ''}`} style={{ textAlign: 'center', marginBottom: 52 }}>
+          <span style={{ display: 'inline-block', padding: '5px 14px', borderRadius: 999, background: '#e3f1ec', color: '#0F7A63', fontSize: 12, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', marginBottom: 16 }}>Proceso</span>
           <h2 style={{ fontSize: 36, fontWeight: 800, color: '#16201d', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Así de fácil funciona</h2>
-          <p style={{ fontSize: 16, color: '#6b7a76', maxWidth: 480, margin: '0 auto' }}>Sin burocracia, sin esperas. De tu solicitud a tu cobertura en 3 pasos.</p>
+          <p style={{ fontSize: 16, color: '#6b7a76', maxWidth: 460, margin: '0 auto' }}>Sin burocracia, sin esperas. De tu solicitud a tu cobertura en 3 pasos.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+        <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {[
-            { n: '01', title: 'Solicitas info', desc: 'Rellenas el formulario en menos de 60 segundos con tus datos de contacto.', color: '#0F7A63' },
-            { n: '02', title: 'Te llamamos', desc: 'Un asesor personal te contacta antes de 24h para entender tus necesidades.', color: '#0a5b49' },
-            { n: '03', title: 'Eliges tu plan', desc: 'Recibes opciones personalizadas. Tú decides, sin presiones y sin coste.', color: '#0a2f27' },
-          ].map(step => (
-            <div key={step.n} style={{ background: '#fff', borderRadius: 20, padding: '32px 28px', border: '1px solid #e6eae8', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: -20, right: -10, fontSize: 80, fontWeight: 900, color: '#f0f4f1', lineHeight: 1, userSelect: 'none' }}>{step.n}</div>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: step.color, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>{step.n}</span>
+            { n: '01', emoji: '📋', title: 'Solicitas info', desc: 'Rellenas el formulario en menos de 60 segundos con tus datos de contacto.', color: '#0F7A63', delay: '0s' },
+            { n: '02', emoji: '📞', title: 'Te llamamos', desc: 'Un asesor personal te contacta antes de 24h para entender tus necesidades.', color: '#0a5b49', delay: '0.1s' },
+            { n: '03', emoji: '✅', title: 'Eliges tu plan', desc: 'Recibes opciones personalizadas. Tú decides, sin presiones y sin coste.', color: '#0a2f27', delay: '0.2s' },
+          ].map((step, i) => (
+            <div key={step.n} className={`step-card fade-up${stepsAnim.inView ? ' visible' : ''}`}
+              style={{ background: '#fff', borderRadius: 20, padding: '32px 28px', border: '1px solid #e6eae8', position: 'relative', overflow: 'hidden', transitionDelay: step.delay }}>
+              <div style={{ position: 'absolute', top: -24, right: -8, fontSize: 88, fontWeight: 900, color: '#f0f4f1', lineHeight: 1, userSelect: 'none', pointerEvents: 'none' }}>{step.n}</div>
+              <div style={{ fontSize: 32, marginBottom: 16 }}>{step.emoji}</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px', borderRadius: 999, background: step.color + '15', marginBottom: 14 }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: step.color, letterSpacing: '0.06em' }}>PASO {step.n}</span>
               </div>
               <h3 style={{ fontSize: 19, fontWeight: 800, color: '#16201d', margin: '0 0 10px' }}>{step.title}</h3>
-              <p style={{ fontSize: 14.5, color: '#6b7a76', lineHeight: 1.6, margin: 0 }}>{step.desc}</p>
+              <p style={{ fontSize: 14.5, color: '#6b7a76', lineHeight: 1.65, margin: 0 }}>{step.desc}</p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ─── CTA FINAL ─── */}
-      <div style={{ background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 100%)', margin: '0 32px 80px', borderRadius: 28, padding: '60px 48px', maxWidth: 1136, marginLeft: 'auto', marginRight: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
-        <div>
-          <h2 style={{ fontSize: 32, fontWeight: 800, color: '#fff', margin: '0 0 10px', letterSpacing: '-0.02em' }}>¿Listo para proteger tu salud?</h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.7)', margin: 0 }}>Sin compromiso. Sin permanencia. Solo cobertura real.</p>
+      {/* ─── TESTIMONIAL ─── */}
+      <div style={{ background: '#fff', borderTop: '1px solid #e8ede9', borderBottom: '1px solid #e8ede9', padding: '56px 32px' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 3, marginBottom: 20 }}>
+            {[...Array(5)].map((_, i) => <Star key={i} size={18} fill="#f59e0b" stroke="none" />)}
+          </div>
+          <blockquote style={{ fontSize: 20, fontWeight: 600, color: '#16201d', lineHeight: 1.55, margin: '0 0 24px', letterSpacing: '-0.01em' }}>
+            "Me llamaron a la mañana siguiente de solicitar el presupuesto. El asesor fue muy claro, sin letra pequeña. Ahora toda la familia está asegurada con DKV."
+          </blockquote>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, #0F7A63, #1a9e7e)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#fff', fontSize: 15 }}>LP</div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#16201d' }}>Laura P.</div>
+              <div style={{ fontSize: 12, color: '#9aaba5' }}>Madrid · Cliente desde 2023</div>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          style={{ padding: '16px 36px', borderRadius: 14, background: '#fff', color: '#0F7A63', fontSize: 15.5, fontWeight: 800, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', fontFamily: 'inherit' }}>
-          Solicitar asesoría gratis →
-        </button>
+      </div>
+
+      {/* ─── CTA FINAL ─── */}
+      <div className="section-padding" style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 32px' }}>
+        <div ref={ctaAnim.ref} className={`cta-block cta-section fade-up${ctaAnim.inView ? ' visible' : ''}`}
+          style={{ background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 100%)', borderRadius: 28, padding: '60px 56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -60, right: -60, width: 280, height: 280, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative' }}>
+            <h2 style={{ fontSize: 32, fontWeight: 900, color: '#fff', margin: '0 0 10px', letterSpacing: '-0.02em' }}>¿Listo para proteger tu salud?</h2>
+            <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', margin: 0 }}>Sin compromiso · Sin permanencia · Solo cobertura real.</p>
+          </div>
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            style={{ padding: '17px 40px', borderRadius: 14, background: '#fff', color: '#0F7A63', fontSize: 15.5, fontWeight: 800, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', fontFamily: 'inherit', flexShrink: 0, position: 'relative' }}>
+            Solicitar asesoría gratis →
+          </button>
+        </div>
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid #e6eae8', padding: '24px 32px', textAlign: 'center' }}>
-        <p style={{ fontSize: 12.5, color: '#9aaba5', margin: 0 }}>© 2025 DKV Seguros de Salud · Todos los derechos reservados · <a href="/panel/login" style={{ color: '#0F7A63', textDecoration: 'none', fontWeight: 600 }}>Acceso asesores</a></p>
+      <div style={{ borderTop: '1px solid #e6eae8', padding: '24px 32px', textAlign: 'center', background: '#fff' }}>
+        <p style={{ fontSize: 12.5, color: '#b0bdb8', margin: 0 }}>
+          © 2025 DKV Seguros de Salud · Todos los derechos reservados ·{' '}
+          <a href="/panel/login" style={{ color: '#0F7A63', textDecoration: 'none', fontWeight: 600 }}>Acceso asesores</a>
+        </p>
       </div>
     </div>
   )
