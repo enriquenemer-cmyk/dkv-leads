@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { supabase, Lead } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { X } from 'lucide-react'
 
 const INTERESES = ['Seguro de salud', 'Hospitalización', 'Seguro dental', 'Reembolso']
@@ -47,8 +48,10 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
     }
     if (editing && lead) {
       await supabase.from('leads').update(data).eq('id', lead.id)
+      await logActividad('lead_editado', `Lead editado: ${form.nombre.trim()}`, { lead_id: lead.id, lead_nombre: form.nombre.trim() })
     } else {
-      await supabase.from('leads').insert(data)
+      const { data: newLead } = await supabase.from('leads').insert(data).select('id').single()
+      await logActividad('lead_nuevo', `Nuevo lead manual: ${form.nombre.trim()}`, { lead_id: newLead?.id, lead_nombre: form.nombre.trim() })
     }
     setSaving(false)
     onSaved()

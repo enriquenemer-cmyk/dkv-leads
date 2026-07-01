@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, Lead } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { TagPill, TAG_STYLES } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
@@ -28,24 +29,30 @@ export default function LeadDetallePage() {
   }
 
   async function updateTag(tag: string) {
-    await supabase.from('leads').update({ tag }).eq('id', id); fetchLead()
+    await supabase.from('leads').update({ tag }).eq('id', id)
+    await logActividad('lead_tag', `Etiqueta cambiada a "${tag}" en ${lead?.nombre}`, { lead_id: id, lead_nombre: lead?.nombre })
+    fetchLead()
   }
 
   async function addNota() {
     if (!notaText.trim() || !lead) return
     const nuevas = [{ text: notaText.trim(), when: new Date().toISOString() }, ...(lead.notas ?? [])]
     await supabase.from('leads').update({ notas: nuevas }).eq('id', id)
+    await logActividad('nota_agregada', `Nota añadida a ${lead.nombre}: "${notaText.trim().slice(0, 60)}"`, { lead_id: id, lead_nombre: lead.nombre })
     setNotaText(''); fetchLead()
   }
 
   async function saveRecordatorio() {
     if (!recTexto.trim() || !recFecha) return
     await supabase.from('leads').update({ recordatorio: { texto: recTexto.trim(), fecha: recFecha } }).eq('id', id)
+    await logActividad('recordatorio_set', `Recordatorio programado para ${lead?.nombre} el ${recFecha}`, { lead_id: id, lead_nombre: lead?.nombre })
     setRecTexto(''); setRecFecha(''); fetchLead()
   }
 
   async function borrarRecordatorio() {
-    await supabase.from('leads').update({ recordatorio: null }).eq('id', id); fetchLead()
+    await supabase.from('leads').update({ recordatorio: null }).eq('id', id)
+    await logActividad('recordatorio_borrado', `Recordatorio eliminado de ${lead?.nombre}`, { lead_id: id, lead_nombre: lead?.nombre })
+    fetchLead()
   }
 
   if (!lead) return (
