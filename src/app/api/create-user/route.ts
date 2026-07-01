@@ -1,28 +1,41 @@
+import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceKey) {
-    return NextResponse.json({ error: 'Service role key no configurada' }, { status: 500 })
-  }
+  const cookieStore = await cookies()
 
-  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
+  // Verify the caller is an authenticated advisor
+  const authClient = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
+  )
+  const { data: { user: caller } } = await authClient.auth.getUser()
+  if (!caller) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
   const { email, password, nombre } = await req.json()
   if (!email || !password) {
     return NextResponse.json({ error: 'Email y contraseña son obligatorios' }, { status: 400 })
   }
 
-  const { data, error } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { nombre: nombre || email },
+  // Use a fresh anon client (not the caller's session) to sign up the new user
+  const anonClient = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false } }
+  )
+  const { data, error } = await anonClient.auth.signUp({ email, password })
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (!data.user) return NextResponse.json({ error: 'No se pudo crear el usuario' }, { status: 400 })
+
+  // Store advisor info in asesores table (using caller's authenticated client)
+  await authClient.from('asesores').upsert({
+    id: data.user.id,
+    email: data.user.email,
+    nombre: nombre || email,
   })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ user: { id: data.user.id, email: data.user.email } })
 }

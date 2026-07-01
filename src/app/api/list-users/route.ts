@@ -1,26 +1,21 @@
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceKey) {
-    return NextResponse.json({ error: 'Service role key no configurada' }, { status: 500 })
-  }
+  const cookieStore = await cookies()
 
-  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false }
-  })
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { cookies: { getAll: () => cookieStore.getAll() } }
+  )
 
-  const { data, error } = await admin.auth.admin.listUsers()
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const users = data.users.map(u => ({
-    id: u.id,
-    email: u.email,
-    nombre: u.user_metadata?.nombre ?? u.email,
-    created_at: u.created_at,
-    last_sign_in_at: u.last_sign_in_at,
-  }))
+  const { data, error } = await supabase.from('asesores').select('*').order('created_at', { ascending: false })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ users })
+  return NextResponse.json({ users: data ?? [] })
 }

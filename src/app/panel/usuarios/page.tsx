@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { UserPlus, Mail, Calendar, Clock, Shield, X, Eye, EyeOff, Check } from 'lucide-react'
+import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check } from 'lucide-react'
 
 type User = { id: string; email: string; nombre: string; created_at: string; last_sign_in_at: string | null }
 
@@ -15,15 +15,12 @@ export default function UsuariosPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [noKey, setNoKey] = useState(false)
-
   useEffect(() => { fetchUsers() }, [])
 
   async function fetchUsers() {
     setLoading(true)
     const res = await fetch('/api/list-users')
     const json = await res.json()
-    if (json.error?.includes('Service role')) { setNoKey(true); setLoading(false); return }
     setUsers(json.users ?? [])
     setLoading(false)
   }
@@ -64,81 +61,49 @@ export default function UsuariosPage() {
         </div>
       )}
 
-      {noKey && (
-        <div style={{ ...card, borderColor: '#fbd4cb', background: '#fef7f5' }}>
-          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fbe7e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Shield size={18} color="#c23a22" />
-            </div>
-            <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#c23a22', margin: '0 0 6px' }}>Falta la clave de servicio de Supabase</h3>
-              <p style={{ fontSize: 13.5, color: '#7a3020', lineHeight: 1.6, margin: '0 0 12px' }}>
-                Para crear y ver usuarios necesitas añadir <code style={{ background: '#fbd4cb', padding: '1px 6px', borderRadius: 5 }}>SUPABASE_SERVICE_ROLE_KEY</code> a tus variables de entorno.
-              </p>
-              <ol style={{ fontSize: 13, color: '#7a3020', lineHeight: 1.9, margin: 0, paddingLeft: 18 }}>
-                <li>Ve a <strong>supabase.com</strong> → tu proyecto → <strong>Settings → API</strong></li>
-                <li>Copia la clave <strong>service_role</strong> (la que empieza por <code>eyJ…</code>)</li>
-                <li>Añádela a <code>.env.local</code>: <code>SUPABASE_SERVICE_ROLE_KEY=eyJ…</code></li>
-                <li>Reinicia el servidor dev y también añádela en <strong>Vercel → Settings → Environment Variables</strong></li>
-              </ol>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!noKey && (
-        <div style={card}>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#9aaba5', fontSize: 14 }}>Cargando asesores…</div>
-          ) : users.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#c8d4ce', fontSize: 14 }}>No hay asesores aún.</div>
-          ) : (
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {['Asesor', 'Correo', 'Alta', 'Último acceso'].map(h => (
-                    <th key={h} style={{ fontSize: 11, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 12px 14px', textAlign: 'left' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u, i) => (
-                  <tr key={u.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #f0f4f1' }}>
-                    <td style={{ padding: '14px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 13, flexShrink: 0 }}>
-                          {(u.nombre?.[0] ?? u.email?.[0] ?? 'A').toUpperCase()}
-                        </div>
-                        <span style={{ fontSize: 14, fontWeight: 600, color: '#16201d' }}>{u.nombre}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Mail size={12} color="#9aaba5" />
-                        <span style={{ fontSize: 13.5, color: '#6b7a76' }}>{u.email}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Calendar size={12} color="#9aaba5" />
-                        <span style={{ fontSize: 13, color: '#9aaba5' }}>{new Date(u.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '14px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <Clock size={12} color="#9aaba5" />
-                        <span style={{ fontSize: 13, color: u.last_sign_in_at ? '#9aaba5' : '#c8d4ce' }}>
-                          {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Nunca'}
-                        </span>
-                      </div>
-                    </td>
-                  </tr>
+      <div style={card}>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#9aaba5', fontSize: 14 }}>Cargando asesores…</div>
+        ) : users.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#c8d4ce', fontSize: 14 }}>No hay asesores aún. Crea el primero con el botón de arriba.</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Asesor', 'Correo', 'Alta'].map(h => (
+                  <th key={h} style={{ fontSize: 11, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 12px 14px', textAlign: 'left' }}>{h}</th>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      )}
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((u, i) => (
+                <tr key={u.id} style={{ borderTop: i === 0 ? 'none' : '1px solid #f0f4f1' }}>
+                  <td style={{ padding: '14px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: '#fff', fontSize: 13, flexShrink: 0 }}>
+                        {(u.nombre?.[0] ?? u.email?.[0] ?? 'A').toUpperCase()}
+                      </div>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#16201d' }}>{u.nombre}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Mail size={12} color="#9aaba5" />
+                      <span style={{ fontSize: 13.5, color: '#6b7a76' }}>{u.email}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '14px 12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Calendar size={12} color="#9aaba5" />
+                      <span style={{ fontSize: 13, color: '#9aaba5' }}>{new Date(u.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
 
       {/* Modal crear usuario */}
       {showModal && (
