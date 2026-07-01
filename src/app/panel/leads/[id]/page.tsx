@@ -1,0 +1,260 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase, Lead } from '@/lib/supabase'
+import { TagPill, TAG_STYLES } from '@/components/TagPill'
+import { Avatar } from '@/components/Avatar'
+import { LeadModal } from '@/components/LeadModal'
+import { ArrowLeft, MessageCircle, Mail, Phone, Bell, X, Plus, Calendar, Edit3, ExternalLink } from 'lucide-react'
+
+const TAGS = ['caliente', 'tibio', 'frio', 'cliente'] as const
+const card = { background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', padding: '24px' }
+
+export default function LeadDetallePage() {
+  const { id } = useParams<{ id: string }>()
+  const router = useRouter()
+  const [lead, setLead] = useState<Lead | null>(null)
+  const [editModal, setEditModal] = useState(false)
+  const [notaText, setNotaText] = useState('')
+  const [recTexto, setRecTexto] = useState('')
+  const [recFecha, setRecFecha] = useState('')
+
+  useEffect(() => { fetchLead() }, [id])
+
+  async function fetchLead() {
+    const { data } = await supabase.from('leads').select('*').eq('id', id).single()
+    if (data) setLead(data as Lead); else router.push('/panel/leads')
+  }
+
+  async function updateTag(tag: string) {
+    await supabase.from('leads').update({ tag }).eq('id', id); fetchLead()
+  }
+
+  async function addNota() {
+    if (!notaText.trim() || !lead) return
+    const nuevas = [{ text: notaText.trim(), when: new Date().toISOString() }, ...(lead.notas ?? [])]
+    await supabase.from('leads').update({ notas: nuevas }).eq('id', id)
+    setNotaText(''); fetchLead()
+  }
+
+  async function saveRecordatorio() {
+    if (!recTexto.trim() || !recFecha) return
+    await supabase.from('leads').update({ recordatorio: { texto: recTexto.trim(), fecha: recFecha } }).eq('id', id)
+    setRecTexto(''); setRecFecha(''); fetchLead()
+  }
+
+  async function borrarRecordatorio() {
+    await supabase.from('leads').update({ recordatorio: null }).eq('id', id); fetchLead()
+  }
+
+  if (!lead) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+      <div style={{ color: '#9aaba5', fontSize: 14 }}>Cargando lead…</div>
+    </div>
+  )
+
+  const waNum = (lead.telefono ?? '').replace(/\D/g, '')
+  const waMsg = encodeURIComponent(`Hola ${lead.nombre}, soy tu asesor de DKV Seguros. Te contacto porque solicitaste información sobre ${lead.interes ?? 'nuestros seguros'}. ¿Tienes un momento para hablar?`)
+
+  return (
+    <div style={{ padding: '32px 36px', maxWidth: 1040, margin: '0 auto' }}>
+      {editModal && <LeadModal lead={lead} onClose={() => setEditModal(false)} onSaved={() => { setEditModal(false); fetchLead() }} />}
+
+      {/* Back */}
+      <Link href="/panel/leads"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600, color: '#6b7a76', textDecoration: 'none', marginBottom: 24 }}>
+        <ArrowLeft size={14} /> Volver a leads
+      </Link>
+
+      {/* Hero card */}
+      <div style={{ ...card, marginBottom: 20, display: 'flex', alignItems: 'center', gap: 20, padding: '28px 28px' }}>
+        <Avatar nombre={lead.nombre} size={64} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: '#16201d', margin: 0, letterSpacing: '-0.02em' }}>{lead.nombre}</h1>
+            <TagPill tag={lead.tag} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <ExternalLink size={11} /> {lead.fuente === 'formulario' ? 'Formulario público' : 'Alta manual'}
+            </span>
+            <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Calendar size={11} /> {new Date(lead.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+          </div>
+        </div>
+        <button onClick={() => setEditModal(true)}
+          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+          <Edit3 size={14} /> Editar datos
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {/* Col left */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Datos de contacto */}
+          <div style={card}>
+            <h2 style={{ fontWeight: 700, margin: '0 0 18px', textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: 11.5, color: '#9aaba5' }}>Datos de contacto</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {lead.telefono && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f4f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Phone size={15} style={{ color: '#0F7A63' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600 }}>Teléfono</div>
+                    <div style={{ fontSize: 14.5, color: '#16201d', fontWeight: 600 }}>{lead.telefono}</div>
+                  </div>
+                </div>
+              )}
+              {lead.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f4f1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Mail size={15} style={{ color: '#0F7A63' }} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600 }}>Correo</div>
+                    <div style={{ fontSize: 14.5, color: '#16201d', fontWeight: 600 }}>{lead.email}</div>
+                  </div>
+                </div>
+              )}
+              {lead.interes && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f4f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
+                  <div>
+                    <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600 }}>Interés</div>
+                    <div style={{ fontSize: 14.5, color: '#16201d', fontWeight: 600 }}>{lead.interes}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Acciones rápidas */}
+          <div style={card}>
+            <h2 style={{ fontSize: 11.5, fontWeight: 700, color: '#9aaba5', margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Contactar ahora</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {lead.telefono && (
+                <a href={`https://wa.me/${waNum}?text=${waMsg}`} target="_blank" rel="noopener noreferrer"
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 13, background: '#25D366', textDecoration: 'none', fontWeight: 700, fontSize: 14, color: '#fff' }}>
+                  <MessageCircle size={18} />
+                  <div>
+                    <div>Enviar WhatsApp</div>
+                    <div style={{ fontSize: 11.5, opacity: 0.8, fontWeight: 400 }}>Mensaje personalizado listo</div>
+                  </div>
+                </a>
+              )}
+              {lead.email && (
+                <a href={`mailto:${lead.email}?subject=Tu presupuesto personalizado DKV`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 13, background: '#0F7A63', textDecoration: 'none', fontWeight: 700, fontSize: 14, color: '#fff' }}>
+                  <Mail size={18} />
+                  <div>
+                    <div>Enviar correo</div>
+                    <div style={{ fontSize: 11.5, opacity: 0.75, fontWeight: 400 }}>Asunto pre-escrito incluido</div>
+                  </div>
+                </a>
+              )}
+              {lead.telefono && (
+                <a href={`tel:+${waNum}`}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 13, background: '#f0f4f1', textDecoration: 'none', fontWeight: 700, fontSize: 14, color: '#16201d', border: '1px solid #e2e8e4' }}>
+                  <Phone size={18} style={{ color: '#0F7A63' }} />
+                  <div>
+                    <div>Llamar ahora</div>
+                    <div style={{ fontSize: 11.5, color: '#9aaba5', fontWeight: 400 }}>{lead.telefono}</div>
+                  </div>
+                </a>
+              )}
+            </div>
+          </div>
+
+          {/* Calificar */}
+          <div style={card}>
+            <h2 style={{ fontSize: 11.5, fontWeight: 700, color: '#9aaba5', margin: '0 0 14px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Calificar lead</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {TAGS.map(t => {
+                const s = TAG_STYLES[t]; const active = lead.tag === t
+                return (
+                  <button key={t} onClick={() => updateTag(t)}
+                    style={{
+                      padding: '10px 12px', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit',
+                      border: active ? `2px solid ${s.color}` : '2px solid #e2e8e4',
+                      background: active ? s.bg : '#fff', color: active ? s.color : '#9aaba5',
+                      fontSize: 13, fontWeight: 700, transition: 'all 0.15s',
+                    }}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Col right */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Recordatorio */}
+          <div style={card}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 10, background: '#f8efd9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Bell size={15} style={{ color: '#a8741a' }} />
+              </div>
+              <h2 style={{ fontSize: 14.5, fontWeight: 700, color: '#16201d', margin: 0 }}>Recordatorio</h2>
+            </div>
+
+            {lead.recordatorio && (
+              <div style={{ padding: '12px 14px', borderRadius: 12, background: '#f8efd9', border: '1px solid #f0d9a0', marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: '#a8741a', marginBottom: 2 }}>📅 {lead.recordatorio.fecha}</div>
+                  <div style={{ fontSize: 13.5, color: '#7a5c10' }}>{lead.recordatorio.texto}</div>
+                </div>
+                <button onClick={borrarRecordatorio} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a8741a', padding: 0, marginLeft: 8 }}>
+                  <X size={15} />
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <input type="date" value={recFecha} onChange={e => setRecFecha(e.target.value)}
+                style={{ padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }} />
+              <input value={recTexto} onChange={e => setRecTexto(e.target.value)} placeholder="Ej: Llamar para cerrar póliza"
+                style={{ padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }} />
+              <button onClick={saveRecordatorio}
+                style={{ padding: '11px', borderRadius: 12, border: 'none', background: '#0F7A63', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                Programar recordatorio
+              </button>
+            </div>
+          </div>
+
+          {/* Notas */}
+          <div style={{ ...card, flex: 1 }}>
+            <h2 style={{ fontSize: 14.5, fontWeight: 700, color: '#16201d', margin: '0 0 14px' }}>Notas</h2>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <input value={notaText} onChange={e => setNotaText(e.target.value)}
+                placeholder="Escribe una nota sobre este lead…"
+                onKeyDown={e => { if (e.key === 'Enter') addNota() }}
+                style={{ flex: 1, padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+              <button onClick={addNota}
+                style={{ padding: '11px 14px', borderRadius: 12, border: 'none', background: '#0F7A63', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <Plus size={16} />
+              </button>
+            </div>
+
+            {(!lead.notas || lead.notas.length === 0)
+              ? <div style={{ textAlign: 'center', padding: '24px 0', color: '#c8d4ce', fontSize: 14 }}>Sin notas aún. Añade una arriba.</div>
+              : <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 280, overflowY: 'auto' }}>
+                  {lead.notas.map((n, i) => (
+                    <div key={i} style={{ padding: '12px 14px', borderRadius: 12, background: '#f8fbf9', border: '1px solid #eaeeed' }}>
+                      <p style={{ fontSize: 13.5, color: '#16201d', margin: '0 0 6px', lineHeight: 1.5 }}>{n.text}</p>
+                      <p style={{ fontSize: 11, color: '#c8d4ce', margin: 0 }}>{new Date(n.when).toLocaleString('es-ES', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</p>
+                    </div>
+                  ))}
+                </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
