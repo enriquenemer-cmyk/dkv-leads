@@ -81,7 +81,11 @@ export default function KanbanPage() {
       </div>
 
       {/* Board */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, flex: 1, alignItems: 'start' }}>
+      <style>{`
+        @media(max-width:820px){.kanban-board{grid-template-columns:repeat(4,minmax(240px,1fr))!important;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}}
+        .kanban-card:hover{transform:translateY(-2px);box-shadow:0 10px 22px -8px rgba(16,32,29,0.22)!important}
+      `}</style>
+      <div className="kanban-board" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, flex: 1, alignItems: 'start' }}>
         {COLS.map(col => {
           const colLeads = byTag(col.key)
           const isDragTarget = dragOver === col.key
@@ -132,13 +136,13 @@ function KanbanCard({ lead, dragging, onDragStart, onDragEnd, onClick }: {
   const waNum = (lead.telefono ?? '').replace(/\D/g, '')
 
   return (
-    <div draggable
+    <div draggable className="kanban-card"
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       style={{
-        background: '#fff', borderRadius: 13, padding: '14px 14px 12px', border: '1px solid #eaeeed',
-        cursor: 'grab', opacity: dragging ? 0.45 : 1, transition: 'all 0.15s',
-        boxShadow: dragging ? 'none' : '0 2px 8px -2px rgba(0,0,0,0.08)',
+        background: '#fff', borderRadius: 13, padding: '14px 14px 12px', border: '1px solid #edf1ef',
+        cursor: 'grab', opacity: dragging ? 0.45 : 1, transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+        boxShadow: dragging ? 'none' : '0 1px 2px rgba(16,32,29,0.04), 0 6px 16px -10px rgba(16,32,29,0.16)',
       }}>
 
       {/* Name + avatar */}

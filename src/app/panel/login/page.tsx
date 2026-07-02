@@ -72,7 +72,7 @@ export default function LoginPage() {
               <div style={{ position: 'relative' }}>
                 <input value={password} onChange={e => setPassword(e.target.value)} type={showPass ? 'text' : 'password'} required placeholder="••••••••"
                   style={{ ...inp('password'), paddingRight: 44 }} onFocus={() => setFocused('password')} onBlur={() => setFocused(null)} />
-                <button type="button" onClick={() => setShowPass(v => !v)}
+                <button type="button" onClick={() => setShowPass(v => !v)} aria-label={showPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                   style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9aaba5', padding: 0 }}>
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>

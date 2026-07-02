@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase, SUCURSALES, encodeFuente } from '@/lib/supabase'
 import { CheckCircle2, ShieldCheck, Clock, Users, Star, ChevronRight, Heart, Building2, Smile, Stethoscope, ArrowLeft, Check } from 'lucide-react'
 
 const INTERESES = [
@@ -26,7 +26,7 @@ function useInView(threshold = 0.15) {
 export default function Landing() {
   const router = useRouter()
   const [step, setStep] = useState(1)
-  const [form, setForm] = useState({ nombre: '', telefono: '', email: '', interes: '' })
+  const [form, setForm] = useState({ nombre: '', telefono: '', email: '', interes: '', sucursal: '' })
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
@@ -37,6 +37,9 @@ export default function Landing() {
 
   function set(key: string, v: string) { setForm(f => ({ ...f, [key]: v })); setError('') }
 
+  const emailValido = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim())
+  const telefonoValido = (t: string) => /^(\+?34)?[6789]\d{8}$/.test(t.replace(/[\s-]/g, ''))
+
   function goStep2() {
     if (!form.interes) { setError('Selecciona el tipo de seguro para continuar.'); return }
     setError(''); setStep(2)
@@ -44,7 +47,10 @@ export default function Landing() {
 
   function goStep3() {
     if (!form.nombre.trim()) { setError('El nombre es obligatorio.'); return }
+    if (!form.sucursal) { setError('Selecciona la oficina más cercana.'); return }
     if (!form.telefono.trim() && !form.email.trim()) { setError('Incluye al menos tu teléfono o correo.'); return }
+    if (form.telefono.trim() && !telefonoValido(form.telefono)) { setError('El teléfono no es válido. Debe ser un número español de 9 dígitos.'); return }
+    if (form.email.trim() && !emailValido(form.email)) { setError('El correo electrónico no tiene un formato válido.'); return }
     setError(''); setStep(3)
   }
 
@@ -53,7 +59,7 @@ export default function Landing() {
     const { error: dbErr } = await supabase.from('leads').insert({
       nombre: form.nombre.trim(), telefono: form.telefono.trim() || null,
       email: form.email.trim() || null, interes: form.interes || null,
-      fuente: 'formulario', tag: 'frio',
+      fuente: encodeFuente('formulario', form.sucursal), tag: 'frio',
     })
     setSending(false)
     if (dbErr) { setError('Algo salió mal. Inténtalo de nuevo.'); return }
@@ -107,7 +113,6 @@ export default function Landing() {
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <span style={{ padding: '7px 16px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 500 }}>Para empresas</span>
-              <a href="/panel/login" style={{ padding: '7px 16px', borderRadius: 999, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 13, fontWeight: 600, backdropFilter: 'blur(8px)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)' }}>Área de asesores</a>
             </div>
           </nav>
 
@@ -234,6 +239,15 @@ export default function Landing() {
                         <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" type="email"
                           style={inp('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
                       </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Oficina más cercana *</label>
+                        <select value={form.sucursal} onChange={e => set('sucursal', e.target.value)}
+                          onFocus={() => setFocused('sucursal')} onBlur={() => setFocused(null)}
+                          style={{ ...inp('sucursal'), cursor: 'pointer', color: form.sucursal ? '#16201d' : '#9aaba5', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%239aaba5\' stroke-width=\'3\'><path d=\'M6 9l6 6 6-6\'/></svg>")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center', paddingRight: 40 }}>
+                          <option value="">Selecciona tu oficina…</option>
+                          {SUCURSALES.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
                     </div>
                     <button type="button" onClick={goStep3}
                       style={{ width: '100%', padding: '15px', borderRadius: 13, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #0F7A63 0%, #0a5b49 100%)', color: '#fff', fontSize: 15, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 8px 28px -6px rgba(15,122,99,0.55)', transition: 'all 0.2s' }}>
@@ -255,6 +269,7 @@ export default function Landing() {
                     <div style={{ background: '#f8fbf9', borderRadius: 14, padding: '16px', marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       {[
                         { label: 'Seguro', value: form.interes },
+                        { label: 'Oficina', value: form.sucursal },
                         { label: 'Nombre', value: form.nombre },
                         { label: 'Teléfono', value: form.telefono || '—' },
                         { label: 'Correo', value: form.email || '—' },
@@ -369,8 +384,7 @@ export default function Landing() {
 
       <div style={{ borderTop: '1px solid #e6eae8', padding: '24px 32px', textAlign: 'center', background: '#fff' }}>
         <p style={{ fontSize: 12.5, color: '#b0bdb8', margin: 0 }}>
-          © 2025 DKV Seguros de Salud · Todos los derechos reservados ·{' '}
-          <a href="/panel/login" style={{ color: '#0F7A63', textDecoration: 'none', fontWeight: 600 }}>Acceso asesores</a>
+          © 2025 DKV Seguros de Salud · Todos los derechos reservados
         </p>
       </div>
     </div>

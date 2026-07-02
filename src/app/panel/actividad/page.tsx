@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Activity, UserPlus, Tag, MessageSquare, Bell, BellOff, Edit3, LogIn, ExternalLink } from 'lucide-react'
+import { EmptyState } from '@/components/EmptyState'
+import { Loader } from '@/components/Loader'
 
 type Actividad = {
   id: string
@@ -58,7 +60,7 @@ export default function ActividadPage() {
     const channel = supabase
       .channel('actividad-realtime')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'actividad' }, payload => {
-        setItems(prev => [payload.new as Actividad, ...prev])
+        setItems(prev => [payload.new as Actividad, ...prev].slice(0, 200))
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -109,17 +111,12 @@ export default function ActividadPage() {
       <style>{`@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }`}</style>
 
       {/* Lista */}
-      <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', overflow: 'hidden', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }}>
         {loading ? (
-          <div style={{ padding: '48px', textAlign: 'center', color: '#9aaba5', fontSize: 14 }}>Cargando actividad…</div>
+          <Loader label="Cargando actividad…" />
         ) : filtered.length === 0 ? (
-          <div style={{ padding: '64px 32px', textAlign: 'center' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 18, background: '#f0f4f1', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-              <Activity size={24} color="#c8d4ce" />
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#9aaba5', marginBottom: 4 }}>Sin actividad registrada</div>
-            <div style={{ fontSize: 13, color: '#c8d4ce' }}>Las acciones del panel aparecerán aquí automáticamente</div>
-          </div>
+          <EmptyState icon={Activity} title="Sin actividad registrada"
+            description="Las acciones del panel (nuevos leads, cambios de estado, notas, recordatorios…) aparecerán aquí automáticamente." />
         ) : (
           filtered.map((item, i) => {
             const cfg = TIPO_CONFIG[item.tipo] ?? { icon: Activity, color: '#9aaba5', bg: '#f0f4f1', label: item.tipo }

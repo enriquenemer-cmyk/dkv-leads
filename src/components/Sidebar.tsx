@@ -1,25 +1,48 @@
 'use client'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy
 } from 'lucide-react'
 
 const navItems = [
   { href: '/panel/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/panel/leads', label: 'Leads', icon: Users },
   { href: '/panel/kanban', label: 'Kanban', icon: Layers },
+  { href: '/panel/agenda', label: 'Agenda', icon: CalendarCheck },
   { href: '/panel/actividad', label: 'Actividad', icon: Activity },
+  { href: '/panel/rendimiento', label: 'Rendimiento', icon: Trophy },
 ]
 
 const configItems = [
   { href: '/panel/usuarios', label: 'Asesores', icon: UserCog },
 ]
 
+function hoyISO() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function Sidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname()
   const router = useRouter()
+  const [pendientes, setPendientes] = useState(0)
+
+  useEffect(() => {
+    async function fetchPendientes() {
+      const { data } = await supabase.from('leads').select('recordatorio').not('recordatorio', 'is', null)
+      const hoy = hoyISO()
+      const n = (data ?? []).filter((l: { recordatorio: { fecha?: string } | null }) => l.recordatorio?.fecha && l.recordatorio.fecha <= hoy).length
+      setPendientes(n)
+    }
+    fetchPendientes()
+    const ch = supabase.channel('sidebar_recordatorios')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, fetchPendientes)
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -28,7 +51,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
   const initial = userEmail?.[0]?.toUpperCase() ?? 'A'
 
-  const navLink = (href: string, label: string, Icon: React.ElementType) => {
+  const navLink = (href: string, label: string, Icon: React.ElementType, badge?: number) => {
     const active = pathname.startsWith(href)
     return (
       <Link key={href} href={href}
@@ -41,7 +64,10 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           borderLeft: active ? '2px solid #0F7A63' : '2px solid transparent',
         }}>
         <Icon size={16} />
-        {label}
+        <span style={{ flex: 1 }}>{label}</span>
+        {!!badge && badge > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#c23a22', borderRadius: 999, minWidth: 19, height: 19, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>
+        )}
       </Link>
     )
   }
@@ -70,7 +96,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
       {/* Cmd+K search button */}
       <div style={{ padding: '12px 12px 0' }}>
-        <button onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }); window.dispatchEvent(e) }}
+        <button aria-label="Buscar leads (atajo Cmd+K)" onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }); window.dispatchEvent(e) }}
           style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)', cursor: 'pointer', fontFamily: 'inherit', color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
           <Search size={13} />
           <span style={{ flex: 1, textAlign: 'left' }}>Buscar…</span>
@@ -81,7 +107,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 10px 6px', margin: 0 }}>Gestión</p>
-        {navItems.map(({ href, label, icon: Icon }) => navLink(href, label, Icon))}
+        {navItems.map(({ href, label, icon: Icon }) => navLink(href, label, Icon, href === '/panel/agenda' ? pendientes : undefined))}
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px 6px', margin: 0 }}>Acciones</p>
@@ -118,7 +144,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</div>
             <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>Asesor DKV</div>
           </div>
-          <button onClick={handleLogout} title="Cerrar sesión"
+          <button onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: 2, display: 'flex' }}>
             <LogOut size={14} />
           </button>

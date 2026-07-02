@@ -2,10 +2,12 @@
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { supabase, Lead } from '@/lib/supabase'
+import { supabase, Lead, SUCURSALES, leadSucursal, fuenteOrigen } from '@/lib/supabase'
 import { TagPill } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
+import { EmptyState } from '@/components/EmptyState'
+import { exportCSV } from '@/lib/export'
 import { Search, Plus, Download, ChevronRight, Phone, Mail, Filter, X } from 'lucide-react'
 
 const TAGS_FILTRO = [
@@ -16,17 +18,6 @@ const TAGS_FILTRO = [
   { key: 'cliente', label: '✓ Clientes', color: '#0F7A63', bg: '#e3f1ec' },
 ]
 
-function exportCSV(leads: Lead[]) {
-  const BOM = '﻿'
-  const header = 'Nombre,Teléfono,Correo,Interés,Estado,Fuente,Fecha\n'
-  const rows = leads.map(l =>
-    [l.nombre, l.telefono ?? '', l.email ?? '', l.interes ?? '', l.tag, l.fuente,
-     new Date(l.created_at).toLocaleDateString('es-ES')].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
-  ).join('\n')
-  const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8' })
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'leads-dkv.csv'; a.click()
-}
-
 function LeadsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -34,8 +25,10 @@ function LeadsContent() {
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('recientes')
   const [filtroTag, setFiltroTag] = useState('todos')
+  const [filtroSucursal, setFiltroSucursal] = useState('todos')
   const [filtroFuente, setFiltroFuente] = useState('todos')
   const [filtroRecordatorio, setFiltroRecordatorio] = useState(false)
+  const [filtroSinAtender, setFiltroSinAtender] = useState(false)
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
   const [showFiltros, setShowFiltros] = useState(false)
@@ -56,15 +49,17 @@ function LeadsContent() {
   }
 
   function clearFiltros() {
-    setFiltroFuente('todos'); setFiltroRecordatorio(false); setFechaDesde(''); setFechaHasta('')
+    setFiltroFuente('todos'); setFiltroRecordatorio(false); setFiltroSinAtender(false); setFechaDesde(''); setFechaHasta('')
   }
 
-  const hasExtraFiltros = filtroFuente !== 'todos' || filtroRecordatorio || fechaDesde || fechaHasta
+  const hasExtraFiltros = filtroFuente !== 'todos' || filtroRecordatorio || filtroSinAtender || fechaDesde || fechaHasta
 
   const filtered = leads
     .filter(l => filtroTag === 'todos' || l.tag === filtroTag)
-    .filter(l => filtroFuente === 'todos' || l.fuente === filtroFuente)
+    .filter(l => filtroSucursal === 'todos' || (leadSucursal(l) ?? '') === filtroSucursal)
+    .filter(l => filtroFuente === 'todos' || fuenteOrigen(l.fuente) === filtroFuente)
     .filter(l => !filtroRecordatorio || !!l.recordatorio)
+    .filter(l => !filtroSinAtender || (l.tag === 'frio' && (!l.notas || l.notas.length === 0)))
     .filter(l => {
       if (!fechaDesde) return true
       return new Date(l.created_at) >= new Date(fechaDesde)
@@ -77,7 +72,7 @@ function LeadsContent() {
     .filter(l => {
       if (!busqueda) return true
       const q = busqueda.toLowerCase()
-      return l.nombre.toLowerCase().includes(q) || (l.email ?? '').toLowerCase().includes(q) || (l.telefono ?? '').includes(q) || (l.interes ?? '').toLowerCase().includes(q)
+      return l.nombre.toLowerCase().includes(q) || (l.email ?? '').toLowerCase().includes(q) || (l.telefono ?? '').includes(q) || (l.interes ?? '').toLowerCase().includes(q) || (leadSucursal(l) ?? '').toLowerCase().includes(q)
     })
     .sort((a, b) => {
       if (orden === 'az') return a.nombre.localeCompare(b.nombre)
@@ -118,6 +113,12 @@ function LeadsContent() {
             placeholder="Buscar por nombre, correo, teléfono o interés…"
             style={{ width: '100%', padding: '11px 14px 11px 40px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }} />
         </div>
+        <select value={filtroSucursal} onChange={e => setFiltroSucursal(e.target.value)}
+          style={{ padding: '11px 14px', borderRadius: 12, border: `1.5px solid ${filtroSucursal !== 'todos' ? '#0F7A63' : '#e2e8e4'}`, background: filtroSucursal !== 'todos' ? '#e3f1ec' : '#fff', color: filtroSucursal !== 'todos' ? '#0F7A63' : '#16201d', fontWeight: filtroSucursal !== 'todos' ? 700 : 400, fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+          <option value="todos">📍 Todas las sucursales</option>
+          {SUCURSALES.map(s => <option key={s} value={s}>{s}</option>)}
+          <option value="">Sin asignar</option>
+        </select>
         <select value={orden} onChange={e => setOrden(e.target.value)}
           style={{ padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
           <option value="recientes">Más recientes</option>
@@ -160,6 +161,13 @@ function LeadsContent() {
               {filtroRecordatorio ? '✓ Activado' : 'Solo con recordatorio'}
             </button>
           </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#9aaba5', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sin atender</label>
+            <button onClick={() => setFiltroSinAtender(v => !v)}
+              style={{ padding: '9px 14px', borderRadius: 10, border: `1.5px solid ${filtroSinAtender ? '#c23a22' : '#e2e8e4'}`, background: filtroSinAtender ? '#fef0ed' : '#f8fbf9', color: filtroSinAtender ? '#c23a22' : '#6b7a76', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {filtroSinAtender ? '✓ Fríos sin nota' : 'Fríos sin nota'}
+            </button>
+          </div>
           {hasExtraFiltros && (
             <button onClick={clearFiltros}
               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '9px 12px', borderRadius: 10, border: 'none', background: '#fef0ed', color: '#c23a22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -189,7 +197,9 @@ function LeadsContent() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', overflow: 'hidden' }}>
+      <style>{`@media(max-width:720px){.leads-table{min-width:640px}}`}</style>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 18 }}>
+      <div className="leads-table" style={{ background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', overflow: 'hidden', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.3fr 1.3fr 1fr 0.8fr 40px', padding: '12px 20px', background: '#f8fbf9', borderBottom: '1px solid #eaeeed' }}>
           {['Contacto', 'Teléfono', 'Interés', 'Estado', 'Fecha', ''].map(h => (
             <span key={h} style={{ fontSize: 11.5, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
@@ -197,10 +207,8 @@ function LeadsContent() {
         </div>
 
         {filtered.length === 0
-          ? <div style={{ padding: '60px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>🔍</div>
-              <p style={{ color: '#9aaba5', fontSize: 14, fontWeight: 500, margin: 0 }}>No hay leads que coincidan con los filtros</p>
-            </div>
+          ? <EmptyState icon={Search} title="Sin resultados"
+              description={leads.length === 0 ? 'Aún no tienes ningún lead. Cuando alguien rellene el formulario o crees uno manualmente, aparecerá aquí.' : 'No hay leads que coincidan con los filtros aplicados. Prueba a cambiar la búsqueda o el estado.'} />
           : filtered.map(l => (
             <Link key={l.id} href={`/panel/leads/${l.id}`}
               style={{
@@ -217,6 +225,7 @@ function LeadsContent() {
                   <div style={{ fontSize: 14, fontWeight: 600, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
                     {l.nombre}
                     {l.recordatorio && <span title="Tiene recordatorio" style={{ fontSize: 10, background: '#f8efd9', color: '#a8741a', padding: '1px 6px', borderRadius: 999, fontWeight: 700, flexShrink: 0 }}>📅</span>}
+                    {leadSucursal(l) && <span title={`Sucursal: ${leadSucursal(l)}`} style={{ fontSize: 10, background: '#eef3f1', color: '#0F7A63', padding: '1px 7px', borderRadius: 999, fontWeight: 700, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 2 }}>📍 {leadSucursal(l)}</span>}
                   </div>
                   {l.email && <div style={{ fontSize: 12, color: '#9aaba5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
                     <Mail size={10} style={{ flexShrink: 0 }} />{l.email}
@@ -238,6 +247,7 @@ function LeadsContent() {
             </Link>
           ))
         }
+      </div>
       </div>
 
       {filtered.length > 0 && (

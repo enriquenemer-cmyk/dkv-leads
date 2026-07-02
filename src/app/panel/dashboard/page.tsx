@@ -1,24 +1,15 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
-import { supabase, Lead } from '@/lib/supabase'
+import { supabase, Lead, leadSucursal, fuenteOrigen } from '@/lib/supabase'
 import { TagPill } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
-import { Users, Flame, Trophy, TrendingUp, Bell, Plus, Download, ArrowUpRight, Clock } from 'lucide-react'
+import { exportCSV } from '@/lib/export'
+import { CountUp, Donut } from '@/components/charts'
+import { Users, Flame, Trophy, TrendingUp, Bell, Plus, Download, ArrowUpRight, Clock, PieChart } from 'lucide-react'
 
-function exportCSV(leads: Lead[]) {
-  const BOM = '﻿'
-  const header = 'Nombre,Teléfono,Correo,Interés,Estado,Fuente,Fecha\n'
-  const rows = leads.map(l =>
-    [l.nombre, l.telefono ?? '', l.email ?? '', l.interes ?? '', l.tag, l.fuente,
-     new Date(l.created_at).toLocaleDateString('es-ES')].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')
-  ).join('\n')
-  const blob = new Blob([BOM + header + rows], { type: 'text/csv;charset=utf-8' })
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'leads-dkv.csv'; a.click()
-}
-
-const card = { background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', padding: '24px' }
+const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
 
 type Periodo = '7d' | '30d' | '90d' | 'todo'
 const PERIODOS: { key: Periodo; label: string }[] = [
@@ -71,10 +62,14 @@ export default function DashboardPage() {
   leads.forEach(l => { if (l.interes) intereses[l.interes] = (intereses[l.interes] ?? 0) + 1 })
   const maxI = Math.max(1, ...Object.values(intereses))
 
-  const formulario = leads.filter(l => l.fuente === 'formulario').length
-  const manual = leads.filter(l => l.fuente === 'manual').length
-  const convForm = formulario > 0 ? Math.round((leads.filter(l => l.fuente === 'formulario' && l.tag === 'cliente').length / formulario) * 100) : 0
-  const convManual = manual > 0 ? Math.round((leads.filter(l => l.fuente === 'manual' && l.tag === 'cliente').length / manual) * 100) : 0
+  const sucursales: Record<string, number> = {}
+  leads.forEach(l => { const s = leadSucursal(l) || 'Sin asignar'; sucursales[s] = (sucursales[s] ?? 0) + 1 })
+  const maxS = Math.max(1, ...Object.values(sucursales))
+
+  const formulario = leads.filter(l => fuenteOrigen(l.fuente) === 'formulario').length
+  const manual = leads.filter(l => fuenteOrigen(l.fuente) === 'manual').length
+  const convForm = formulario > 0 ? Math.round((leads.filter(l => fuenteOrigen(l.fuente) === 'formulario' && l.tag === 'cliente').length / formulario) * 100) : 0
+  const convManual = manual > 0 ? Math.round((leads.filter(l => fuenteOrigen(l.fuente) === 'manual' && l.tag === 'cliente').length / manual) * 100) : 0
 
   // Comparativa con período anterior
   const prevLeads = useMemo(() => {
@@ -90,11 +85,34 @@ export default function DashboardPage() {
   const prevTotal = prevLeads.length
   const diffPct = prevTotal > 0 ? Math.round(((total - prevTotal) / prevTotal) * 100) : null
 
+  // Serie de los últimos 7 días (sobre TODOS los leads, no depende del filtro de período)
+  const ultimos7 = useMemo(() => {
+    const dias: Array<{ label: string; count: number; esHoy: boolean }> = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - i)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const count = allLeads.filter(l => (l.created_at || '').slice(0, 10) === key).length
+      dias.push({ label: d.toLocaleDateString('es-ES', { weekday: 'short' }).replace('.', ''), count, esHoy: i === 0 })
+    }
+    return dias
+  }, [allLeads])
+  const max7 = Math.max(1, ...ultimos7.map(d => d.count))
+  const leadsHoy = ultimos7[6]?.count ?? 0
+  const leads7d = ultimos7.reduce((s, d) => s + d.count, 0)
+
   const METRICS = [
-    { label: 'Total leads', value: total, sub: periodo === 'todo' ? 'Todos los captados' : `En este período`, icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
-    { label: 'Leads calientes', value: calientes, sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22' },
-    { label: 'Clientes', value: clientes, sub: 'Conversión exitosa', icon: Trophy, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
-    { label: 'Tasa de conversión', value: `${conversion}%`, sub: 'Total → Cliente', icon: TrendingUp, bg: '#f8efd9', ic: '#a8741a', dot: '#a8741a' },
+    { label: 'Total leads', value: total, suffix: '', sub: periodo === 'todo' ? 'Todos los captados' : `En este período`, icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
+    { label: 'Leads calientes', value: calientes, suffix: '', sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22' },
+    { label: 'Clientes', value: clientes, suffix: '', sub: 'Conversión exitosa', icon: Trophy, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
+    { label: 'Tasa de conversión', value: conversion, suffix: '%', sub: 'Total → Cliente', icon: TrendingUp, bg: '#f8efd9', ic: '#a8741a', dot: '#a8741a' },
+  ]
+
+  // Distribución por estado (para la gráfica de dona)
+  const distribucion = [
+    { label: 'Fríos', value: leads.filter(l => l.tag === 'frio').length, color: '#8fb9cf' },
+    { label: 'Tibios', value: leads.filter(l => l.tag === 'tibio').length, color: '#e8b866' },
+    { label: 'Calientes', value: leads.filter(l => l.tag === 'caliente').length, color: '#e07856' },
+    { label: 'Clientes', value: leads.filter(l => l.tag === 'cliente').length, color: '#0F7A63' },
   ]
 
   const EMBUDO = [
@@ -150,36 +168,84 @@ export default function DashboardPage() {
         )}
       </div>
 
+      <style>{`
+        @keyframes dashUp { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+        .dash-card { animation: dashUp 0.5s ease both }
+        .metric-card { transition: transform 0.18s ease, box-shadow 0.18s ease }
+        .metric-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px -14px rgba(10,47,39,0.25) }
+      `}</style>
+
       {/* Metric cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
-        {METRICS.map(({ label, value, sub, icon: Icon, bg, ic }) => (
-          <div key={label} style={{ ...card, padding: '22px 22px 20px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }} className="dash-grid">
+        {METRICS.map(({ label, value, suffix, sub, icon: Icon, bg, ic }, i) => (
+          <div key={label} className="dash-card metric-card" style={{ ...card, padding: '22px 22px 20px', animationDelay: `${i * 0.07}s` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon size={18} style={{ color: ic }} />
               </div>
               <ArrowUpRight size={14} style={{ color: '#c8d4ce' }} />
             </div>
-            <div style={{ fontSize: 36, fontWeight: 800, color: '#16201d', lineHeight: 1, marginBottom: 4 }}>{value}</div>
+            <div style={{ fontSize: 36, fontWeight: 800, color: '#16201d', lineHeight: 1, marginBottom: 4 }}><CountUp value={value} suffix={suffix} /></div>
             <div style={{ fontSize: 13, fontWeight: 600, color: '#16201d', marginBottom: 2 }}>{label}</div>
             <div style={{ fontSize: 12, color: '#9aaba5' }}>{sub}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+      {/* Gráfico últimos 7 días */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <h2 style={{ fontSize: 15, fontWeight: 700, color: '#16201d', margin: '0 0 3px' }}>Leads · últimos 7 días</h2>
+            <p style={{ fontSize: 12.5, color: '#9aaba5', margin: 0 }}>Ritmo de captación de la última semana</p>
+          </div>
+          <div style={{ display: 'flex', gap: 24 }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#0F7A63', lineHeight: 1 }}>{leadsHoy}</div>
+              <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hoy</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: '#16201d', lineHeight: 1 }}>{leads7d}</div>
+              <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>7 días</div>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 120 }}>
+          {ultimos7.map((d, i) => (
+            <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, height: '100%', justifyContent: 'flex-end' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: d.count > 0 ? '#16201d' : '#c8d4ce' }}>{d.count}</span>
+              <div style={{ width: '100%', maxWidth: 46, height: `${Math.max(4, (d.count / max7) * 90)}px`, borderRadius: '8px 8px 4px 4px', background: d.esHoy ? 'linear-gradient(180deg, #0F7A63, #0a5b49)' : '#d6e6df', transition: 'height 0.5s ease' }} />
+              <span style={{ fontSize: 11, color: d.esHoy ? '#0F7A63' : '#9aaba5', fontWeight: d.esHoy ? 700 : 500, textTransform: 'capitalize' }}>{d.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16, marginBottom: 16 }}>
+        {/* Distribución por estado (dona) */}
+        <div style={card} className="dash-card">
+          <h2 style={{ fontSize: 15, fontWeight: 700, color: '#16201d', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: 7 }}>
+            <PieChart size={16} color="#0F7A63" /> Distribución por estado
+          </h2>
+          {total === 0
+            ? <p style={{ fontSize: 13.5, color: '#c8d4ce' }}>Sin datos todavía.</p>
+            : <Donut segments={distribucion} />}
+        </div>
         {/* Embudo */}
-        <div style={card}>
+        <div style={card} className="dash-card">
           <h2 style={{ fontSize: 15, fontWeight: 700, color: '#16201d', margin: '0 0 20px' }}>Embudo de conversión</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {EMBUDO.map(s => (
               <div key={s.label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, color: '#6b7a76', marginBottom: 6 }}>
-                  <span>{s.label}</span>
-                  <span style={{ color: '#16201d' }}>{s.count} <span style={{ color: '#9aaba5', fontWeight: 400 }}>({s.pct}%)</span></span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 600, color: '#16201d' }}>{s.label}</span>
+                  <span style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: '#16201d' }}>{s.count}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: s.color }}>{s.pct}%</span>
+                  </span>
                 </div>
-                <div style={{ height: 8, borderRadius: 99, background: '#f0f4f1' }}>
-                  <div style={{ height: 8, borderRadius: 99, background: s.color, width: `${s.pct}%`, transition: 'width 0.6s ease' }} />
+                <div style={{ height: 14, borderRadius: 99, background: '#f0f4f1', overflow: 'hidden' }}>
+                  <div style={{ height: 14, borderRadius: 99, background: s.color, width: `${s.pct}%`, transition: 'width 0.7s cubic-bezier(0.4,0,0.2,1)', minWidth: s.pct > 0 ? 8 : 0 }} />
                 </div>
               </div>
             ))}
@@ -205,6 +271,27 @@ export default function DashboardPage() {
               </div>
           }
         </div>
+      </div>
+
+      {/* Leads por sucursal */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 700, color: '#16201d', margin: '0 0 20px' }}>📍 Leads por sucursal</h2>
+        {Object.keys(sucursales).length === 0
+          ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80, color: '#9aaba5', fontSize: 14 }}>Sin datos en este período</div>
+          : <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
+              {Object.entries(sucursales).sort((a,b) => b[1]-a[1]).map(([suc, count]) => (
+                <div key={suc}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 7 }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: suc === 'Sin asignar' ? '#9aaba5' : '#16201d' }}>{suc}</span>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: '#16201d' }}>{count}</span>
+                  </div>
+                  <div style={{ height: 12, borderRadius: 99, background: '#f0f4f1', overflow: 'hidden' }}>
+                    <div style={{ height: 12, borderRadius: 99, background: suc === 'Sin asignar' ? '#c8d4ce' : '#0F7A63', width: `${Math.round((count/maxS)*100)}%`, transition: 'width 0.7s ease' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+        }
       </div>
 
       {/* Stats por fuente */}

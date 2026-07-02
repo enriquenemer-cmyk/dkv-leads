@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { supabase, Lead } from '@/lib/supabase'
+import { supabase, Lead, leadSucursal, fuenteOrigen } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
 import { TagPill, TAG_STYLES } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
@@ -10,7 +10,7 @@ import { LeadModal } from '@/components/LeadModal'
 import { ArrowLeft, MessageCircle, Mail, Phone, Bell, X, Plus, Calendar, Edit3, ExternalLink, Printer, ChevronDown } from 'lucide-react'
 
 const TAGS = ['caliente', 'tibio', 'frio', 'cliente'] as const
-const card = { background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', padding: '24px' }
+const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
 
 function buildWaTemplates(nombre: string, interes: string | null) {
   const nombre1 = nombre.split(' ')[0]
@@ -45,18 +45,24 @@ export default function LeadDetallePage() {
   const [recFecha, setRecFecha] = useState('')
   const [waOpen, setWaOpen] = useState(false)
   const [waCopied, setWaCopied] = useState<number | null>(null)
+  const [historial, setHistorial] = useState<Array<{ id: string; tipo: string; descripcion: string; usuario_email: string | null; created_at: string }>>([])
 
-  useEffect(() => { fetchLead() }, [id])
+  useEffect(() => { fetchLead(); fetchHistorial() }, [id])
 
   async function fetchLead() {
     const { data } = await supabase.from('leads').select('*').eq('id', id).single()
     if (data) setLead(data as Lead); else router.push('/panel/leads')
   }
 
+  async function fetchHistorial() {
+    const { data } = await supabase.from('actividad').select('id,tipo,descripcion,usuario_email,created_at').eq('lead_id', id).order('created_at', { ascending: false }).limit(50)
+    if (data) setHistorial(data)
+  }
+
   async function updateTag(tag: string) {
     await supabase.from('leads').update({ tag }).eq('id', id)
     await logActividad('lead_tag', `Etiqueta cambiada a "${tag}" en ${lead?.nombre}`, { lead_id: id, lead_nombre: lead?.nombre })
-    fetchLead()
+    fetchLead(); fetchHistorial()
   }
 
   async function addNota() {
@@ -64,20 +70,20 @@ export default function LeadDetallePage() {
     const nuevas = [{ text: notaText.trim(), when: new Date().toISOString() }, ...(lead.notas ?? [])]
     await supabase.from('leads').update({ notas: nuevas }).eq('id', id)
     await logActividad('nota_agregada', `Nota añadida a ${lead.nombre}: "${notaText.trim().slice(0, 60)}"`, { lead_id: id, lead_nombre: lead.nombre })
-    setNotaText(''); fetchLead()
+    setNotaText(''); fetchLead(); fetchHistorial()
   }
 
   async function saveRecordatorio() {
     if (!recTexto.trim() || !recFecha) return
     await supabase.from('leads').update({ recordatorio: { texto: recTexto.trim(), fecha: recFecha } }).eq('id', id)
     await logActividad('recordatorio_set', `Recordatorio programado para ${lead?.nombre} el ${recFecha}`, { lead_id: id, lead_nombre: lead?.nombre })
-    setRecTexto(''); setRecFecha(''); fetchLead()
+    setRecTexto(''); setRecFecha(''); fetchLead(); fetchHistorial()
   }
 
   async function borrarRecordatorio() {
     await supabase.from('leads').update({ recordatorio: null }).eq('id', id)
     await logActividad('recordatorio_borrado', `Recordatorio eliminado de ${lead?.nombre}`, { lead_id: id, lead_nombre: lead?.nombre })
-    fetchLead()
+    fetchLead(); fetchHistorial()
   }
 
   function copyTemplate(text: string, idx: number) {
@@ -132,7 +138,7 @@ export default function LeadDetallePage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <ExternalLink size={11} /> {lead.fuente === 'formulario' ? 'Formulario público' : 'Alta manual'}
+                  <ExternalLink size={11} /> {fuenteOrigen(lead.fuente) === 'formulario' ? 'Formulario público' : 'Alta manual'}
                 </span>
                 <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <Calendar size={11} /> {new Date(lead.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -181,6 +187,15 @@ export default function LeadDetallePage() {
                       <div>
                         <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600 }}>Interés</div>
                         <div style={{ fontSize: 14.5, color: '#16201d', fontWeight: 600 }}>{lead.interes}</div>
+                      </div>
+                    </div>
+                  )}
+                  {leadSucursal(lead) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eef3f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📍</div>
+                      <div>
+                        <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600 }}>Sucursal</div>
+                        <div style={{ fontSize: 14.5, color: '#0F7A63', fontWeight: 700 }}>{leadSucursal(lead)}</div>
                       </div>
                     </div>
                   )}
@@ -311,15 +326,23 @@ export default function LeadDetallePage() {
               {/* Notas */}
               <div style={{ ...card, flex: 1 }}>
                 <h2 style={{ fontSize: 14.5, fontWeight: 700, color: '#16201d', margin: '0 0 14px' }}>Notas</h2>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }} className="no-print">
-                  <input value={notaText} onChange={e => setNotaText(e.target.value)}
-                    placeholder="Escribe una nota sobre este lead…"
-                    onKeyDown={e => { if (e.key === 'Enter') addNota() }}
-                    style={{ flex: 1, padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
-                  <button onClick={addNota}
-                    style={{ padding: '11px 14px', borderRadius: 12, border: 'none', background: '#0F7A63', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                    <Plus size={16} />
-                  </button>
+                <div className="no-print" style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={notaText} onChange={e => setNotaText(e.target.value)} maxLength={500}
+                      aria-label="Escribir una nota"
+                      placeholder="Escribe una nota sobre este lead…"
+                      onKeyDown={e => { if (e.key === 'Enter') addNota() }}
+                      style={{ flex: 1, padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+                    <button onClick={addNota} aria-label="Añadir nota" disabled={!notaText.trim()}
+                      style={{ padding: '11px 14px', borderRadius: 12, border: 'none', background: notaText.trim() ? '#0F7A63' : '#c8d4ce', color: '#fff', cursor: notaText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center' }}>
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                  {notaText.length > 0 && (
+                    <div style={{ textAlign: 'right', fontSize: 11, color: notaText.length >= 500 ? '#c23a22' : '#9aaba5', marginTop: 5, fontWeight: 500 }}>
+                      {notaText.length}/500
+                    </div>
+                  )}
                 </div>
 
                 {(!lead.notas || lead.notas.length === 0)
@@ -329,6 +352,31 @@ export default function LeadDetallePage() {
                         <div key={i} style={{ padding: '12px 14px', borderRadius: 12, background: '#f8fbf9', border: '1px solid #eaeeed' }}>
                           <p style={{ fontSize: 13.5, color: '#16201d', margin: '0 0 6px', lineHeight: 1.5 }}>{n.text}</p>
                           <p style={{ fontSize: 11, color: '#c8d4ce', margin: 0 }}>{new Date(n.when).toLocaleString('es-ES', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</p>
+                        </div>
+                      ))}
+                    </div>
+                }
+              </div>
+
+              {/* Historial del lead */}
+              <div style={{ ...card }} className="no-print">
+                <h2 style={{ fontSize: 14.5, fontWeight: 700, color: '#16201d', margin: '0 0 16px' }}>Historial</h2>
+                {historial.length === 0
+                  ? <div style={{ textAlign: 'center', padding: '20px 0', color: '#c8d4ce', fontSize: 13.5 }}>Aún no hay actividad registrada para este lead.</div>
+                  : <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {historial.map((h, i) => (
+                        <div key={h.id} style={{ display: 'flex', gap: 12 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#0F7A63', marginTop: 5, flexShrink: 0 }} />
+                            {i < historial.length - 1 && <div style={{ width: 2, flex: 1, background: '#eaeeed', margin: '3px 0' }} />}
+                          </div>
+                          <div style={{ paddingBottom: i < historial.length - 1 ? 16 : 0 }}>
+                            <p style={{ fontSize: 13, color: '#16201d', margin: 0, lineHeight: 1.45 }}>{h.descripcion}</p>
+                            <p style={{ fontSize: 11, color: '#9aaba5', margin: '3px 0 0' }}>
+                              {new Date(h.created_at).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              {h.usuario_email && ` · ${h.usuario_email}`}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>

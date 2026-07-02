@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  async redirects() {
+    return [
+      // El dominio raíz muestra la web DKV
+      { source: '/', destination: '/dkv', permanent: false },
+    ]
+  },
 };
 
 export default nextConfig;

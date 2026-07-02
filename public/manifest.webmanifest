@@ -1,0 +1,14 @@
+{
+  "name": "DKV Seguros de Salud",
+  "short_name": "DKV Salud",
+  "description": "Asesoría gratuita en seguros de salud DKV. Respuesta en menos de 24h, sin compromiso.",
+  "start_url": "/dkv",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#063f3b",
+  "theme_color": "#095751",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

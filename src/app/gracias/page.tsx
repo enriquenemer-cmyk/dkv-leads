@@ -1,8 +1,9 @@
 'use client'
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Phone, Mail, Clock, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { trackLead } from '@/components/Analytics'
 
 const PASOS = [
   { icon: Phone, num: '01', titulo: 'Te llamamos hoy', texto: 'Un asesor personal te contactará antes de las 24h. Revisa tu teléfono.' },
@@ -12,6 +13,8 @@ const PASOS = [
 
 function GraciasContent() {
   const nombre = useSearchParams().get('nombre') ?? 'cliente'
+  // Conversión SEM: se dispara una sola vez al llegar a gracias (lead confirmado)
+  useEffect(() => { trackLead() }, [])
   return (
     <main style={{ minHeight: '100vh', background: '#f0f4f1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', fontFamily: 'var(--font-jakarta), system-ui, sans-serif' }}>
       <div style={{ width: '100%', maxWidth: 560 }}>
@@ -58,14 +61,10 @@ function GraciasContent() {
         </div>
 
         {/* Buttons */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
           <Link href="/"
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '14px', borderRadius: 14, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
             <ArrowLeft size={14} /> Volver al inicio
-          </Link>
-          <Link href="/panel/login"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '14px', borderRadius: 14, background: 'linear-gradient(135deg, #0F7A63, #0a5b49)', color: '#fff', textDecoration: 'none', fontSize: 14, fontWeight: 700, boxShadow: '0 6px 20px -6px rgba(15,122,99,0.45)' }}>
-            Panel del asesor →
           </Link>
         </div>
       </div>

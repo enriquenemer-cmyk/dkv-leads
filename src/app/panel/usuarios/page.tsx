@@ -1,10 +1,12 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check } from 'lucide-react'
+import { Loader } from '@/components/Loader'
+import { EmptyState } from '@/components/EmptyState'
 
 type User = { id: string; email: string; nombre: string; created_at: string; last_sign_in_at: string | null }
 
-const card = { background: '#fff', borderRadius: 18, border: '1px solid #eaeeed', padding: '24px' }
+const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
 
 export default function UsuariosPage() {
   const [users, setUsers] = useState<User[]>([])
@@ -63,9 +65,9 @@ export default function UsuariosPage() {
 
       <div style={card}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#9aaba5', fontSize: 14 }}>Cargando asesores…</div>
+          <Loader label="Cargando asesores…" />
         ) : users.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#c8d4ce', fontSize: 14 }}>No hay asesores aún. Crea el primero con el botón de arriba.</div>
+          <EmptyState icon={UserPlus} title="No hay asesores todavía" description="Crea el primer asesor con el botón de arriba para que pueda acceder al panel." />
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { supabase, Lead } from '@/lib/supabase'
+import { supabase, Lead, SUCURSALES, encodeFuente, fuenteOrigen, leadSucursal } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
 import { X } from 'lucide-react'
 
@@ -20,37 +20,71 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
     telefono: lead?.telefono ?? '',
     email: lead?.email ?? '',
     interes: lead?.interes ?? '',
+    sucursal: (lead ? leadSucursal(lead) : '') ?? '',
     tag: lead?.tag ?? 'frio',
   })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [dup, setDup] = useState<{ id: string; nombre: string } | null>(null)
 
   function set(key: string, value: string) {
     setForm((f) => ({ ...f, [key]: value }))
+    setDup(null)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  const emailValido = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim())
+  const telefonoValido = (t: string) => /^(\+?34)?[6789]\d{8}$/.test(t.replace(/[\s-]/g, ''))
+
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    save(false)
+  }
+
+  async function save(force: boolean) {
     if (!form.nombre.trim()) { setError('El nombre es obligatorio.'); return }
     if (!form.telefono.trim() && !form.email.trim()) {
-      setError('Ingresá al menos teléfono o correo.')
+      setError('Introduce al menos teléfono o correo.')
+      return
+    }
+    if (form.telefono.trim() && !telefonoValido(form.telefono)) {
+      setError('El teléfono no es válido (número español de 9 dígitos).')
+      return
+    }
+    if (form.email.trim() && !emailValido(form.email)) {
+      setError('El correo electrónico no tiene un formato válido.')
       return
     }
     setSaving(true)
     setError('')
+    setDup(null)
+
+    // Detección de duplicados: avisa si ya existe un lead con el mismo teléfono o correo
+    if (!force) {
+      const conds: string[] = []
+      if (form.telefono.trim()) conds.push(`telefono.eq.${form.telefono.trim()}`)
+      if (form.email.trim()) conds.push(`email.eq.${form.email.trim()}`)
+      if (conds.length) {
+        const { data: existentes } = await supabase.from('leads').select('id,nombre').or(conds.join(',')).limit(5)
+        const otro = (existentes ?? []).find((x) => x.id !== lead?.id)
+        if (otro) { setSaving(false); setDup(otro as { id: string; nombre: string }); return }
+      }
+    }
+    const origen = editing && lead ? (fuenteOrigen(lead.fuente) || 'manual') : 'manual'
     const data = {
       nombre: form.nombre.trim(),
       telefono: form.telefono.trim() || null,
       email: form.email.trim() || null,
       interes: form.interes || null,
       tag: form.tag,
-      fuente: 'manual',
+      fuente: encodeFuente(origen, form.sucursal),
     }
     if (editing && lead) {
-      await supabase.from('leads').update(data).eq('id', lead.id)
+      const { error: dbErr } = await supabase.from('leads').update(data).eq('id', lead.id)
+      if (dbErr) { setSaving(false); setError('No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.'); return }
       await logActividad('lead_editado', `Lead editado: ${form.nombre.trim()}`, { lead_id: lead.id, lead_nombre: form.nombre.trim() })
     } else {
-      const { data: newLead } = await supabase.from('leads').insert(data).select('id').single()
+      const { data: newLead, error: dbErr } = await supabase.from('leads').insert(data).select('id').single()
+      if (dbErr) { setSaving(false); setError('No se pudo crear el lead. Revisa tu conexión e inténtalo de nuevo.'); return }
       await logActividad('lead_nuevo', `Nuevo lead manual: ${form.nombre.trim()}`, { lead_id: newLead?.id, lead_nombre: form.nombre.trim() })
     }
     setSaving(false)
@@ -69,6 +103,23 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
           {error && (
             <div className="text-[13px] font-medium px-4 py-3 rounded-xl" style={{ background: '#fbe7e2', color: '#c23a22' }}>
               {error}
+            </div>
+          )}
+
+          {dup && (
+            <div className="px-4 py-3 rounded-xl" style={{ background: '#f8efd9', border: '1px solid #ecdcae' }}>
+              <div className="text-[13px] font-semibold" style={{ color: '#a8741a' }}>⚠️ Posible duplicado</div>
+              <div className="text-[12.5px] mt-1" style={{ color: '#7a5c10' }}>
+                Ya existe un lead con este teléfono o correo: <b>{dup.nombre}</b>.
+              </div>
+              <div className="flex gap-2 mt-2.5">
+                <a href={`/panel/leads/${dup.id}`} className="text-[12px] font-semibold px-3 py-1.5 rounded-lg" style={{ background: '#fff', border: '1px solid #ecdcae', color: '#a8741a', textDecoration: 'none' }}>
+                  Ver lead existente
+                </a>
+                <button type="button" onClick={() => save(true)} className="text-[12px] font-semibold px-3 py-1.5 rounded-lg" style={{ background: '#a8741a', color: '#fff', border: 'none', cursor: 'pointer' }}>
+                  Crear de todas formas
+                </button>
+              </div>
             </div>
           )}
 
@@ -110,8 +161,20 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
               onChange={(e) => set('interes', e.target.value)}
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
             >
-              <option value="">Seleccioná un interés</option>
+              <option value="">Selecciona un interés</option>
               {INTERESES.map((i) => <option key={i} value={i}>{i}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-[12.5px] font-semibold text-[#6b7a76] mb-1.5">Sucursal</label>
+            <select
+              value={form.sucursal}
+              onChange={(e) => set('sucursal', e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
+            >
+              <option value="">Sin asignar</option>
+              {SUCURSALES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
 
