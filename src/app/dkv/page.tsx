@@ -587,10 +587,17 @@ export default function DKVClone() {
           .g3{grid-template-columns:1fr!important}
         }
         @media(max-width:560px){
-          .g4{grid-template-columns:1fr!important}
+          .g4{grid-template-columns:1fr!important;gap:14px!important}
+          .g3{gap:14px!important}
+          .g2{gap:26px!important}
           .pad{padding-left:20px!important;padding-right:20px!important}
           .topbar{display:none!important}
           .band-col{flex-direction:column!important;align-items:flex-start!important}
+          /* Tarjetas de beneficios: horizontales y compactas en móvil */
+          .bcard{display:flex!important;flex-direction:row!important;align-items:center!important;text-align:left!important;gap:16px!important}
+          .bcard-ic{margin:0!important;width:54px!important;height:54px!important;border-radius:15px!important}
+          .bcard-txt h3{margin:0 0 4px!important;font-size:16.5px!important}
+          .bcard-txt p{font-size:13.5px!important;line-height:1.5!important}
         }
         @media(max-width:768px){
           .sem-bar{display:flex!important}
@@ -745,7 +752,7 @@ export default function DKVClone() {
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px)', backgroundSize: '30px 30px', pointerEvents: 'none' }} />
 
         <div className="pad" style={{ position: 'relative', maxWidth: 1240, margin: '0 auto', padding: '0 24px', width: '100%', boxSizing: 'border-box', zIndex: 2 }}>
-          <div className="hero-copy" style={{ maxWidth: 680, color: '#fff', padding: '96px 0' }}>
+          <div className="hero-copy" style={{ maxWidth: 680, color: '#fff', padding: 'clamp(46px,12vw,96px) 0' }}>
             {kw && (
               <div className="h-rise" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 999, background: C.lime, color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 14 }}>
                 <Search size={15} /> {kw.charAt(0).toUpperCase() + kw.slice(1)}
@@ -755,7 +762,7 @@ export default function DKVClone() {
               <span style={{ display: 'flex', gap: 1 }}>{[...Array(5)].map((_, i) => <Star key={i} size={14} fill="#f5a623" stroke="none" />)}</span>
               <span style={{ fontSize: 13.5, fontWeight: 700 }}>4,8 · +2 millones de asegurados en España</span>
             </div>
-            <h1 className="h-rise d1" style={{ fontSize: 'clamp(42px,6.2vw,76px)', fontWeight: 800, lineHeight: 1.01, letterSpacing: '-0.042em', margin: '0 0 22px', textShadow: '0 4px 40px rgba(0,0,0,.3)' }}>
+            <h1 className="h-rise d1" style={{ fontSize: 'clamp(33px,6.6vw,76px)', fontWeight: 800, lineHeight: 1.01, letterSpacing: '-0.042em', margin: '0 0 22px', textShadow: '0 4px 40px rgba(0,0,0,.3)' }}>
               Tu salud no espera<br />en <span style={{ color: C.lime }}>listas de espera</span>
             </h1>
             <p className="h-rise d2" style={{ fontSize: 'clamp(17px,2vw,21px)', fontWeight: 500, color: 'rgba(255,255,255,.9)', lineHeight: 1.55, margin: '0 0 38px', maxWidth: 560 }}>
@@ -795,20 +802,22 @@ export default function DKVClone() {
       </div>
 
       {/* ═══ BENEFICIOS ═══ */}
-      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '84px 24px' }}>
+      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
         <Reveal>
-          <h2 style={{ textAlign: 'center', fontSize: 'clamp(28px,3.4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 12px' }}>¿Por qué elegir un seguro médico con DKV?</h2>
+          <h2 style={{ textAlign: 'center', fontSize: 'clamp(23px,4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 12px' }}>¿Por qué elegir un seguro médico con DKV?</h2>
           <p style={{ textAlign: 'center', fontSize: 17, color: C.taupe, maxWidth: 620, margin: '0 auto 56px' }}>Más de 50 años cuidando la salud de las familias españolas con la mejor cobertura médica.</p>
         </Reveal>
         <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
           {BENEFITS.map(({ icon: Icon, title, desc }, i) => (
             <Reveal key={title} delay={i * 0.08}>
-              <div className="card" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, padding: '34px 26px', textAlign: 'center', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: '0 2px 14px rgba(0,0,0,.03)' }}>
-                <div style={{ width: 74, height: 74, borderRadius: 20, background: `linear-gradient(135deg, ${C.cream}, #e6efe8)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <div className="card bcard" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, padding: 'clamp(24px,5.5vw,34px) clamp(20px,5vw,26px)', textAlign: 'center', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: '0 2px 14px rgba(0,0,0,.03)' }}>
+                <div className="bcard-ic" style={{ width: 74, height: 74, borderRadius: 20, background: `linear-gradient(135deg, ${C.cream}, #e6efe8)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', flexShrink: 0 }}>
                   <Icon size={32} style={{ color: C.teal }} strokeWidth={1.8} />
                 </div>
-                <h3 style={{ fontSize: 18.5, fontWeight: 800, color: C.text, margin: '0 0 10px' }}>{title}</h3>
-                <p style={{ fontSize: 14.5, color: C.taupe, lineHeight: 1.6, margin: 0 }}>{desc}</p>
+                <div className="bcard-txt">
+                  <h3 style={{ fontSize: 18.5, fontWeight: 800, color: C.text, margin: '0 0 10px' }}>{title}</h3>
+                  <p style={{ fontSize: 14.5, color: C.taupe, lineHeight: 1.6, margin: 0 }}>{desc}</p>
+                </div>
               </div>
             </Reveal>
           ))}
@@ -829,10 +838,10 @@ export default function DKVClone() {
       {/* ═══ CALCULADORA (form → Supabase) ═══ */}
       <section id="calcula" style={{ background: `linear-gradient(140deg, ${C.tealDeep} 0%, ${C.teal} 55%, ${C.tealSoft} 100%)`, color: '#fff', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: -140, right: -120, width: 520, height: 520, borderRadius: '50%', background: 'rgba(152,169,42,.16)', filter: 'blur(20px)', pointerEvents: 'none' }} />
-        <div className="pad g2" style={{ maxWidth: 1240, margin: '0 auto', padding: '76px 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center', position: 'relative' }}>
+        <div className="pad g2" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,76px) 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 56, alignItems: 'center', position: 'relative' }}>
           <Reveal>
             <span style={{ display: 'inline-block', background: C.lime, color: '#fff', fontSize: 12.5, fontWeight: 800, letterSpacing: '0.06em', padding: '6px 14px', borderRadius: 999, marginBottom: 18 }}>PROMO HASTA -35%</span>
-            <h2 style={{ fontSize: 'clamp(30px,3.6vw,42px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.025em', margin: '0 0 16px' }}>Calcula el precio de tu seguro médico</h2>
+            <h2 style={{ fontSize: 'clamp(25px,4.4vw,42px)', fontWeight: 800, lineHeight: 1.08, letterSpacing: '-0.025em', margin: '0 0 16px' }}>Calcula el precio de tu seguro médico</h2>
             <p style={{ fontSize: 17.5, color: 'rgba(255,255,255,.85)', lineHeight: 1.6, margin: '0 0 28px', maxWidth: 440 }}>En menos de un minuto tendrás el precio de tu seguro DKV personalizado. Un asesor te llama sin compromiso.</p>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
               {['Precio inmediato y sin compromiso', 'Cobertura desde el primer día', 'Descuento de hasta el 35%'].map(t => (
@@ -888,7 +897,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ ENCUENTRA MÉDICO ═══ */}
-      <section id="medico" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '72px 24px' }}>
+      <section id="medico" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,72px) 24px' }}>
         <Reveal>
           <div className="g2" style={{ background: `linear-gradient(120deg, ${C.cream}, #eef1e0)`, borderRadius: 24, overflow: 'hidden', display: 'grid', gridTemplateColumns: '0.85fr 1.15fr', alignItems: 'stretch' }}>
             <div style={{ minHeight: 240, backgroundImage: `url(${IMG.network})`, backgroundSize: 'cover', backgroundPosition: 'center' }} />
@@ -909,11 +918,11 @@ export default function DKVClone() {
 
       {/* ═══ PRODUCTOS ═══ */}
       <section style={{ background: C.grayBg }}>
-        <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '84px 24px' }}>
+        <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
           <Reveal>
             <div style={{ textAlign: 'center', marginBottom: 56 }}>
               <Kicker><ShieldCheck size={14} /> Nuestras modalidades</Kicker>
-              <h2 style={{ fontSize: 'clamp(28px,3.4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '16px 0 12px' }}>Seguros médicos pensados para ti</h2>
+              <h2 style={{ fontSize: 'clamp(23px,4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '16px 0 12px' }}>Seguros médicos pensados para ti</h2>
               <p style={{ fontSize: 17, color: C.taupe, maxWidth: 560, margin: '0 auto' }}>Elige la modalidad que mejor se adapte a tu forma de cuidarte.</p>
             </div>
           </Reveal>
@@ -939,11 +948,11 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ OTROS SEGUROS ═══ */}
-      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '84px 24px' }}>
+      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
         <Reveal>
           <div style={{ marginBottom: 38 }}>
             <Kicker><Sparkles size={14} /> Más protección</Kicker>
-            <h2 style={{ fontSize: 'clamp(26px,3vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.02em', margin: '16px 0 0' }}>Otros seguros para cuidar lo que importa</h2>
+            <h2 style={{ fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.02em', margin: '16px 0 0' }}>Otros seguros para cuidar lo que importa</h2>
           </div>
         </Reveal>
         <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 22 }}>
@@ -970,7 +979,7 @@ export default function DKVClone() {
 
       {/* ═══ TESTIMONIOS ═══ */}
       <section style={{ background: C.grayBg }}>
-        <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '88px 24px' }}>
+        <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,88px) 24px' }}>
           <Reveal>
             <div style={{ textAlign: 'center', marginBottom: 52 }}>
               <Kicker><Star size={13} fill={C.teal} stroke="none" /> Opiniones reales</Kicker>
@@ -1005,7 +1014,7 @@ export default function DKVClone() {
         <div style={{ position: 'absolute', top: -80, left: '40%', width: 360, height: 360, borderRadius: '50%', background: 'rgba(255,255,255,.1)', pointerEvents: 'none' }} />
         <div className="pad band-col" style={{ maxWidth: 1240, margin: '0 auto', padding: '58px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 30, flexWrap: 'wrap', position: 'relative' }}>
           <div style={{ maxWidth: 640 }}>
-            <h2 style={{ fontSize: 'clamp(26px,3vw,34px)', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>¿Ya tienes un seguro de salud?</h2>
+            <h2 style={{ fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, margin: '0 0 10px', letterSpacing: '-0.02em' }}>¿Ya tienes un seguro de salud?</h2>
             <p style={{ fontSize: 17, color: 'rgba(255,255,255,.92)', margin: 0, lineHeight: 1.5 }}>Cámbiate a DKV y mantén tu antigüedad. Te ponemos fácil el traspaso sin perder coberturas.</p>
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -1016,13 +1025,13 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ MÉDICOS Y CENTROS PROPIOS ═══ */}
-      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '84px 24px' }}>
+      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
         <div className="g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 54, alignItems: 'center' }}>
           <Reveal style={{ borderRadius: 24, overflow: 'hidden' }}>
             <div style={{ minHeight: 380, backgroundImage: `url(${IMG.network})`, backgroundSize: 'cover', backgroundPosition: 'center', boxShadow: '0 30px 60px -30px rgba(9,87,81,.4)' }} />
           </Reveal>
           <Reveal delay={0.1}>
-            <h2 style={{ fontSize: 'clamp(26px,3vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 18px', lineHeight: 1.15 }}>Médicos, centros y espacios de salud propios</h2>
+            <h2 style={{ fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 18px', lineHeight: 1.15 }}>Médicos, centros y espacios de salud propios</h2>
             <p style={{ fontSize: 16, color: C.taupe, lineHeight: 1.65, margin: '0 0 30px' }}>Más de 51.000 profesionales y 1.000 centros médicos concertados, además de 23 centros propios y el DKV Health Club para cuidarte de forma integral.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22 }}>
               {[
@@ -1051,14 +1060,14 @@ export default function DKVClone() {
                 <Activity size={16} /> Datos que nos avalan
               </span>
             </div>
-            <h2 style={{ textAlign: 'center', fontSize: 'clamp(28px,3.4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 12px' }}>DKV en cifras</h2>
+            <h2 style={{ textAlign: 'center', fontSize: 'clamp(23px,4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 12px' }}>DKV en cifras</h2>
             <p style={{ textAlign: 'center', fontSize: 17, color: C.taupe, maxWidth: 560, margin: '0 auto 52px' }}>La diferencia de la medicina privada frente a las listas de espera, en números reales.</p>
           </Reveal>
 
           <div className="g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 26, marginBottom: 26 }}>
             {/* Donut card */}
             <Reveal>
-              <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 24, padding: '36px 30px', height: '100%', boxSizing: 'border-box', boxShadow: '0 20px 50px -32px rgba(9,87,81,.35)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(26px,5.5vw,36px) clamp(22px,5vw,30px)', height: '100%', boxSizing: 'border-box', boxShadow: '0 20px 50px -32px rgba(9,87,81,.35)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, alignSelf: 'flex-start', marginBottom: 22 }}>
                   <ThumbsUp size={19} style={{ color: C.lime }} />
                   <h3 style={{ fontSize: 18, fontWeight: 800, color: C.text, margin: 0 }}>Satisfacción de clientes</h3>
@@ -1125,10 +1134,10 @@ export default function DKVClone() {
 
       {/* ═══ APP ACTIVA DKV ═══ */}
       <section style={{ background: `linear-gradient(135deg, ${C.cream}, #fff)` }}>
-        <div className="pad g2" style={{ maxWidth: 1240, margin: '0 auto', padding: '76px 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 54, alignItems: 'center' }}>
+        <div className="pad g2" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,76px) 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 54, alignItems: 'center' }}>
           <Reveal>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: C.teal, fontWeight: 800, fontSize: 13.5, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 14 }}><Smartphone size={16} /> App Activa DKV</span>
-            <h2 style={{ fontSize: 'clamp(28px,3.4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 20px', lineHeight: 1.1 }}>Tu seguro siempre contigo</h2>
+            <h2 style={{ fontSize: 'clamp(23px,4vw,38px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 20px', lineHeight: 1.1 }}>Tu seguro siempre contigo</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 13, marginBottom: 30 }}>
               {['Busca médicos y centros cercanos', 'Tarjeta de seguro digital', 'Gestiona tus autorizaciones', 'Videoconsulta y coach de salud'].map(t => (
                 <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 15.5, color: C.text, fontWeight: 500 }}>
@@ -1157,7 +1166,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ BLOG ═══ */}
-      <section id="blog" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '88px 24px' }}>
+      <section id="blog" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,88px) 24px' }}>
         <Reveal>
           <div className="band-col" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', marginBottom: 48 }}>
             <div>
@@ -1189,7 +1198,7 @@ export default function DKVClone() {
 
       {/* ═══ FAQ ═══ */}
       <section style={{ background: C.grayBg, borderTop: `1px solid ${C.border}` }}>
-        <div className="pad" style={{ maxWidth: 820, margin: '0 auto', padding: '88px 24px' }}>
+        <div className="pad" style={{ maxWidth: 820, margin: '0 auto', padding: 'clamp(50px,11vw,88px) 24px' }}>
           <Reveal>
             <div style={{ textAlign: 'center', marginBottom: 44 }}>
               <Kicker><MessageCircle size={14} /> Dudas frecuentes</Kicker>
@@ -1226,12 +1235,12 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ ¿NECESITAS AYUDA? ═══ */}
-      <section id="contacto" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '84px 24px' }}>
-        <Reveal><h2 style={{ textAlign: 'center', fontSize: 'clamp(26px,3vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 48px' }}>¿Necesitas ayuda?</h2></Reveal>
+      <section id="contacto" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
+        <Reveal><h2 style={{ textAlign: 'center', fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 48px' }}>¿Necesitas ayuda?</h2></Reveal>
         <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
           {HELP.map(({ icon: Icon, title, desc, cta, action }, i) => (
             <Reveal key={title} delay={i * 0.08}>
-              <div className="card" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, padding: '36px 30px', textAlign: 'center', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: '0 2px 12px rgba(0,0,0,.03)' }}>
+              <div className="card" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, padding: 'clamp(26px,5.5vw,36px) clamp(22px,5vw,30px)', textAlign: 'center', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: '0 2px 12px rgba(0,0,0,.03)' }}>
                 <div style={{ width: 66, height: 66, borderRadius: 18, background: `linear-gradient(135deg, ${C.cream}, #e6efe8)`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}><Icon size={28} style={{ color: C.teal }} /></div>
                 <h3 style={{ fontSize: 18.5, fontWeight: 800, color: C.text, margin: '0 0 10px' }}>{title}</h3>
                 <p style={{ fontSize: 14.5, color: C.taupe, lineHeight: 1.6, margin: '0 0 22px' }}>{desc}</p>
