@@ -487,10 +487,13 @@ export default function DKVClone() {
       if (!stored) sessionStorage.setItem('dkv-attrib', parts.join(' '))
       attribRef.current = stored || parts.join(' ')
 
-      // Message-match: adapta hero y keyword al anuncio
-      const k = (sp.get('kw') || sp.get('utm_term') || '').trim()
+      // Message-match: adapta hero y keyword al anuncio (por ?kw=, utm_term o URL de campaña limpia)
+      const pathKw = /^\/seguro-/.test(window.location.pathname)
+        ? window.location.pathname.replace(/^\/seguro-?/, '').replace(/-/g, ' ').trim()
+        : ''
+      const k = (sp.get('kw') || sp.get('utm_term') || pathKw).trim()
       if (k) setKw(k)
-      const hay = `${k} ${sp.get('utm_campaign') || ''} ${sp.get('utm_content') || ''}`.toLowerCase()
+      const hay = `${k} ${pathKw} ${sp.get('utm_campaign') || ''} ${sp.get('utm_content') || ''}`.toLowerCase()
       const lime = { color: C.lime }
       const themes: { m: RegExp; h1: React.ReactNode; sub: React.ReactNode }[] = [
         { m: /dental|boca|diente|ortodon/, h1: <>Tu seguro <span style={lime}>dental DKV</span></>, sub: <>Cuida tu boca con la mayor red dental de España. Sin esperas y hasta un <b style={lime}>35% de descuento</b>.</> },

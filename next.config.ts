@@ -1,11 +1,26 @@
 import type { NextConfig } from "next";
 
+// Slugs de campaña con URL limpia → sirven la landing /dkv (rewrite: la URL se mantiene bonita)
+const CAMPANAS = [
+  'seguro-dental',
+  'seguro-familiar',
+  'seguro-sin-copago',
+  'seguro-reembolso',
+  'seguro-autonomos',
+  'seguro-sin-listas-de-espera',
+  'seguro-salud',
+]
+
 const nextConfig: NextConfig = {
   async redirects() {
     return [
       // El dominio raíz muestra la web DKV
       { source: '/', destination: '/dkv', permanent: false },
     ]
+  },
+  async rewrites() {
+    // Cada URL de campaña muestra la landing completa; el tema del hero se detecta por la ruta
+    return CAMPANAS.map(slug => ({ source: `/${slug}`, destination: '/dkv' }))
   },
 };
 
