@@ -1289,7 +1289,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ FAQ ═══ */}
-      <section style={{ background: C.grayBg, borderTop: `1px solid ${C.border}` }}>
+      <section className="hide-mobile" style={{ background: C.grayBg, borderTop: `1px solid ${C.border}` }}>
         <div className="pad" style={{ maxWidth: 820, margin: '0 auto', padding: 'clamp(50px,11vw,88px) 24px' }}>
           <Reveal>
             <div style={{ textAlign: 'center', marginBottom: 44 }}>
@@ -1327,7 +1327,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ ¿NECESITAS AYUDA? ═══ */}
-      <section id="contacto" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
+      <section id="contacto" className="pad hide-mobile" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
         <Reveal><h2 style={{ textAlign: 'center', fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 48px' }}>¿Necesitas ayuda?</h2></Reveal>
         <div className="g3 mcarousel" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
           {HELP.map(({ icon: Icon, title, desc, cta, action }, i) => (
