@@ -1634,29 +1634,29 @@ function Kicker({ children }: { children: React.ReactNode }) {
   )
 }
 
-/* Logo oficial DKV + distintivo "Agente exclusivo DKV" */
+/* Logo oficial DKV + distintivo "Agente exclusivo DKV" (insignia de certificación) */
 function DKVLogo({ size = 30, light = false }: { size?: number; light?: boolean }) {
-  const boxH = Math.round(size * 1.95)
-  const fs = Math.max(9, Math.round(size * 0.42))
-  const ring = Math.round(size * 0.64)
+  const ring = Math.round(size * 0.66)
+  const labelFs = Math.max(7.5, size * 0.30)
+  const mainFs = Math.max(11, size * 0.44)
+  const div = light ? '1px solid rgba(255,255,255,.22)' : '1px solid #d7e2db'
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.5), flexShrink: 0 }} aria-label="DKV Seguros — Agente exclusivo">
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.46), flexShrink: 0 }} aria-label="DKV Seguros — Agente exclusivo">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={light ? '/dkv-logo-light.png' : '/dkv-logo.png'} alt="DKV Seguros" style={{ height: size, width: 'auto', display: 'block' }} />
-      <span
-        style={{
-          display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: Math.round(size * 0.12), height: boxH, padding: `0 ${Math.round(size * 0.5)}px`,
-          background: C.teal, color: '#fff', boxSizing: 'border-box',
-          border: light ? '1px solid rgba(255,255,255,.28)' : 'none',
-        }}
-      >
-        <svg width={ring} height={ring} viewBox="0 0 24 24" fill="none" aria-hidden style={{ display: 'block' }}>
-          <circle cx="12" cy="12" r="11" stroke={C.lime} strokeWidth="1.6" />
-          <path d="M7 12.4l3.1 3.1L17 8.6" stroke={C.lime} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span style={{ fontWeight: 700, fontSize: fs, lineHeight: 1.08, textAlign: 'center', whiteSpace: 'nowrap' }}>
-          Agente<br />exclusivo DKV
+      <span style={{ height: Math.round(size * 1.4), width: 1, background: light ? 'rgba(255,255,255,.2)' : '#e3e9e4' }} />
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.34),
+        height: Math.round(size * 1.5), padding: `0 ${Math.round(size * 0.52)}px`,
+        borderRadius: Math.round(size * 0.44), boxSizing: 'border-box',
+        background: light ? 'rgba(255,255,255,.08)' : 'linear-gradient(135deg,#f2f7f2,#eaf2ec)', border: div,
+      }}>
+        <span style={{ width: ring, height: ring, borderRadius: '50%', background: `linear-gradient(135deg, ${C.lime}, ${C.limeDark})`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 3px 8px -2px rgba(124,140,31,.55)' }}>
+          <Check size={Math.round(ring * 0.6)} color="#fff" strokeWidth={3.4} />
+        </span>
+        <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.05 }}>
+          <span style={{ fontSize: labelFs, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: light ? 'rgba(255,255,255,.66)' : C.taupe, whiteSpace: 'nowrap' }}>Agente exclusivo</span>
+          <span style={{ fontSize: mainFs, fontWeight: 800, color: light ? '#fff' : C.teal, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>DKV Seguros</span>
         </span>
       </span>
     </span>
