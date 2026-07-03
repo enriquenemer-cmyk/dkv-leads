@@ -56,6 +56,11 @@ const websiteLd = {
 export default function DkvLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      {/* Preconexión a los hosts de imágenes → carga más rápida (mejor LCP y Quality Score) */}
+      <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
+      <link rel="preconnect" href="https://randomuser.me" crossOrigin="" />
+      <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      <link rel="dns-prefetch" href="https://randomuser.me" />
       <JsonLd data={[orgLd, websiteLd]} />
       {children}
     </>

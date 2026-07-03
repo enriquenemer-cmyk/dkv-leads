@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import Analytics from '@/components/Analytics'
 import { Analytics as VercelAnalytics } from '@vercel/analytics/next'
+import WebTracker from '@/components/WebTracker'
 
 export const viewport: Viewport = {
   themeColor: '#0F7A63',
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <Analytics />
         <VercelAnalytics />
+        <WebTracker />
       </body>
     </html>
   )

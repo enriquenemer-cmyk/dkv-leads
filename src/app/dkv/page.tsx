@@ -498,7 +498,12 @@ export default function DKVClone() {
         { m: /sin copago/, h1: <>Seguro de salud <span style={lime}>sin copago</span></>, sub: <>Paga una cuota fija y olvídate: sin abonar nada por cada visita. Cobertura desde el primer día.</> },
         { m: /reembolso|libre elecci/, h1: <>Elige a tu médico con el <span style={lime}>seguro de reembolso</span></>, sub: <>Acude a cualquier médico o clínica y te devolvemos los gastos. Libertad total, con DKV.</> },
         { m: /aut[oó]nomo|freelance|desgrav/, h1: <>Seguro de salud para <span style={lime}>autónomos</span></>, sub: <>Cuídate y desgrava: tu seguro DKV como gasto deducible. Cobertura inmediata y sin esperas.</> },
-        { m: /barat|econ[oó]mic|precio|desde/, h1: <>Seguro de salud DKV <span style={lime}>desde 25,50€/mes</span></>, sub: <>La mejor medicina privada al mejor precio. Calcula el tuyo en 1 minuto, sin compromiso.</> },
+        { m: /lista de espera|listas de espera|sin espera|r[aá]pid/, h1: <>Olvídate de las <span style={lime}>listas de espera</span></>, sub: <>Con DKV tienes cita con el especialista en días, no en meses. Cobertura desde el primer día.</> },
+        { m: /operaci|cirug|intervenc|quir[uú]rgic/, h1: <>Tu operación privada, <span style={lime}>sin esperas</span></>, sub: <>Cirugía y hospitalización con los mejores especialistas de DKV, cuando lo necesitas.</> },
+        { m: /embaraz|matern|parto|comadron|ginec[oó]log/, h1: <>Cuida tu <span style={lime}>embarazo</span> con DKV</>, sub: <>Ginecología, seguimiento del embarazo y comadrona digital. Tú y tu bebé, en las mejores manos.</> },
+        { m: /mayor|s[eé]nior|jubilad|tercera edad|65/, h1: <>Seguro de salud para <span style={lime}>mayores</span></>, sub: <>Atención médica sin esperas y con trato cercano. La tranquilidad que mereces, con DKV.</> },
+        { m: /prueba|resonancia|diagn[oó]stic|especialista|analítica|analitica/, h1: <>Especialistas y pruebas, <span style={lime}>sin esperas</span></>, sub: <>Accede a +51.000 profesionales y a todas las pruebas diagnósticas cuando las necesites.</> },
+        { m: /barat|econ[oó]mic|precio|desde|cu[aá]nto cuesta/, h1: <>Seguro de salud DKV <span style={lime}>desde 25,50€/mes</span></>, sub: <>La mejor medicina privada al mejor precio. Calcula el tuyo en 1 minuto, sin compromiso.</> },
       ]
       const t = themes.find(x => x.m.test(hay))
       if (t) setHeroCopy({ h1: t.h1, sub: t.sub })
