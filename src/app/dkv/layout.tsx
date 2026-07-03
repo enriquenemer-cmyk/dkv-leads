@@ -29,7 +29,8 @@ const orgLd = {
   logo: `${BASE}/dkv-logo.png`,
   telephone: '+34699669603',
   priceRange: '€€',
-  areaServed: 'ES',
+  currenciesAccepted: 'EUR',
+  areaServed: ['España', 'Madrid', 'Sevilla', 'León', 'Salamanca', 'Valladolid'],
   address: {
     '@type': 'PostalAddress',
     streetAddress: 'C/ Príncipe de Vergara 80',
@@ -38,6 +39,18 @@ const orgLd = {
     addressRegion: 'Madrid',
     addressCountry: 'ES',
   },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 40.4297,
+    longitude: -3.6769,
+  },
+  openingHoursSpecification: {
+    '@type': 'OpeningHoursSpecification',
+    dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+    opens: '09:00',
+    closes: '19:00',
+  },
+  knowsAbout: ['Seguros de salud', 'Seguros dentales', 'Seguros médicos DKV', 'Seguro familiar', 'Seguro sin copago', 'Seguro de reembolso'],
   aggregateRating: {
     '@type': 'AggregateRating',
     ratingValue: '4.8',

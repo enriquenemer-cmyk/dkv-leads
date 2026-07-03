@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap
 } from 'lucide-react'
 
 const navItems = [
   { href: '/panel/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/panel/prioridad', label: 'Prioridad', icon: Zap },
   { href: '/panel/leads', label: 'Leads', icon: Users },
   { href: '/panel/kanban', label: 'Kanban', icon: Layers },
   { href: '/panel/agenda', label: 'Agenda', icon: CalendarCheck },
