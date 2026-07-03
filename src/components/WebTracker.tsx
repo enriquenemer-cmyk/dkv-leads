@@ -4,23 +4,36 @@ import { usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 /* Analítica propia y ligera de la web pública.
-   Registra visitas, clics (posición para el mapa de calor) y profundidad de scroll.
+   Registra visitas, clics (mapa de calor), scroll, embudo del formulario,
+   fuente/campaña de la visita, ciudad aproximada y comportamiento.
    - Solo se activa si el visitante ACEPTÓ las cookies (mismo consentimiento que GA/Meta/Clarity).
    - Nunca se ejecuta dentro del panel (/panel).
    - Los eventos se agrupan y se envían en lote para no penalizar el rendimiento. */
 
 const CONSENT_KEY = 'dkv-cookie-consent'
 const SESSION_KEY = 'dkv-analytics-sid'
+const RETURNING_KEY = 'dkv-analytics-known'
+const LANDING_KEY = 'dkv-analytics-landing'
+const GEO_KEY = 'dkv-analytics-geo'
 
 type Evento = {
   session_id: string
-  tipo: 'view' | 'click' | 'scroll'
+  tipo: 'view' | 'click' | 'scroll' | 'form_start' | 'form_submit'
   path: string
   xr?: number | null
   yr?: number | null
   scroll_pct?: number | null
   vw?: number | null
   elemento?: string | null
+  // Contexto de la visita (se rellena sobre todo en el evento 'view')
+  referrer?: string | null
+  utm_source?: string | null
+  utm_medium?: string | null
+  utm_campaign?: string | null
+  pais?: string | null
+  ciudad?: string | null
+  visitante?: string | null   // 'nuevo' | 'recurrente'
+  dur?: number | null         // duración de la sesión en segundos
 }
 
 function getSessionId(): string {
@@ -36,8 +49,37 @@ function getSessionId(): string {
   }
 }
 
-/* Devuelve una etiqueta legible de lo que se ha pulsado (texto del botón/enlace,
-   o el tipo de elemento), para poder rankear qué se clica más y qué menos. */
+/* Clasifica el origen del tráfico a partir del referrer y las UTM. */
+function fuente() {
+  let referrer: string | null = null
+  try {
+    const r = document.referrer
+    if (r && !r.includes(location.host)) referrer = new URL(r).hostname
+  } catch { /* noop */ }
+  const p = new URLSearchParams(location.search)
+  return {
+    referrer,
+    utm_source: p.get('utm_source'),
+    utm_medium: p.get('utm_medium'),
+    utm_campaign: p.get('utm_campaign'),
+  }
+}
+
+/* Ciudad/país aproximados (cacheados por sesión para no repetir la llamada). */
+async function geo(): Promise<{ pais: string | null; ciudad: string | null }> {
+  try {
+    const cache = sessionStorage.getItem(GEO_KEY)
+    if (cache) return JSON.parse(cache)
+    const r = await fetch('/api/geo').then(x => x.json())
+    const g = { pais: r.pais ?? null, ciudad: r.ciudad ?? null }
+    sessionStorage.setItem(GEO_KEY, JSON.stringify(g))
+    return g
+  } catch {
+    return { pais: null, ciudad: null }
+  }
+}
+
+/* Devuelve una etiqueta legible de lo que se ha pulsado. */
 function describirElemento(el: HTMLElement | null): string {
   if (!el) return 'desconocido'
   const clickable = (el.closest('a,button,[role="button"],input,select,label') as HTMLElement) || el
@@ -51,7 +93,6 @@ export default function WebTracker() {
   const pathname = usePathname()
 
   useEffect(() => {
-    // Nunca medir el panel interno ni sin consentimiento.
     if (pathname.startsWith('/panel')) return
     try {
       if (localStorage.getItem(CONSENT_KEY) !== 'accepted') return
@@ -60,58 +101,90 @@ export default function WebTracker() {
     const sid = getSessionId()
     let cola: Evento[] = []
     let scrollMax = 0
+    let formIniciado = false
     let flushTimer: ReturnType<typeof setTimeout> | null = null
+    const inicio = Date.now()
 
     const enviar = () => {
       if (!cola.length) return
       const lote = cola
       cola = []
-      // Inserción "fire and forget": si falla, no molestamos al visitante.
       supabase.from('web_eventos').insert(lote).then(() => {}, () => {})
     }
-
     const programarEnvio = () => {
       if (flushTimer) return
       flushTimer = setTimeout(() => { flushTimer = null; enviar() }, 4000)
     }
-
     const encolar = (e: Evento) => { cola.push(e); programarEnvio() }
 
-    // 1) Visita a la página
-    encolar({ session_id: sid, tipo: 'view', path: pathname, vw: window.innerWidth })
+    // ¿Nuevo o recurrente?
+    let visitante = 'nuevo'
+    try {
+      if (localStorage.getItem(RETURNING_KEY)) visitante = 'recurrente'
+      else localStorage.setItem(RETURNING_KEY, '1')
+    } catch { /* noop */ }
 
-    // 2) Clics — guardamos posición relativa (0..1) para el mapa de calor
+    // Recuerda la primera página de la sesión (para atribuir el lead)
+    try { if (!sessionStorage.getItem(LANDING_KEY)) sessionStorage.setItem(LANDING_KEY, pathname) } catch { /* noop */ }
+
+    // 1) Visita — con fuente, campaña, ciudad y tipo de visitante
+    const f = fuente()
+    geo().then(g => {
+      encolar({
+        session_id: sid, tipo: 'view', path: pathname, vw: window.innerWidth,
+        referrer: f.referrer, utm_source: f.utm_source, utm_medium: f.utm_medium, utm_campaign: f.utm_campaign,
+        pais: g.pais, ciudad: g.ciudad, visitante,
+      })
+    })
+
+    // 1b) ¿Llegó a "gracias"? => lead enviado (cierre del embudo)
+    if (pathname.startsWith('/gracias')) {
+      let landing = pathname
+      try { landing = sessionStorage.getItem(LANDING_KEY) || pathname } catch { /* noop */ }
+      encolar({ session_id: sid, tipo: 'form_submit', path: pathname, elemento: landing, vw: window.innerWidth })
+    }
+
+    // 2) Clics — posición relativa para el mapa de calor
     const onClick = (ev: MouseEvent) => {
       const docH = document.documentElement.scrollHeight || 1
       const xr = ev.clientX / (window.innerWidth || 1)
       const yr = (window.scrollY + ev.clientY) / docH
       encolar({
         session_id: sid, tipo: 'click', path: pathname,
-        xr: Math.min(1, Math.max(0, xr)),
-        yr: Math.min(1, Math.max(0, yr)),
-        vw: window.innerWidth,
-        elemento: describirElemento(ev.target as HTMLElement),
+        xr: Math.min(1, Math.max(0, xr)), yr: Math.min(1, Math.max(0, yr)),
+        vw: window.innerWidth, elemento: describirElemento(ev.target as HTMLElement),
       })
     }
 
-    // 3) Scroll — solo guardamos el % máximo alcanzado (una vez por página)
+    // 2b) Embudo — primer foco en un campo del formulario = "empezó el formulario"
+    const onFocus = (ev: FocusEvent) => {
+      if (formIniciado) return
+      const t = ev.target as HTMLElement
+      if (t && /^(input|select|textarea)$/i.test(t.tagName)) {
+        formIniciado = true
+        encolar({ session_id: sid, tipo: 'form_start', path: pathname, vw: window.innerWidth })
+      }
+    }
+
+    // 3) Scroll — % máximo alcanzado
     const onScroll = () => {
       const docH = document.documentElement.scrollHeight - window.innerHeight
       const pct = docH > 0 ? Math.round((window.scrollY / docH) * 100) : 100
       if (pct > scrollMax) scrollMax = Math.min(100, pct)
     }
-
     const guardarScroll = () => {
       if (scrollMax > 0) {
-        cola.push({ session_id: sid, tipo: 'scroll', path: pathname, scroll_pct: scrollMax, vw: window.innerWidth })
+        cola.push({
+          session_id: sid, tipo: 'scroll', path: pathname, scroll_pct: scrollMax,
+          vw: window.innerWidth, dur: Math.round((Date.now() - inicio) / 1000),
+        })
         scrollMax = 0
       }
     }
-
-    // Al abandonar/ocultar la página: guardamos el scroll y forzamos el envío.
     const onHide = () => { guardarScroll(); enviar() }
 
     document.addEventListener('click', onClick, { capture: true })
+    document.addEventListener('focusin', onFocus, { capture: true })
     window.addEventListener('scroll', onScroll, { passive: true })
     window.addEventListener('pagehide', onHide)
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') onHide() })
@@ -121,6 +194,7 @@ export default function WebTracker() {
       enviar()
       if (flushTimer) clearTimeout(flushTimer)
       document.removeEventListener('click', onClick, { capture: true })
+      document.removeEventListener('focusin', onFocus, { capture: true })
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('pagehide', onHide)
     }

@@ -1,10 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check } from 'lucide-react'
+import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check, ShieldCheck, Lock } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 import { Loader } from '@/components/Loader'
 import { EmptyState } from '@/components/EmptyState'
 
-type User = { id: string; email: string; nombre: string; created_at: string; last_sign_in_at: string | null }
+type User = { id: string; email: string; nombre: string; created_at: string; last_sign_in_at: string | null; rol?: string }
 
 const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
 
@@ -17,21 +18,30 @@ export default function UsuariosPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [soyAdmin, setSoyAdmin] = useState(false)
   useEffect(() => { fetchUsers() }, [])
 
   async function fetchUsers() {
     setLoading(true)
-    const res = await fetch('/api/list-users')
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    const res = await fetch('/api/list-users', { headers: token ? { Authorization: `Bearer ${token}` } : {} })
     const json = await res.json()
-    setUsers(json.users ?? [])
+    const list: User[] = json.users ?? []
+    setUsers(list)
+    // Si aún nadie tiene rol (columna sin crear), tratamos a todos como admin (transición).
+    const hayRoles = list.some(u => u.rol)
+    const yo = list.find(u => u.id === session?.user?.id)
+    setSoyAdmin(!hayRoles || yo?.rol === 'admin')
     setLoading(false)
   }
 
   async function createUser(e: React.FormEvent) {
     e.preventDefault(); setError(''); setSaving(true)
+    const { data: { session } } = await supabase.auth.getSession()
     const res = await fetch('/api/create-user', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
       body: JSON.stringify(form),
     })
     const json = await res.json()
@@ -51,10 +61,16 @@ export default function UsuariosPage() {
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Asesores</h1>
           <p style={{ fontSize: 14, color: '#9aaba5', margin: 0 }}>Gestiona los usuarios con acceso al panel</p>
         </div>
-        <button onClick={() => { setShowModal(true); setError('') }}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 13, background: '#0F7A63', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-          <UserPlus size={15} /> Nuevo asesor
-        </button>
+        {soyAdmin ? (
+          <button onClick={() => { setShowModal(true); setError('') }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 13, background: '#0F7A63', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <UserPlus size={15} /> Nuevo asesor
+          </button>
+        ) : (
+          <div title="Solo un administrador puede crear asesores" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 13, background: '#f0f4f1', color: '#9aaba5', fontSize: 13, fontWeight: 600 }}>
+            <Lock size={14} /> Solo administradores
+          </div>
+        )}
       </div>
 
       {success && (
@@ -72,7 +88,7 @@ export default function UsuariosPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr>
-                {['Asesor', 'Correo', 'Alta'].map(h => (
+                {['Asesor', 'Correo', 'Rol', 'Alta'].map(h => (
                   <th key={h} style={{ fontSize: 11, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0 12px 14px', textAlign: 'left' }}>{h}</th>
                 ))}
               </tr>
@@ -93,6 +109,15 @@ export default function UsuariosPage() {
                       <Mail size={12} color="#9aaba5" />
                       <span style={{ fontSize: 13.5, color: '#6b7a76' }}>{u.email}</span>
                     </div>
+                  </td>
+                  <td style={{ padding: '14px 12px' }}>
+                    {u.rol === 'admin' ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: '#0F7A63', background: '#e3f1ec', padding: '3px 10px', borderRadius: 999 }}>
+                        <ShieldCheck size={12} /> Admin
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#6b7a76', background: '#f0f4f1', padding: '3px 10px', borderRadius: 999 }}>Asesor</span>
+                    )}
                   </td>
                   <td style={{ padding: '14px 12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

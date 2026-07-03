@@ -1,17 +1,19 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET() {
-  const cookieStore = await cookies()
+const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
+export async function GET(req: NextRequest) {
+  const token = req.headers.get('Authorization')?.replace('Bearer ', '')
+  if (!token) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabase = createClient(URL, ANON, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false },
+  })
+
+  const { data: { user } } = await supabase.auth.getUser(token)
   if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
   const { data, error } = await supabase.from('asesores').select('*').order('created_at', { ascending: false })

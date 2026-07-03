@@ -33,3 +33,14 @@ create policy "web_eventos_select" on web_eventos
 -- necesita además el GRANT a nivel de tabla o las inserciones dan error 42501.
 grant insert on public.web_eventos to anon, authenticated;
 grant select on public.web_eventos to authenticated;
+
+-- Columnas ampliadas (fuente/campaña, ubicación, comportamiento y embudo).
+-- Seguro de ejecutar varias veces: 'if not exists'.
+alter table web_eventos add column if not exists referrer     text;
+alter table web_eventos add column if not exists utm_source   text;
+alter table web_eventos add column if not exists utm_medium   text;
+alter table web_eventos add column if not exists utm_campaign text;
+alter table web_eventos add column if not exists pais         text;
+alter table web_eventos add column if not exists ciudad       text;
+alter table web_eventos add column if not exists visitante    text;   -- 'nuevo' | 'recurrente'
+alter table web_eventos add column if not exists dur          int;    -- duración de la sesión (segundos)
