@@ -61,6 +61,13 @@ export default function DkvLayout({ children }: { children: React.ReactNode }) {
       <link rel="preconnect" href="https://randomuser.me" crossOrigin="" />
       <link rel="dns-prefetch" href="https://images.unsplash.com" />
       <link rel="dns-prefetch" href="https://randomuser.me" />
+      {/* Precarga de la imagen del hero (elemento LCP) con prioridad alta */}
+      <link
+        rel="preload"
+        as="image"
+        href="https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=1100&q=80"
+        fetchPriority="high"
+      />
       <JsonLd data={[orgLd, websiteLd]} />
       {children}
     </>

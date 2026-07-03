@@ -29,9 +29,11 @@ export default function AnaliticaPage() {
   const [rango, setRango] = useState<Rango>(7)
   const [device, setDevice] = useState<Device>('todos')
   const [path, setPath] = useState<string>('')
+  const [ahora, setAhora] = useState(0) // sello de tiempo capturado al cargar (evita impureza en render)
 
   useEffect(() => {
     async function load() {
+      setAhora(Date.now())
       const desde = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString()
       const { data } = await supabase
         .from('web_eventos')
@@ -47,14 +49,14 @@ export default function AnaliticaPage() {
 
   // Filtro por rango de fechas y dispositivo
   const filtrados = useMemo(() => {
-    const corte = Date.now() - rango * 24 * 3600 * 1000
+    const corte = (ahora || Date.parse(eventos[0]?.created_at ?? '') || 0) - rango * 24 * 3600 * 1000
     return eventos.filter(e => {
       if (new Date(e.created_at).getTime() < corte) return false
       if (device === 'escritorio' && esMovil(e.vw)) return false
       if (device === 'movil' && !esMovil(e.vw)) return false
       return true
     })
-  }, [eventos, rango, device])
+  }, [eventos, rango, device, ahora])
 
   // Páginas ordenadas por nº de visitas (para el selector y el mapa de calor)
   const paginas = useMemo(() => {

@@ -28,3 +28,8 @@ create policy "web_eventos_insert" on web_eventos
 -- Solo los usuarios logueados (asesores) pueden LEER la analítica.
 create policy "web_eventos_select" on web_eventos
   for select to authenticated using (true);
+
+-- IMPORTANTE: en este Supabase las políticas RLS no bastan; el rol anónimo
+-- necesita además el GRANT a nivel de tabla o las inserciones dan error 42501.
+grant insert on public.web_eventos to anon, authenticated;
+grant select on public.web_eventos to authenticated;
