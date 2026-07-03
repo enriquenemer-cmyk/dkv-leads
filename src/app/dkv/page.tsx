@@ -543,9 +543,19 @@ export default function DKVClone() {
         .btn-white:hover{transform:translateY(-2px);box-shadow:0 12px 26px -10px rgba(0,0,0,.25)}
         .btn-out:hover{background:${C.teal}!important;color:#fff!important}
         .btn-out-w:hover{background:#fff!important;color:${C.limeDark}!important}
-        .card:hover{transform:translateY(-8px);box-shadow:0 30px 60px -28px rgba(9,87,81,.34)!important;border-color:#d5e0da!important}
+        .card:hover{transform:translateY(-8px);box-shadow:0 34px 70px -26px rgba(9,87,81,.4)!important;border-color:#d5e0da!important}
         .card:hover .card-arrow{transform:translateX(4px)}
         .card-arrow{transition:transform .2s}
+        /* Zoom suave de imágenes en tarjetas */
+        .zoomimg{transition:transform .6s cubic-bezier(.22,1,.36,1)}
+        .card:hover .zoomimg{transform:scale(1.07)}
+        /* Brillo que barre los botones al pasar el ratón */
+        .btn-red,.btn-teal,.btn-white{position:relative;overflow:hidden}
+        .btn-red::after,.btn-teal::after,.btn-white::after{content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:none}
+        .btn-red:hover::after,.btn-teal:hover::after,.btn-white:hover::after{animation:shine .8s ease}
+        @keyframes shine{to{left:150%}}
+        /* Entrada con leve escala para las secciones reveladas */
+        .trust-row span{transition:color .2s}
         .foot a{transition:color .15s}
         .foot a:hover{color:#fff!important}
         .soc:hover{background:${C.lime}!important;color:#fff!important;transform:translateY(-3px)}
@@ -773,9 +783,9 @@ export default function DKVClone() {
               <button onClick={() => scrollTo('medico')} className="btn-glass" style={{ ...solid('rgba(255,255,255,.14)'), border: '1.5px solid rgba(255,255,255,.4)', backdropFilter: 'blur(10px)', padding: '16px 30px', fontSize: 16 }}>Ver cuadro médico</button>
             </div>
             <div className="h-rise d4" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-              {[{ n: '+2M', l: 'Asegurados' }, { n: '51.000+', l: 'Médicos y centros' }, { n: '50 años', l: 'De experiencia' }].map(s => (
+              {[{ end: 2, suf: 'M', pre: '+', l: 'Asegurados' }, { end: 51000, suf: '+', pre: '', l: 'Médicos y centros' }, { end: 50, suf: '', pre: '', l: 'Años de experiencia' }].map(s => (
                 <div key={s.l} style={{ padding: '15px 24px', borderRadius: 16, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.18)', backdropFilter: 'blur(10px)', minWidth: 118 }}>
-                  <div style={{ fontSize: 27, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 }}>{s.n}</div>
+                  <div style={{ fontSize: 27, fontWeight: 900, letterSpacing: '-0.02em', lineHeight: 1 }}><CountUp end={s.end} suffix={s.suf} prefix={s.pre} /></div>
                   <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.7)', fontWeight: 600, marginTop: 6 }}>{s.l}</div>
                 </div>
               ))}
@@ -798,6 +808,23 @@ export default function DKVClone() {
             <button onClick={() => scrollTo('calcula')} className="btn-red" style={solid(C.red)}>Calcula tu seguro</button>
             <button onClick={() => scrollTo('medico')} className="btn-teal" style={solid(C.teal)}>Cuadro médico</button>
           </div>
+        </div>
+      </div>
+
+      {/* ═══ SELLOS DE CONFIANZA ═══ */}
+      <div style={{ background: '#fff', borderBottom: `1px solid ${C.border}` }}>
+        <div className="pad trust-row" style={{ maxWidth: 1240, margin: '0 auto', padding: '22px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'clamp(18px,4vw,52px)', flexWrap: 'wrap' }}>
+          {[
+            { icon: ShieldCheck, t: 'Datos protegidos (RGPD)' },
+            { icon: Check, t: 'Sin permanencia' },
+            { icon: Clock, t: 'Respuesta en 24 h' },
+            { icon: Award, t: '50 años de experiencia' },
+            { icon: Star, t: '4,8 ★ en Google' },
+          ].map(({ icon: Ic, t }) => (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 14, fontWeight: 700, color: C.taupe, whiteSpace: 'nowrap' }}>
+              <span style={{ width: 30, height: 30, borderRadius: 9, background: C.cream, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Ic size={16} style={{ color: C.teal }} /></span>{t}
+            </span>
+          ))}
         </div>
       </div>
 
@@ -930,7 +957,7 @@ export default function DKVClone() {
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.title} delay={i * 0.07}>
                 <div className="card" style={{ background: '#fff', borderRadius: 20, border: `1px solid ${p.featured ? C.lime : C.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: p.featured ? '0 18px 40px -22px rgba(152,169,42,.5)' : '0 2px 12px rgba(0,0,0,.03)' }}>
-                  <div style={{ height: 132, position: 'relative', backgroundImage: `linear-gradient(180deg, rgba(9,87,81,.05), rgba(9,87,81,.42)), url(${DETAIL_IMG[p.title] || IMG.network})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                  <div className="zoomimg" style={{ height: 132, position: 'relative', backgroundImage: `linear-gradient(180deg, rgba(9,87,81,.05), rgba(9,87,81,.42)), url(${DETAIL_IMG[p.title] || IMG.network})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                     {p.promo && <span style={{ position: 'absolute', top: 12, left: 12, background: C.red, color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 11px', borderRadius: 999 }}>¡PROMO {p.promo}!</span>}
                     {p.featured && <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 10.5, fontWeight: 800, color: C.limeDark, background: 'rgba(255,255,255,.94)', padding: '4px 10px', borderRadius: 999 }}>MÁS ELEGIDO</span>}
                   </div>
@@ -984,7 +1011,17 @@ export default function DKVClone() {
             <div style={{ textAlign: 'center', marginBottom: 52 }}>
               <Kicker><Star size={13} fill={C.teal} stroke="none" /> Opiniones reales</Kicker>
               <h2 style={{ fontSize: 'clamp(28px,3.4vw,40px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '16px 0 12px' }}>Lo que dicen nuestros asegurados</h2>
-              <p style={{ fontSize: 17, color: C.taupe, maxWidth: 540, margin: '0 auto' }}>Miles de familias ya viven su salud sin listas de espera. Estas son algunas de sus historias.</p>
+              <p style={{ fontSize: 17, color: C.taupe, maxWidth: 540, margin: '0 auto 22px' }}>Miles de familias ya viven su salud sin listas de espera. Estas son algunas de sus historias.</p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: '#fff', border: `1px solid ${C.border}`, borderRadius: 999, padding: '10px 20px', boxShadow: '0 10px 30px -18px rgba(9,87,81,.4)' }}>
+                <svg width="22" height="22" viewBox="0 0 48 48" style={{ flexShrink: 0 }}><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.1 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <b style={{ fontSize: 17, color: C.text }}>4,8</b>
+                    <span style={{ display: 'flex', gap: 1 }}>{[...Array(5)].map((_, i) => <Star key={i} size={13} fill="#f5a623" stroke="none" />)}</span>
+                  </span>
+                  <span style={{ fontSize: 12, color: C.taupe, fontWeight: 600 }}>+2.000 opiniones en Google</span>
+                </div>
+              </div>
             </div>
           </Reveal>
           <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
@@ -1181,7 +1218,7 @@ export default function DKVClone() {
           {ARTICLES.map((a, i) => (
             <Reveal key={a.title} delay={i * 0.07}>
               <button onClick={() => goArticle(a.title)} className="card dkv-a" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 0, boxSizing: 'border-box', boxShadow: '0 2px 12px rgba(0,0,0,.03)', transition: 'transform .2s, box-shadow .2s, border-color .2s' }}>
-                <div style={{ height: 168, backgroundImage: `url(${a.img})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
+                <div className="zoomimg" style={{ height: 168, backgroundImage: `url(${a.img})`, backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative', flexShrink: 0 }}>
                   <span style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,255,255,.94)', color: C.teal, fontSize: 11, fontWeight: 800, padding: '4px 11px', borderRadius: 999, backdropFilter: 'blur(4px)' }}>{a.category}</span>
                 </div>
                 <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', flex: 1 }}>
@@ -1253,8 +1290,15 @@ export default function DKVClone() {
         </div>
       </section>
 
+      {/* Separador onda hacia el footer */}
+      <div style={{ background: '#fff', lineHeight: 0 }}>
+        <svg viewBox="0 0 1440 90" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 'clamp(38px,6vw,78px)' }}>
+          <path fill={C.tealDeep} d="M0,42 C320,92 620,8 900,34 C1140,56 1300,78 1440,44 L1440,90 L0,90 Z" />
+        </svg>
+      </div>
+
       {/* ═══ FOOTER ═══ */}
-      <footer className="foot" style={{ background: C.tealDeep, color: 'rgba(255,255,255,.72)' }}>
+      <footer className="foot" style={{ background: C.tealDeep, color: 'rgba(255,255,255,.72)', marginTop: -1 }}>
         <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '62px 24px 36px' }}>
           <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 40 }}>
             {[
