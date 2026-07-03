@@ -653,6 +653,8 @@ export default function DKVClone() {
           .mcarousel{display:flex!important;grid-template-columns:none!important;overflow-x:auto;gap:14px!important;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:12px!important;scrollbar-width:none}
           .mcarousel::-webkit-scrollbar{display:none}
           .mcarousel>*{flex:0 0 82%!important;min-width:0;scroll-snap-align:start}
+          /* Secciones informativas ocultas en móvil (siguen en escritorio y SEO) */
+          .hide-mobile{display:none!important}
           /* Pastillas de cifras y columnas del footer: 2 por fila en móvil (mitad de alto) */
           .stat-grid{grid-template-columns:1fr 1fr!important;gap:12px!important}
           .foot-grid{grid-template-columns:1fr 1fr!important;gap:26px 20px!important}
@@ -1115,7 +1117,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ MÉDICOS Y CENTROS PROPIOS ═══ */}
-      <section className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
+      <section className="pad hide-mobile" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
         <div className="g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 54, alignItems: 'center' }}>
           <Reveal style={{ borderRadius: 24, overflow: 'hidden' }}>
             <div style={{ minHeight: 380, backgroundImage: `url(${IMG.network})`, backgroundSize: 'cover', backgroundPosition: 'center', boxShadow: '0 30px 60px -30px rgba(9,87,81,.4)' }} />
@@ -1141,7 +1143,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ DKV EN CIFRAS (gráficos animados) ═══ */}
-      <section style={{ background: `linear-gradient(180deg, #fff, ${C.grayBg})`, position: 'relative', overflow: 'hidden' }}>
+      <section className="hide-mobile" style={{ background: `linear-gradient(180deg, #fff, ${C.grayBg})`, position: 'relative', overflow: 'hidden' }}>
         <div style={{ opacity: 0.25 }}><PulseLine height={54} /></div>
         <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '40px 24px 88px' }}>
           <Reveal>
@@ -1223,7 +1225,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ APP ACTIVA DKV ═══ */}
-      <section style={{ background: `linear-gradient(135deg, ${C.cream}, #fff)` }}>
+      <section className="hide-mobile" style={{ background: `linear-gradient(135deg, ${C.cream}, #fff)` }}>
         <div className="pad g2" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,76px) 24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 54, alignItems: 'center' }}>
           <Reveal>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: C.teal, fontWeight: 800, fontSize: 13.5, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 14 }}><Smartphone size={16} /> App Activa DKV</span>
@@ -1256,7 +1258,7 @@ export default function DKVClone() {
       </section>
 
       {/* ═══ BLOG ═══ */}
-      <section id="blog" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,88px) 24px' }}>
+      <section id="blog" className="pad hide-mobile" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,88px) 24px' }}>
         <Reveal>
           <div className="band-col" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20, flexWrap: 'wrap', marginBottom: 48 }}>
             <div>
