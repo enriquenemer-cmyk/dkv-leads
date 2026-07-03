@@ -148,7 +148,7 @@ export default async function SeguroPage({ params }: { params: Promise<{ slug: s
       {/* Footer */}
       <footer style={{ background: C.tealDeep, color: 'rgba(255,255,255,.6)', padding: '30px 24px', textAlign: 'center', fontSize: 13 }}>
         <Link href="/dkv" style={{ color: 'rgba(255,255,255,.85)', textDecoration: 'none', fontWeight: 600 }}>← Volver a DKV Seguros</Link>
-        <div style={{ marginTop: 8 }}>© 2026 DKV · Réplica visual con fines demostrativos.</div>
+        <div style={{ marginTop: 8 }}>© 2026 DKV Seguros de Salud · Todos los derechos reservados.</div>
       </footer>
 
       <style>{`@media(max-width:820px){.seguro-grid{grid-template-columns:1fr!important}.cov-grid{grid-template-columns:1fr!important}.rel-grid{grid-template-columns:1fr!important}}`}</style>
