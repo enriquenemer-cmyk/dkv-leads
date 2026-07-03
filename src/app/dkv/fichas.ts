@@ -55,7 +55,7 @@ export const SEGUROS: Ficha[] = [
     desc: 'Elige entre más de 51.000 profesionales y 1.000 centros médicos concertados por toda España.',
     coverage: ['Libre elección dentro de la red DKV', 'Especialistas sin volante en muchos casos', 'Clínicas y centros por toda España', 'Segunda opinión médica', 'Videoconsulta con tu médico', 'Sin adelantar dinero'],
     idealFor: 'Quien quiere elegir entre una amplia red de médicos concertados sin complicaciones.' },
-  { group: 'Seguros de salud', title: 'Seguros con reembolso', icon: Umbrella, price: '55€/mes', img: IMG.doctor,
+  { group: 'Seguros de salud', title: 'Seguros con reembolso', icon: Umbrella, price: '55€/mes', img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1400&q=80',
     tagline: 'Libertad total para elegir a tu médico',
     desc: 'Elige libremente cualquier médico o clínica, dentro o fuera del cuadro, y te reembolsamos los gastos.',
     coverage: ['Cualquier médico o clínica, también privados', 'Reembolso de hasta el 80-90% de los gastos', 'Compatible con el cuadro médico DKV', 'Cobertura nacional e internacional', 'Habitación individual en hospital', 'Perfecto para segundas opiniones'],

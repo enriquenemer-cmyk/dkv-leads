@@ -190,7 +190,7 @@ const DETAIL_IMG: Record<string, string> = {
   'Seguros sin copago': IMG.doctor,
   'Seguros con copago': IMG.network,
   'Seguros de cuadro médico': IMG.digital,
-  'Seguros con reembolso': IMG.doctor,
+  'Seguros con reembolso': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1000&q=80',
   'Seguro DKV Salud': IMG.wellness,
   'DKV Famedic': IMG.familyKids,
   'DKV Visado': IMG.team,
