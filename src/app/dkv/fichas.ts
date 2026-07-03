@@ -1,6 +1,6 @@
 import {
   ShieldCheck, Timer, Stethoscope, Umbrella, Smile, Feather, Home, HeartPulse,
-  Scale, Wrench, Users, Gift, HardHat, FileText,
+  Scale, Wrench, Users, Gift, HardHat, FileText, Plane, Globe,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -70,6 +70,11 @@ export const SEGUROS: Ficha[] = [
     desc: 'Asistencia médica ambulatoria familiar: hasta 8 miembros de la familia por 25,50€ al mes (mismo precio para todos), sin límite de edad ni declaración de salud previa.',
     coverage: ['Hasta 8 personas por el mismo precio', 'Sin límite de edad', 'Sin declaración de salud previa', 'Consultas ilimitadas en 7 especialidades', 'Ginecología con revisión anual (citología y ecografía)', 'Medicina general, pediatría y enfermería'],
     idealFor: 'Familias que quieren cubrir a todos sus miembros con un seguro sencillo y económico.' },
+  { group: 'Seguros de salud', title: 'DKV Visado', icon: Plane, promo: 'VISADO', img: IMG.team,
+    tagline: 'Tu mejor opción para tramitar tu visado en España',
+    desc: 'El seguro de salud que cumple todos los requisitos para tramitar tu visado o permiso de residencia en España: sin copagos, sin carencias y con certificado válido para tus trámites. Devolución garantizada si tu visado es denegado.',
+    coverage: ['Sin copagos y sin periodos de carencia', 'Cobertura médica completa: +51.000 especialistas y 1.000 centros', 'Atención primaria, urgencias y ambulancia 24h', 'Hospitalización y cirugía incluidas', 'Cobertura en el extranjero hasta 180 días y 30.000€', 'Servicio dental incluido', 'Póliza renovable y vitalicia desde el 3er año', 'Certificado válido para tus trámites de visado', 'Devolución garantizada si tu visado es denegado'],
+    idealFor: 'Extranjeros que necesitan un seguro de salud que cumpla los requisitos para su visado o permiso de residencia en España.' },
   // ── Otros seguros ──
   { group: 'Otros seguros', title: 'Seguros dentales', icon: Smile, price: '9€/mes', img: IMG.dental,
     tagline: 'La mayor red dental de España',
@@ -81,6 +86,11 @@ export const SEGUROS: Ficha[] = [
     desc: 'Tranquilidad para ti y los tuyos, con la gestión integral del servicio y todos los trámites incluidos.',
     coverage: ['Gestión integral del servicio', 'Asesoramiento y trámites incluidos', 'Cobertura para toda la familia', 'Asistencia en viaje', 'Tus seres queridos, sin preocupaciones'],
     idealFor: 'Quien quiere dejar todo previsto y no cargar a su familia con gestiones.' },
+  { group: 'Otros seguros', title: 'Seguro de repatriación', icon: Globe, img: IMG.business,
+    tagline: 'Repatriación garantizada a tu país de origen',
+    desc: 'Pensado para extranjeros residentes en España: garantiza el traslado y la repatriación al país de origen, con todos los trámites internacionales resueltos para que tu familia no tenga que preocuparse de nada.',
+    coverage: ['Traslado y repatriación al país de origen', 'Gestión integral de los trámites internacionales', 'Cobertura para toda la familia', 'Acompañamiento y asistencia a los familiares', 'Asistencia 24h en todo el mundo', 'Complemento ideal del seguro de decesos'],
+    idealFor: 'Extranjeros residentes en España que quieren garantizar la repatriación a su país de origen.' },
   { group: 'Otros seguros', title: 'Seguros de vida', icon: Umbrella, price: '8€/mes', img: IMG.life,
     tagline: 'La tranquilidad de tu familia, asegurada',
     desc: 'Protege económicamente a tu familia pase lo que pase, con coberturas adaptadas a tus necesidades.',
@@ -98,9 +108,9 @@ export const SEGUROS: Ficha[] = [
     coverage: ['Cuadro médico con +51.000 profesionales', 'Especialistas y pruebas diagnósticas', 'Hospitalización y urgencias 24h', 'Videoconsulta para no parar tu actividad', 'Deducible en tu declaración (según normativa)', 'Hasta 35% de descuento'],
     idealFor: 'Autónomos que quieren cuidarse rápido, sin depender de la lista de espera pública y con ventaja fiscal.' },
   { group: 'Autónomos', title: 'Seguro de baja laboral', icon: Umbrella, price: '19€/mes', img: IMG.network,
-    tagline: 'Ingresos garantizados si no puedes trabajar',
-    desc: 'Si una enfermedad o accidente te impide trabajar, recibes una indemnización diaria para cubrir tus ingresos.',
-    coverage: ['Indemnización diaria por baja', 'Cobertura por enfermedad y accidente', 'Compatible con la prestación pública', 'Capital extra por hospitalización', 'Tú eliges el importe diario', 'Protege tu tesorería'],
+    tagline: 'Un subsidio diario si no puedes trabajar',
+    desc: 'Que una baja no te preocupe: si una enfermedad o un accidente te impiden trabajar, DKV te cubre con un subsidio diario para que puedas hacer frente a tus gastos.',
+    coverage: ['Subsidio diario si no puedes trabajar', 'Cobertura 24h por accidente y enfermedad', 'Desde el primer día y hasta año y medio', 'Garantía extra por hospitalización', 'Prestación por parto o adopción', 'Ventajas fiscales para autónomos'],
     idealFor: 'Autónomos cuyos ingresos dependen 100% de su actividad y no pueden permitirse parar sin cobrar.' },
   { group: 'Autónomos', title: 'Seguro de accidentes', icon: ShieldCheck, price: '11€/mes', img: IMG.doctor,
     tagline: 'Protección 24 horas, dentro y fuera del trabajo',

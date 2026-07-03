@@ -18,7 +18,7 @@ const FAQ_LD = {
 import {
   Phone, User, ChevronDown, Menu, X, Search, Clock, Monitor, Award, Stethoscope,
   Check, ArrowRight, Star, Smartphone, CalendarDays, PhoneCall,
-  Share2, AtSign, Globe, MessageCircle, ShieldCheck, Heart, Plus, Loader2, Sparkles,
+  Share2, AtSign, Globe, MessageCircle, ShieldCheck, Heart, Plus, Loader2, Sparkles, Plane,
   Activity, TrendingUp, ThumbsUp, Timer, HeartPulse,
   Smile, Home, Feather, Quote, Minus, Umbrella,
   Users, Gift, HardHat, FileText, Wrench, Scale,
@@ -119,6 +119,13 @@ const PRODUCTS = [
     coverage: ['Hasta 8 personas por el mismo precio', 'Sin límite de edad', 'Sin declaración de salud previa', 'Consultas ilimitadas en 7 especialidades', 'Ginecología con revisión anual', 'Medicina general, pediatría y enfermería'],
     idealFor: 'Familias que quieren cubrir a todos sus miembros con un seguro sencillo y económico.',
   },
+  {
+    title: 'DKV Visado', promo: 'VISADO', icon: Plane,
+    desc: 'El seguro de salud que cumple todos los requisitos para tramitar tu visado o residencia en España, con certificado válido para tus trámites.',
+    tagline: 'Tu mejor opción para tramitar tu visado en España',
+    coverage: ['Sin copagos y sin periodos de carencia', 'Cobertura médica completa: +51.000 especialistas', 'Atención primaria, urgencias y ambulancia 24h', 'Hospitalización y cirugía incluidas', 'Cobertura en el extranjero hasta 180 días y 30.000€', 'Servicio dental incluido', 'Certificado válido para tu visado', 'Devolución garantizada si tu visado es denegado'],
+    idealFor: 'Extranjeros que necesitan un seguro de salud que cumpla los requisitos para su visado o residencia en España.',
+  },
 ]
 
 const OTHER = [
@@ -133,6 +140,12 @@ const OTHER = [
     tagline: 'Todo resuelto en los momentos difíciles',
     coverage: ['Gestión integral del servicio', 'Asesoramiento y trámites incluidos', 'Cobertura para toda la familia', 'Asistencia en viaje', 'Tus seres queridos, sin preocupaciones'],
     idealFor: 'Quien quiere dejar todo previsto y no cargar a su familia con gestiones.',
+  },
+  {
+    title: 'Seguro de repatriación', icon: Globe, desc: 'Repatriación garantizada a tu país de origen, para extranjeros residentes en España.',
+    tagline: 'Repatriación garantizada a tu país de origen',
+    coverage: ['Traslado y repatriación al país de origen', 'Gestión integral de los trámites internacionales', 'Cobertura para toda la familia', 'Acompañamiento y asistencia a los familiares', 'Asistencia 24h en todo el mundo', 'Complemento ideal del seguro de decesos'],
+    idealFor: 'Extranjeros residentes en España que quieren garantizar la repatriación a su país de origen.',
   },
   {
     title: 'Seguros de vida', icon: Umbrella, desc: 'Protege económicamente a tu familia pase lo que pase.',
@@ -180,8 +193,10 @@ const DETAIL_IMG: Record<string, string> = {
   'Seguros con reembolso': IMG.doctor,
   'Seguro DKV Salud': IMG.wellness,
   'DKV Famedic': IMG.familyKids,
+  'DKV Visado': IMG.team,
   'Seguros dentales': IMG.dental,
   'Seguros de decesos': IMG.funeral,
+  'Seguro de repatriación': IMG.business,
   'Seguros de vida': IMG.life,
   'Seguros de hogar': IMG.home,
   'Salud para autónomos': IMG.doctor,
