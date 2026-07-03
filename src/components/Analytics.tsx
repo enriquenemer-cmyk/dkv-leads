@@ -26,6 +26,30 @@ export function trackLead(value?: number) {
   } catch { /* noop */ }
 }
 
+type WinFn = { gtag?: (...a: unknown[]) => void; fbq?: (...a: unknown[]) => void }
+
+/* Evento genérico a GA4 (para micro-conversiones que optimizan las pujas). */
+export function trackEvent(name: string, params: Record<string, unknown> = {}) {
+  if (typeof window === 'undefined') return
+  try { (window as unknown as WinFn).gtag?.('event', name, params) } catch { /* noop */ }
+}
+
+/* Clic en teléfono o WhatsApp → señal de contacto para Google Ads + Meta.
+   En móvil de pago, muchas conversiones llegan por llamada/WhatsApp: medirlas es clave. */
+export function trackContact(method: 'phone' | 'whatsapp') {
+  trackEvent('contact', { method })
+  try { (window as unknown as WinFn).fbq?.('track', 'Contact', { method }) } catch { /* noop */ }
+  const cid = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
+  const clabel = process.env.NEXT_PUBLIC_GOOGLE_ADS_CONTACT_LABEL
+  if (cid && clabel) trackEvent('conversion', { send_to: `${cid}/${clabel}` })
+}
+
+/* Primer contacto con el formulario → intención de lead (para remarketing y pujas). */
+export function trackFormStart() {
+  trackEvent('form_start')
+  try { (window as unknown as WinFn).fbq?.('trackCustom', 'FormStart') } catch { /* noop */ }
+}
+
 export default function Analytics() {
   const [consent, setConsent] = useState<'accepted' | 'rejected' | null>(null)
   const [ready, setReady] = useState(false)
@@ -69,6 +93,17 @@ export default function Analytics() {
           t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,
           'script','https://connect.facebook.net/en_US/fbevents.js');
           fbq('init', '${PIXEL_ID}'); fbq('track', 'PageView');
+        `}</Script>
+      )}
+
+      {/* Microsoft Clarity — mapas de calor, mapas de scroll y grabaciones de sesión */}
+      {load && CLARITY_ID && (
+        <Script id="ms-clarity" strategy="afterInteractive">{`
+          (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "${CLARITY_ID}");
         `}</Script>
       )}
 

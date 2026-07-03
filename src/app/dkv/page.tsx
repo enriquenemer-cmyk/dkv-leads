@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import JsonLd from '@/components/JsonLd'
+import { trackContact, trackFormStart } from '@/components/Analytics'
 import { slugify, FAQS } from './fichas'
 
 const FAQ_LD = {
@@ -468,17 +469,39 @@ export default function DKVClone() {
 
   // ── SEM: captura del origen del lead (UTM, gclid, fbclid) + keyword para message-match ──
   const attribRef = useRef('')
+  const formStarted = useRef(false)
+  const onFormFocus = () => { if (!formStarted.current) { formStarted.current = true; trackFormStart() } }
   const [kw, setKw] = useState('')
+  const [heroCopy, setHeroCopy] = useState<{ h1?: React.ReactNode; sub?: React.ReactNode } | null>(null)
   useEffect(() => {
     try {
       const sp = new URLSearchParams(window.location.search)
       const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid']
       const parts = keys.map(k => { const v = sp.get(k); return v ? `${k}=${v}` : '' }).filter(Boolean)
+      // Atribución enriquecida: procedencia y dispositivo (útil para segmentar leads de pago)
+      let refHost = ''
+      try { refHost = document.referrer ? new URL(document.referrer).hostname : '' } catch { refHost = '' }
+      if (refHost && !refHost.includes('dkv-ergo')) parts.push(`ref=${refHost}`)
+      parts.push(`disp=${window.innerWidth < 768 ? 'movil' : 'escritorio'}`)
       const stored = sessionStorage.getItem('dkv-attrib')
-      if (parts.length && !stored) sessionStorage.setItem('dkv-attrib', parts.join(' '))
+      if (!stored) sessionStorage.setItem('dkv-attrib', parts.join(' '))
       attribRef.current = stored || parts.join(' ')
+
+      // Message-match: adapta hero y keyword al anuncio
       const k = (sp.get('kw') || sp.get('utm_term') || '').trim()
       if (k) setKw(k)
+      const hay = `${k} ${sp.get('utm_campaign') || ''} ${sp.get('utm_content') || ''}`.toLowerCase()
+      const lime = { color: C.lime }
+      const themes: { m: RegExp; h1: React.ReactNode; sub: React.ReactNode }[] = [
+        { m: /dental|boca|diente|ortodon/, h1: <>Tu seguro <span style={lime}>dental DKV</span></>, sub: <>Cuida tu boca con la mayor red dental de España. Sin esperas y hasta un <b style={lime}>35% de descuento</b>.</> },
+        { m: /famil|hijo|niñ|pareja/, h1: <>Protege a <span style={lime}>toda tu familia</span> con DKV</>, sub: <>Un seguro de salud para todos los tuyos: hasta 8 miembros, sin listas de espera y con hasta un <b style={lime}>35% de descuento</b>.</> },
+        { m: /sin copago/, h1: <>Seguro de salud <span style={lime}>sin copago</span></>, sub: <>Paga una cuota fija y olvídate: sin abonar nada por cada visita. Cobertura desde el primer día.</> },
+        { m: /reembolso|libre elecci/, h1: <>Elige a tu médico con el <span style={lime}>seguro de reembolso</span></>, sub: <>Acude a cualquier médico o clínica y te devolvemos los gastos. Libertad total, con DKV.</> },
+        { m: /aut[oó]nomo|freelance|desgrav/, h1: <>Seguro de salud para <span style={lime}>autónomos</span></>, sub: <>Cuídate y desgrava: tu seguro DKV como gasto deducible. Cobertura inmediata y sin esperas.</> },
+        { m: /barat|econ[oó]mic|precio|desde/, h1: <>Seguro de salud DKV <span style={lime}>desde 25,50€/mes</span></>, sub: <>La mejor medicina privada al mejor precio. Calcula el tuyo en 1 minuto, sin compromiso.</> },
+      ]
+      const t = themes.find(x => x.m.test(hay))
+      if (t) setHeroCopy({ h1: t.h1, sub: t.sub })
     } catch { /* noop */ }
   }, [])
 
@@ -622,13 +645,13 @@ export default function DKVClone() {
       <div style={{ position: 'fixed', top: 0, left: 0, height: 3, width: `${prog}%`, background: `linear-gradient(90deg, ${C.teal}, ${C.lime})`, zIndex: 100, transition: 'width .12s ease', pointerEvents: 'none' }} />
 
       {/* Botón flotante WhatsApp */}
-      <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" target="_blank" rel="noopener noreferrer" className="wa-float dkv-a" aria-label="Escríbenos por WhatsApp" style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 85, width: 60, height: 60, borderRadius: '50%', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" className="wa-float dkv-a" aria-label="Escríbenos por WhatsApp" style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 85, width: 60, height: 60, borderRadius: '50%', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <MessageCircle size={30} color="#fff" />
       </a>
 
       {/* Barra fija móvil (SEM): click-to-call + CTA principal */}
       <div className="sem-bar" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 86, background: '#fff', borderTop: `1px solid ${C.border}`, padding: '10px 14px', gap: 10, boxShadow: '0 -8px 24px -12px rgba(0,0,0,.25)' }}>
-        <a href="tel:699669603" className="dkv-a" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', borderRadius: 12, border: `1.6px solid ${C.teal}`, color: C.teal, fontWeight: 800, fontSize: 15 }}><Phone size={17} /> Llamar</a>
+        <a href="tel:699669603" onClick={() => trackContact('phone')} className="dkv-a" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', borderRadius: 12, border: `1.6px solid ${C.teal}`, color: C.teal, fontWeight: 800, fontSize: 15 }}><Phone size={17} /> Llamar</a>
         <button onClick={() => scrollTo('calcula')} style={{ flex: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', borderRadius: 12, border: 'none', background: C.red, color: '#fff', fontWeight: 800, fontSize: 15, fontFamily: 'inherit', cursor: 'pointer' }}>Calcula tu seguro <ArrowRight size={17} /></button>
       </div>
 
@@ -673,14 +696,14 @@ export default function DKVClone() {
           </nav>
           <div style={{ flex: 1 }} />
           <div className="hide-md" style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-            <a href="tel:699669603" className="dkv-a" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            <a href="tel:699669603" onClick={() => trackContact('phone')} className="dkv-a" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               <span style={{ width: 38, height: 38, borderRadius: '50%', background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Phone size={17} style={{ color: C.teal }} /></span>
               <span style={{ lineHeight: 1.15 }}>
                 <span style={{ display: 'block', fontSize: 11, color: C.taupe }}>Quiero contratar</span>
                 <span style={{ display: 'block', fontSize: 15.5, fontWeight: 800, color: C.text, whiteSpace: 'nowrap' }}>699 669 603</span>
               </span>
             </a>
-            <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" target="_blank" rel="noopener noreferrer" className="btn-out dkv-a" style={{ ...outline(C.teal), textDecoration: 'none' }}><MessageCircle size={16} /> WhatsApp</a>
+            <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" className="btn-out dkv-a" style={{ ...outline(C.teal), textDecoration: 'none' }}><MessageCircle size={16} /> WhatsApp</a>
           </div>
           <button onClick={() => setMenuOpen(true)} aria-label="Menú" className="show-md" style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: C.teal }}><Menu size={26} /></button>
         </div>
@@ -737,8 +760,8 @@ export default function DKVClone() {
             {OTHER.map(o => (
               <button key={o.title} onClick={() => { setMenuOpen(false); goSeguro(o.title) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${C.border}`, background: 'none', border: 'none', borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: C.border, cursor: 'pointer', fontFamily: 'inherit', color: C.text, fontWeight: 600, fontSize: 14.5 }}>{o.title}<ArrowRight size={15} style={{ color: C.teal }} /></button>
             ))}
-            <a href="tel:699669603" className="dkv-a" style={{ padding: '14px 0 13px', fontWeight: 700, color: C.teal, display: 'flex', alignItems: 'center', gap: 8 }}><Phone size={16} /> 699 669 603</a>
-            <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" target="_blank" rel="noopener noreferrer" className="dkv-a" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: '#fff', borderRadius: 999, padding: '13px', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}><MessageCircle size={17} /> Escríbenos por WhatsApp</a>
+            <a href="tel:699669603" onClick={() => trackContact('phone')} className="dkv-a" style={{ padding: '14px 0 13px', fontWeight: 700, color: C.teal, display: 'flex', alignItems: 'center', gap: 8 }}><Phone size={16} /> 699 669 603</a>
+            <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" className="dkv-a" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: '#fff', borderRadius: 999, padding: '13px', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}><MessageCircle size={17} /> Escríbenos por WhatsApp</a>
             <button onClick={() => scrollTo('calcula')} className="btn-red" style={{ ...solid(C.red), justifyContent: 'center', marginTop: 10 }}>Calcula tu seguro</button>
           </div>
         </div>
@@ -773,10 +796,10 @@ export default function DKVClone() {
               <span style={{ fontSize: 13.5, fontWeight: 700 }}>4,8 · +2 millones de asegurados en España</span>
             </div>
             <h1 className="h-rise d1" style={{ fontSize: 'clamp(33px,6.6vw,76px)', fontWeight: 800, lineHeight: 1.01, letterSpacing: '-0.042em', margin: '0 0 22px', textShadow: '0 4px 40px rgba(0,0,0,.3)' }}>
-              Tu salud no espera<br />en <span style={{ color: C.lime }}>listas de espera</span>
+              {heroCopy?.h1 ?? <>Tu salud no espera<br />en <span style={{ color: C.lime }}>listas de espera</span></>}
             </h1>
             <p className="h-rise d2" style={{ fontSize: 'clamp(17px,2vw,21px)', fontWeight: 500, color: 'rgba(255,255,255,.9)', lineHeight: 1.55, margin: '0 0 38px', maxWidth: 560 }}>
-              Accede a la mejor medicina privada con DKV: <b style={{ color: '#fff' }}>+51.000 especialistas</b>, cobertura desde el primer día y hasta un <b style={{ color: C.lime }}>35% de descuento</b>.
+              {heroCopy?.sub ?? <>Accede a la mejor medicina privada con DKV: <b style={{ color: '#fff' }}>+51.000 especialistas</b>, cobertura desde el primer día y hasta un <b style={{ color: C.lime }}>35% de descuento</b>.</>}
             </p>
             <div className="h-rise d3" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 42 }}>
               <button onClick={() => scrollTo('calcula')} className="btn-red" style={{ ...solid(C.red), padding: '17px 36px', fontSize: 16.5, boxShadow: '0 18px 40px -12px rgba(221,54,54,.6)' }}>Calcula tu seguro <ArrowRight size={19} /></button>
@@ -880,7 +903,7 @@ export default function DKVClone() {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <form onSubmit={handleSubmit} style={{ background: '#fff', borderRadius: 22, padding: '32px 30px', color: C.text, boxShadow: '0 40px 90px -30px rgba(0,0,0,.55)' }}>
+            <form onSubmit={handleSubmit} onFocus={onFormFocus} style={{ background: '#fff', borderRadius: 22, padding: '32px 30px', color: C.text, boxShadow: '0 40px 90px -30px rgba(0,0,0,.55)' }}>
               <h3 style={{ fontSize: 22, fontWeight: 800, color: C.teal, margin: '0 0 4px' }}>Calcula tu seguro</h3>
               <p style={{ fontSize: 13.5, color: C.taupe, margin: '0 0 22px' }}>Rellena tus datos y te llamamos gratis.</p>
 
@@ -1056,7 +1079,7 @@ export default function DKVClone() {
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={() => scrollTo('calcula')} className="btn-white" style={solid('#fff', C.limeDark)}>Más información</button>
-            <a href="tel:699669603" className="btn-out-w dkv-a" style={{ ...outline('#fff'), borderColor: 'rgba(255,255,255,.75)' }}><Phone size={16} /> 699 669 603</a>
+            <a href="tel:699669603" onClick={() => trackContact('phone')} className="btn-out-w dkv-a" style={{ ...outline('#fff'), borderColor: 'rgba(255,255,255,.75)' }}><Phone size={16} /> 699 669 603</a>
           </div>
         </div>
       </section>
@@ -1282,7 +1305,7 @@ export default function DKVClone() {
                 <h3 style={{ fontSize: 18.5, fontWeight: 800, color: C.text, margin: '0 0 10px' }}>{title}</h3>
                 <p style={{ fontSize: 14.5, color: C.taupe, lineHeight: 1.6, margin: '0 0 22px' }}>{desc}</p>
                 {action === 'tel'
-                  ? <a href="tel:699669603" className="btn-out dkv-a" style={{ ...outline(C.teal), margin: '0 auto' }}>{cta}</a>
+                  ? <a href="tel:699669603" onClick={() => trackContact('phone')} className="btn-out dkv-a" style={{ ...outline(C.teal), margin: '0 auto' }}>{cta}</a>
                   : <button onClick={() => scrollTo('calcula')} className="btn-out" style={{ ...outline(C.teal), margin: '0 auto' }}>{cta}</button>}
               </div>
             </Reveal>

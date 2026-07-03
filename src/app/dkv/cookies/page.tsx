@@ -22,6 +22,7 @@ export default function CookiesPage() {
         <li><b>Técnicas (necesarias):</b> imprescindibles para el funcionamiento del sitio y para recordar tu decisión sobre las cookies. No requieren consentimiento.</li>
         <li><b>Analíticas (Google Analytics):</b> nos ayudan a entender de forma anónima cómo se usa la web para mejorarla. Solo se activan si las aceptas.</li>
         <li><b>Publicitarias / de medición (Meta Pixel):</b> permiten medir la eficacia de nuestras campañas. Solo se activan si las aceptas.</li>
+        <li><b>Analíticas de experiencia (Microsoft Clarity):</b> generan mapas de calor y grabaciones anónimas de navegación para ver qué contenido interesa más y mejorar la web. Solo se activan si las aceptas.</li>
       </UL>
 
       <H2>3. Consentimiento y gestión</H2>
@@ -33,7 +34,7 @@ export default function CookiesPage() {
       <P>También puedes configurar o bloquear las cookies desde los ajustes de tu navegador (Chrome, Safari, Firefox, Edge…).</P>
 
       <H2>4. Cookies de terceros</H2>
-      <P>Google (Analytics) y Meta (Pixel) tratan datos según sus propias políticas de privacidad. Te recomendamos consultarlas para conocer cómo gestionan la información.</P>
+      <P>Google (Analytics), Meta (Pixel) y Microsoft (Clarity) tratan datos según sus propias políticas de privacidad. Te recomendamos consultarlas para conocer cómo gestionan la información.</P>
 
       <H2>5. Contacto</H2>
       <P>Si tienes dudas sobre esta política, escríbenos a <a href={`mailto:${TITULAR.email}`} style={{ color: '#095751', fontWeight: 600 }}>{TITULAR.email}</a>.</P>
