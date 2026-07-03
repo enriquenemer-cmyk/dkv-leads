@@ -7,6 +7,7 @@ import { logActividad } from '@/lib/actividad'
 import { TagPill, TAG_STYLES } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
+import { WalletButton } from '@/components/WalletButton'
 import { ArrowLeft, MessageCircle, Mail, Phone, Bell, X, Plus, Calendar, Edit3, ExternalLink, Printer, ChevronDown } from 'lucide-react'
 
 const TAGS = ['caliente', 'tibio', 'frio', 'cliente'] as const
@@ -285,6 +286,9 @@ export default function LeadDetallePage() {
                   })}
                 </div>
               </div>
+
+              {/* Tarjeta de fidelización (Google Wallet) */}
+              <WalletButton lead={lead} />
             </div>
 
             {/* Col right */}

@@ -9,6 +9,8 @@ export type TipoActividad =
   | 'recordatorio_borrado'
   | 'usuario_creado'
   | 'sesion_inicio'
+  | 'wallet_enviada'
+  | 'wallet_actualizada'
 
 export async function logActividad(
   tipo: TipoActividad,

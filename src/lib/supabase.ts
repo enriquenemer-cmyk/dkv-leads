@@ -44,4 +44,6 @@ export type Lead = {
   notas: Array<{ text: string; when: string }>
   recordatorio: { texto: string; fecha: string } | null
   created_at: string
+  wallet_sellos?: number | null
+  wallet_guardada?: boolean | null
 }
