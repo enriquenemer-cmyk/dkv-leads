@@ -18,7 +18,7 @@ const FAQ_LD = {
 import {
   Phone, User, ChevronDown, Menu, X, Search, Clock, Monitor, Award, Stethoscope,
   Check, ArrowRight, Star, Smartphone, CalendarDays, PhoneCall,
-  Share2, AtSign, Globe, MessageCircle, ShieldCheck, Heart, Plus, Loader2, Sparkles, Plane,
+  Share2, AtSign, Globe, MessageCircle, ShieldCheck, Heart, Plus, Loader2, Sparkles, Plane, MapPin,
   Activity, TrendingUp, ThumbsUp, Timer, HeartPulse,
   Smile, Home, Feather, Quote, Minus, Umbrella,
   Users, Gift, HardHat, FileText, Wrench, Scale,
@@ -853,6 +853,20 @@ export default function DKVClone() {
           <span style={{ fontSize: 52, fontWeight: 900, lineHeight: .95 }}>35%</span>
           <span style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.1em' }}>DTO.</span>
         </div>
+
+        {/* Tarjeta flotante de reseña (social proof, solo escritorio) */}
+        <div className="hide-md" style={{ position: 'absolute', bottom: 42, right: 'clamp(28px,7vw,130px)', width: 258, background: 'rgba(255,255,255,.13)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,.22)', borderRadius: 18, padding: '16px 18px', zIndex: 3, boxShadow: '0 24px 60px -22px rgba(0,0,0,.55)', animation: 'floatUp 5s ease-in-out infinite' }}>
+          <div style={{ display: 'flex', gap: 2, marginBottom: 9 }}>{[...Array(5)].map((_, i) => <Star key={i} size={14} fill="#f5a623" stroke="none" />)}</div>
+          <p style={{ fontSize: 13.5, color: '#fff', lineHeight: 1.5, margin: '0 0 12px', fontWeight: 500 }}>«Me llamaron al día siguiente. Sin letra pequeña y todo clarísimo.»</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Laura P." loading="lazy" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.3)' }} />
+            <div style={{ lineHeight: 1.2 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>Laura P.</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)' }}>Madrid · Cliente DKV</div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Sub-hero action band */}
@@ -937,7 +951,8 @@ export default function DKVClone() {
           <Reveal delay={0.1}>
             <form onSubmit={handleSubmit} onFocus={onFormFocus} style={{ background: '#fff', borderRadius: 22, padding: '32px 30px', color: C.text, boxShadow: '0 40px 90px -30px rgba(0,0,0,.55)' }}>
               <h3 style={{ fontSize: 22, fontWeight: 800, color: C.teal, margin: '0 0 4px' }}>Calcula tu seguro</h3>
-              <p style={{ fontSize: 13.5, color: C.taupe, margin: '0 0 22px' }}>Rellena tus datos y te llamamos gratis.</p>
+              <p style={{ fontSize: 13.5, color: C.taupe, margin: '0 0 14px' }}>Rellena tus datos y te llamamos gratis.</p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: C.cream, color: C.teal, borderRadius: 999, padding: '6px 13px', fontSize: 11.5, fontWeight: 800, marginBottom: 20, letterSpacing: '0.02em' }}><Clock size={13} /> Solo 30 segundos · Sin compromiso</div>
 
               {interesSel && (
                 <div style={{ padding: '9px 13px', borderRadius: 10, background: '#e9f1ec', border: '1px solid #cfe0d7', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -950,18 +965,30 @@ export default function DKVClone() {
               {error &&<div style={{ marginBottom: 16, padding: '11px 14px', borderRadius: 12, background: '#fef0ed', border: '1px solid #fbd4cb', color: C.redDark, fontSize: 13, fontWeight: 500 }}>{error}</div>}
 
               <Field label="Nombre completo *">
-                <input className="in" value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García" style={inputStyle(focus === 'nombre')} onFocus={() => setFocus('nombre')} onBlur={() => setFocus(null)} />
+                <div style={{ position: 'relative' }}>
+                  <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'nombre' ? C.teal : '#9aaba5', pointerEvents: 'none' }} />
+                  <input className="in" value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García" style={{ ...inputStyle(focus === 'nombre'), paddingLeft: 42 }} onFocus={() => setFocus('nombre')} onBlur={() => setFocus(null)} />
+                </div>
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, margin: '14px 0' }}>
                 <Field label="Código postal">
-                  <input className="in" value={form.cp} onChange={e => set('cp', e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="28001" inputMode="numeric" style={inputStyle(focus === 'cp')} onFocus={() => setFocus('cp')} onBlur={() => setFocus(null)} />
+                  <div style={{ position: 'relative' }}>
+                    <MapPin size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'cp' ? C.teal : '#9aaba5', pointerEvents: 'none' }} />
+                    <input className="in" value={form.cp} onChange={e => set('cp', e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="28001" inputMode="numeric" style={{ ...inputStyle(focus === 'cp'), paddingLeft: 42 }} onFocus={() => setFocus('cp')} onBlur={() => setFocus(null)} />
+                  </div>
                 </Field>
                 <Field label="Teléfono">
-                  <input className="in" value={form.telefono} onChange={e => set('telefono', e.target.value.replace(/[^\d+\s]/g, '').slice(0, 15))} placeholder="600 000 000" inputMode="tel" style={inputStyle(focus === 'tel')} onFocus={() => setFocus('tel')} onBlur={() => setFocus(null)} />
+                  <div style={{ position: 'relative' }}>
+                    <Phone size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'tel' ? C.teal : '#9aaba5', pointerEvents: 'none' }} />
+                    <input className="in" value={form.telefono} onChange={e => set('telefono', e.target.value.replace(/[^\d+\s]/g, '').slice(0, 15))} placeholder="600 000 000" inputMode="tel" style={{ ...inputStyle(focus === 'tel'), paddingLeft: 40 }} onFocus={() => setFocus('tel')} onBlur={() => setFocus(null)} />
+                  </div>
                 </Field>
               </div>
               <Field label="Correo electrónico (opcional)">
-                <input className="in" type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" style={inputStyle(focus === 'email')} onFocus={() => setFocus('email')} onBlur={() => setFocus(null)} />
+                <div style={{ position: 'relative' }}>
+                  <AtSign size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'email' ? C.teal : '#9aaba5', pointerEvents: 'none' }} />
+                  <input className="in" type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" style={{ ...inputStyle(focus === 'email'), paddingLeft: 42 }} onFocus={() => setFocus('email')} onBlur={() => setFocus(null)} />
+                </div>
               </Field>
 
               <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 12.5, color: C.taupe, lineHeight: 1.5, margin: '18px 0 18px', cursor: 'pointer' }}>

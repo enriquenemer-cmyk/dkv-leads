@@ -80,6 +80,17 @@ export default async function SeguroPage({ params }: { params: Promise<{ slug: s
         </div>
       </section>
 
+      {/* Sellos de confianza (coherencia con la landing) */}
+      <div style={{ background: '#fafbf9', borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '16px 24px', display: 'flex', flexWrap: 'wrap', gap: 'clamp(14px,3vw,40px)', justifyContent: 'center' }}>
+          {[{ i: ShieldCheck, t: 'Datos protegidos (RGPD)' }, { i: Check, t: 'Sin permanencia' }, { i: Phone, t: 'Respuesta en 24h' }, { i: ThumbsUp, t: '4,8 ★ en Google' }].map(({ i: Ic, t }) => (
+            <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, fontWeight: 700, color: C.taupe, whiteSpace: 'nowrap' }}>
+              <span style={{ width: 28, height: 28, borderRadius: 8, background: '#eef3ee', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}><Ic size={15} style={{ color: C.teal }} /></span>{t}
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* Content */}
       <section style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 24px 72px', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 40, alignItems: 'start' }} className="seguro-grid">
         <div>
