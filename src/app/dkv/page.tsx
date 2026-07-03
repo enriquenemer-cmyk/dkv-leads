@@ -649,6 +649,13 @@ export default function DKVClone() {
           .pad{padding-left:20px!important;padding-right:20px!important}
           .topbar{display:none!important}
           .band-col{flex-direction:column!important;align-items:flex-start!important}
+          /* Carruseles horizontales deslizables en móvil (acortan mucho la página) */
+          .mcarousel{display:flex!important;grid-template-columns:none!important;overflow-x:auto;gap:14px!important;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:12px!important;scrollbar-width:none}
+          .mcarousel::-webkit-scrollbar{display:none}
+          .mcarousel>*{flex:0 0 82%!important;min-width:0;scroll-snap-align:start}
+          /* Pastillas de cifras y columnas del footer: 2 por fila en móvil (mitad de alto) */
+          .stat-grid{grid-template-columns:1fr 1fr!important;gap:12px!important}
+          .foot-grid{grid-template-columns:1fr 1fr!important;gap:26px 20px!important}
           /* Tarjetas de beneficios: horizontales y compactas en móvil */
           .bcard{display:flex!important;flex-direction:row!important;align-items:center!important;text-align:left!important;gap:16px!important}
           .bcard-ic{margin:0!important;width:54px!important;height:54px!important;border-radius:15px!important}
@@ -999,7 +1006,7 @@ export default function DKVClone() {
               <p style={{ fontSize: 17, color: C.taupe, maxWidth: 560, margin: '0 auto' }}>Elige la modalidad que mejor se adapte a tu forma de cuidarte.</p>
             </div>
           </Reveal>
-          <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 22 }}>
+          <div className="g4 mcarousel" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 22 }}>
             {PRODUCTS.map((p, i) => (
               <Reveal key={p.title} delay={i * 0.07}>
                 <div className="card" style={{ background: '#fff', borderRadius: 20, border: `1px solid ${p.featured ? C.lime : C.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: p.featured ? '0 18px 40px -22px rgba(152,169,42,.5)' : '0 2px 12px rgba(0,0,0,.03)' }}>
@@ -1028,7 +1035,7 @@ export default function DKVClone() {
             <h2 style={{ fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.02em', margin: '16px 0 0' }}>Otros seguros para cuidar lo que importa</h2>
           </div>
         </Reveal>
-        <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 22 }}>
+        <div className="g4 mcarousel" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 22 }}>
           {OTHER.map((o, i) => {
             const Icon = o.icon
             return (
@@ -1070,7 +1077,7 @@ export default function DKVClone() {
               </div>
             </div>
           </Reveal>
-          <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
+          <div className="g3 mcarousel" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
             {TESTIMONIALS.map((t, i) => (
               <Reveal key={t.name} delay={i * 0.09}>
                 <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 22, padding: '34px 30px', height: '100%', boxSizing: 'border-box', position: 'relative', boxShadow: '0 12px 40px -28px rgba(9,87,81,.35)' }}>
@@ -1147,7 +1154,7 @@ export default function DKVClone() {
             <p style={{ textAlign: 'center', fontSize: 17, color: C.taupe, maxWidth: 560, margin: '0 auto 52px' }}>La diferencia de la medicina privada frente a las listas de espera, en números reales.</p>
           </Reveal>
 
-          <div className="g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 26, marginBottom: 26 }}>
+          <div className="g2 mcarousel" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr', gap: 26, marginBottom: 26 }}>
             {/* Donut card */}
             <Reveal>
               <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 24, padding: 'clamp(26px,5.5vw,36px) clamp(22px,5vw,30px)', height: '100%', boxSizing: 'border-box', boxShadow: '0 20px 50px -32px rgba(9,87,81,.35)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -1185,7 +1192,7 @@ export default function DKVClone() {
           </div>
 
           {/* Count-up pills */}
-          <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20 }}>
+          <div className="g4 stat-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 20 }}>
             {[
               { icon: Heart, end: 2, dec: 0, suf: 'M+', l: 'Asegurados en España' },
               { icon: Stethoscope, end: 51000, suf: '+', l: 'Médicos y profesionales' },
@@ -1260,7 +1267,7 @@ export default function DKVClone() {
             <button onClick={() => scrollTo('calcula')} className="btn-out" style={outline(C.teal)}>Ver todos los artículos <ArrowRight size={16} /></button>
           </div>
         </Reveal>
-        <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
+        <div className="g4 mcarousel" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
           {ARTICLES.map((a, i) => (
             <Reveal key={a.title} delay={i * 0.07}>
               <button onClick={() => goArticle(a.title)} className="card dkv-a" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, overflow: 'hidden', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', padding: 0, boxSizing: 'border-box', boxShadow: '0 2px 12px rgba(0,0,0,.03)', transition: 'transform .2s, box-shadow .2s, border-color .2s' }}>
@@ -1320,7 +1327,7 @@ export default function DKVClone() {
       {/* ═══ ¿NECESITAS AYUDA? ═══ */}
       <section id="contacto" className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: 'clamp(50px,11vw,84px) 24px' }}>
         <Reveal><h2 style={{ textAlign: 'center', fontSize: 'clamp(22px,3.8vw,34px)', fontWeight: 800, color: C.text, letterSpacing: '-0.025em', margin: '0 0 48px' }}>¿Necesitas ayuda?</h2></Reveal>
-        <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
+        <div className="g3 mcarousel" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24 }}>
           {HELP.map(({ icon: Icon, title, desc, cta, action }, i) => (
             <Reveal key={title} delay={i * 0.08}>
               <div className="card" style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 20, padding: 'clamp(26px,5.5vw,36px) clamp(22px,5vw,30px)', textAlign: 'center', height: '100%', boxSizing: 'border-box', transition: 'transform .2s, box-shadow .2s, border-color .2s', boxShadow: '0 2px 12px rgba(0,0,0,.03)' }}>
@@ -1346,7 +1353,7 @@ export default function DKVClone() {
       {/* ═══ FOOTER ═══ */}
       <footer className="foot" style={{ background: C.tealDeep, color: 'rgba(255,255,255,.72)', marginTop: -1 }}>
         <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '62px 24px 36px' }}>
-          <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 40 }}>
+          <div className="g4 foot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 40 }}>
             {[
               { h: 'Seguros para particulares', links: ['Seguros de salud', 'Seguros sin copago', 'Seguros con copago', 'Seguros dentales', 'Seguros de reembolso', 'Cuadro médico'] },
               { h: 'Otros seguros', links: ['Seguros de vida', 'Seguros de decesos', 'Seguros de hogar', 'Seguros de accidentes', 'Seguros de viaje', 'Seguros de mascotas'] },
