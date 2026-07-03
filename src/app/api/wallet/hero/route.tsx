@@ -1,8 +1,8 @@
 import { ImageResponse } from 'next/og'
 
 /* Banner (heroImage) de la tarjeta Club Sonrisa para Google Wallet.
-   Dibuja los 5 sellos según ?sellos=N (0..5) y la línea del premio.
-   Google lo muestra grande dentro del pase. Se sirve como PNG. */
+   Dibuja los 5 sellos según ?sellos=N (0..5), la meta con regalo y una
+   barra de progreso. Google lo muestra grande dentro del pase (PNG). */
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
@@ -11,6 +11,10 @@ export async function GET(req: Request) {
   n = Math.max(0, Math.min(5, n))
   const completa = n >= 5
   const faltan = 5 - n
+
+  const CREMA = '#EDEDE0'
+  const LIMA = '#8FAE2C'
+  const ORO = '#EF9F27'
 
   return new ImageResponse(
     (
@@ -25,7 +29,11 @@ export async function GET(req: Request) {
           backgroundColor: '#0F4A3F',
         }}
       >
-        <div style={{ display: 'flex', marginBottom: 30 }}>
+        <div style={{ display: 'flex', fontSize: 22, letterSpacing: 4, color: 'rgba(237,237,224,0.6)', marginBottom: 22 }}>
+          REFIERE Y GANA
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 26 }}>
           {[0, 1, 2, 3, 4].map((i) => (
             <div
               key={i}
@@ -33,21 +41,42 @@ export async function GET(req: Request) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 104,
-                height: 104,
-                marginLeft: i === 0 ? 0 : 20,
-                borderRadius: 52,
-                fontSize: 52,
-                backgroundColor: i < n ? '#8FAE2C' : 'transparent',
-                border: i < n ? '3px solid #8FAE2C' : '3px solid rgba(237,237,224,0.30)',
+                width: 86,
+                height: 86,
+                marginLeft: i === 0 ? 0 : 16,
+                borderRadius: 43,
+                fontSize: 42,
+                backgroundColor: i < n ? LIMA : 'transparent',
+                border: i < n ? `3px solid ${LIMA}` : '3px solid rgba(237,237,224,0.30)',
               }}
             >
               {i < n ? '🦷' : ''}
             </div>
           ))}
+          <div style={{ display: 'flex', fontSize: 40, color: 'rgba(237,237,224,0.55)', marginLeft: 22, marginRight: 22 }}>→</div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              fontSize: 46,
+              backgroundColor: completa ? ORO : 'transparent',
+              border: `3px solid ${ORO}`,
+            }}
+          >
+            🎁
+          </div>
         </div>
-        <div style={{ display: 'flex', fontSize: 34, color: completa ? '#F4C77A' : '#EDEDE0' }}>
-          {completa ? '¡Blanqueamiento dental desbloqueado!' : `Te faltan ${faltan} · Blanqueamiento dental gratis`}
+
+        <div style={{ display: 'flex', width: 620, height: 12, borderRadius: 6, backgroundColor: 'rgba(237,237,224,0.18)', marginBottom: 18 }}>
+          <div style={{ display: 'flex', width: (620 * n) / 5, height: 12, borderRadius: 6, backgroundColor: LIMA }} />
+        </div>
+
+        <div style={{ display: 'flex', fontSize: 32, color: completa ? '#F4C77A' : CREMA }}>
+          {completa ? '¡Blanqueamiento dental desbloqueado!' : `${n}/5 · Te faltan ${faltan} para tu blanqueamiento`}
         </div>
       </div>
     ),
