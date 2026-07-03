@@ -1,0 +1,16 @@
+{
+  "name": "DKV Asesores",
+  "short_name": "DKV Asesores",
+  "description": "Gestiona tus leads DKV desde el móvil: leads calientes, llamar, WhatsApp y notas.",
+  "start_url": "/app",
+  "scope": "/app",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a2f27",
+  "theme_color": "#0a2f27",
+  "icons": [
+    { "src": "/logo-cuadrado.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-cuadrado.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-cuadrado.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

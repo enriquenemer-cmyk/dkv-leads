@@ -676,8 +676,8 @@ export default function DKVClone() {
             : <button key={i.t} onClick={i.on} className="dkv-a" style={{ opacity: 0.96, background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, padding: 0 }}>{i.t}</button>
           )}
           <span style={{ opacity: 0.45 }}>|</span>
-          {[{ t: 'Català', tl: 'ca' }, { t: 'English', tl: 'en' }, { t: 'Deutsch', tl: 'de' }].map(l => (
-            <a key={l.t} href={`https://translate.google.com/translate?sl=es&tl=${l.tl}&u=https://dkv-ergo.es/dkv`} target="_blank" rel="noopener noreferrer" className="dkv-a hide-md" style={{ opacity: 0.9, fontWeight: 500 }}>{l.t}</a>
+          {[{ t: 'Español', c: 'es' }, { t: 'Gallego', c: 'gl' }, { t: 'Català', c: 'ca' }, { t: 'English', c: 'en' }, { t: 'Deutsch', c: 'de' }].map(l => (
+            <button key={l.c} onClick={() => (window as unknown as { changeLanguage?: (x: string) => void }).changeLanguage?.(l.c)} className="dkv-a hide-md notranslate" translate="no" style={{ opacity: 0.9, fontWeight: 500, background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, padding: 0 }}>{l.t}</button>
           ))}
         </div>
       </div>
@@ -1583,11 +1583,32 @@ function Kicker({ children }: { children: React.ReactNode }) {
   )
 }
 
-/* Logo oficial DKV (imagen real descargada de dkv.es) */
+/* Logo oficial DKV + distintivo "Agente exclusivo DKV" */
 function DKVLogo({ size = 30, light = false }: { size?: number; light?: boolean }) {
+  const boxH = Math.round(size * 1.95)
+  const fs = Math.max(9, Math.round(size * 0.42))
+  const ring = Math.round(size * 0.64)
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={light ? '/dkv-logo-light.png' : '/dkv-logo.png'} alt="DKV Seguros" style={{ height: size, width: 'auto', display: 'block', flexShrink: 0 }} />
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: Math.round(size * 0.5), flexShrink: 0 }} aria-label="DKV Seguros — Agente exclusivo">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={light ? '/dkv-logo-light.png' : '/dkv-logo.png'} alt="DKV Seguros" style={{ height: size, width: 'auto', display: 'block' }} />
+      <span
+        style={{
+          display: 'inline-flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: Math.round(size * 0.12), height: boxH, padding: `0 ${Math.round(size * 0.5)}px`,
+          background: C.teal, color: '#fff', boxSizing: 'border-box',
+          border: light ? '1px solid rgba(255,255,255,.28)' : 'none',
+        }}
+      >
+        <svg width={ring} height={ring} viewBox="0 0 24 24" fill="none" aria-hidden style={{ display: 'block' }}>
+          <circle cx="12" cy="12" r="11" stroke={C.lime} strokeWidth="1.6" />
+          <path d="M7 12.4l3.1 3.1L17 8.6" stroke={C.lime} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span style={{ fontWeight: 700, fontSize: fs, lineHeight: 1.08, textAlign: 'center', whiteSpace: 'nowrap' }}>
+          Agente<br />exclusivo DKV
+        </span>
+      </span>
+    </span>
   )
 }
 
