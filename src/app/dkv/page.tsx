@@ -711,11 +711,11 @@ export default function DKVClone() {
 
       {/* ═══ HEADER ═══ */}
       <header onMouseLeave={() => setOpenMenu(null)} style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,.9)', backdropFilter: 'saturate(180%) blur(12px)', borderBottom: `1px solid ${scrolled || openMenu ? C.border : 'transparent'}`, boxShadow: scrolled ? '0 6px 22px -14px rgba(0,0,0,.25)' : 'none', transition: 'box-shadow .25s, border-color .25s' }}>
-        <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 30, height: scrolled ? 68 : 78, transition: 'height .25s' }}>
+        <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 20, height: scrolled ? 68 : 78, transition: 'height .25s', minWidth: 0 }}>
           <a href="#" onClick={e => { e.preventDefault(); scrollTo('top') }} className="dkv-a" style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
             <DKVLogo size={26} />
           </a>
-          <nav className="hide-md" style={{ display: 'flex', gap: 28, marginLeft: 6, fontSize: 15.5, fontWeight: 600, color: C.taupe }}>
+          <nav className="hide-md" style={{ display: 'flex', gap: 22, marginLeft: 4, fontSize: 15, fontWeight: 600, color: C.taupe }}>
             {NAV.map(n => {
               const hasMenu = !!MEGA[n.label]
               const active = openMenu === n.label
