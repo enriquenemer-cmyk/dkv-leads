@@ -745,7 +745,6 @@ export default function DKVClone() {
                 <span style={{ display: 'block', fontSize: 15.5, fontWeight: 800, color: C.text, whiteSpace: 'nowrap' }}>699 669 603</span>
               </span>
             </a>
-            <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" className="btn-out dkv-a" style={{ ...outline(C.teal), textDecoration: 'none' }}><MessageCircle size={16} /> WhatsApp</a>
           </div>
           <button onClick={() => setMenuOpen(true)} aria-label="Menú" className="show-md" style={{ display: 'none', background: 'none', border: 'none', cursor: 'pointer', color: C.teal }}><Menu size={26} /></button>
         </div>
