@@ -719,6 +719,13 @@ export default function DKVClone() {
             {NAV.map(n => {
               const hasMenu = !!MEGA[n.label]
               const active = openMenu === n.label
+              if (n.label === 'Calcula tu seguro') {
+                return (
+                  <button key={n.label} onClick={() => scrollTo('calcula')} onMouseEnter={() => setOpenMenu(null)} className="btn-red" style={{ ...solid(C.red), padding: '10px 22px', fontSize: 14.5, marginLeft: 4, boxShadow: '0 10px 22px -8px rgba(221,54,54,.5)' }}>
+                    Calcula tu seguro <ArrowRight size={16} />
+                  </button>
+                )
+              }
               return (
                 <a key={n.label} href="#"
                   onMouseEnter={() => setOpenMenu(hasMenu ? n.label : null)}
