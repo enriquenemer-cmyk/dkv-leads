@@ -633,9 +633,12 @@ export default function DKVClone() {
         @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
         .drawer{position:fixed;inset:0;z-index:60;background:rgba(15,21,18,.5);backdrop-filter:blur(2px)}
         .drawer-panel{position:absolute;top:0;right:0;bottom:0;width:min(320px,86vw);background:#fff;padding:26px 24px;box-shadow:-20px 0 60px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:6px}
-        @media(max-width:980px){
+        /* Header: cambia a menú hamburguesa antes de que se desborde (tablets) */
+        @media(max-width:1200px){
           .hide-md{display:none!important}
           .show-md{display:flex!important}
+        }
+        @media(max-width:980px){
           .hero-grid{grid-template-columns:1fr!important}
           .hero-img{min-height:340px!important;margin:0 -24px!important;border-radius:0!important}
           .g2{grid-template-columns:1fr!important}
@@ -1531,7 +1534,7 @@ function Donut({ pct, size = 210, stroke = 20, color = C.lime, label, sub }: { p
   const circ = 2 * Math.PI * r
   return (
     <div ref={ref} style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(140deg)' }}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e7eee9" strokeWidth={stroke} />
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={inView ? circ * (1 - pct / 100) : circ}
