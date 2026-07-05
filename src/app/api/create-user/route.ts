@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Solo un administrador puede crear asesores.' }, { status: 403 })
   }
 
-  const { email, password, nombre } = await req.json()
+  const { email, password, nombre, permisos } = await req.json()
   if (!email || !password) {
     return NextResponse.json({ error: 'Email y contraseña son obligatorios' }, { status: 400 })
   }
@@ -39,10 +39,12 @@ export async function POST(req: NextRequest) {
   if (!data.user) return NextResponse.json({ error: 'No se pudo crear el usuario' }, { status: 400 })
 
   // Store advisor info (rol defaults to 'asesor' via the column default).
+  // `permisos`: array of allowed section hrefs; null = full access.
   await authClient.from('asesores').upsert({
     id: data.user.id,
     email: data.user.email,
     nombre: nombre || email,
+    permisos: Array.isArray(permisos) && permisos.length ? permisos : null,
   })
 
   return NextResponse.json({ user: { id: data.user.id, email: data.user.email } })

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { puedeVer } from '@/lib/secciones'
 import {
   LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap
 } from 'lucide-react'
@@ -31,6 +32,17 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname()
   const router = useRouter()
   const [pendientes, setPendientes] = useState(0)
+  const [permisos, setPermisos] = useState<string[] | null>(null) // null = acceso total (admin / sin restricción)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      const uid = data.user?.id
+      if (!uid) return
+      const { data: row } = await supabase.from('asesores').select('rol, permisos').eq('id', uid).single()
+      if (row && row.rol !== 'admin' && Array.isArray(row.permisos)) setPermisos(row.permisos as string[])
+      else setPermisos(null)
+    })
+  }, [])
 
   useEffect(() => {
     async function fetchPendientes() {
@@ -109,7 +121,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 10px 6px', margin: 0 }}>Gestión</p>
-        {navItems.map(({ href, label, icon: Icon }) => navLink(href, label, Icon, href === '/panel/agenda' ? pendientes : undefined))}
+        {navItems.filter(i => puedeVer(permisos, i.href)).map(({ href, label, icon: Icon }) => navLink(href, label, Icon, href === '/panel/agenda' ? pendientes : undefined))}
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px 6px', margin: 0 }}>Acciones</p>
@@ -135,7 +147,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px 6px', margin: 0 }}>Configuración</p>
-        {configItems.map(({ href, label, icon: Icon }) => navLink(href, label, Icon))}
+        {configItems.filter(i => puedeVer(permisos, i.href)).map(({ href, label, icon: Icon }) => navLink(href, label, Icon))}
       </nav>
 
       {/* User */}

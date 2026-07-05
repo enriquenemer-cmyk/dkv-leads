@@ -4,6 +4,7 @@ import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check, ShieldCheck, Lo
 import { supabase } from '@/lib/supabase'
 import { Loader } from '@/components/Loader'
 import { EmptyState } from '@/components/EmptyState'
+import { SECCIONES } from '@/lib/secciones'
 
 type User = { id: string; email: string; nombre: string; created_at: string; last_sign_in_at: string | null; rol?: string }
 
@@ -19,6 +20,9 @@ export default function UsuariosPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [soyAdmin, setSoyAdmin] = useState(false)
+  // Secciones a las que tendrá acceso el nuevo asesor (por defecto: todas menos gestión de asesores)
+  const [permisos, setPermisos] = useState<string[]>(SECCIONES.filter(s => s.href !== '/panel/usuarios').map(s => s.href))
+  const togglePermiso = (href: string) => setPermisos(p => p.includes(href) ? p.filter(x => x !== href) : [...p, href])
   useEffect(() => { fetchUsers() }, [])
 
   async function fetchUsers() {
@@ -30,9 +34,12 @@ export default function UsuariosPage() {
     const list: User[] = json.users ?? []
     setUsers(list)
     // Si aún nadie tiene rol (columna sin crear), tratamos a todos como admin (transición).
+    // Buscamos al usuario actual por id O por email (robusto ante desajustes).
+    const emailActual = (session?.user?.email ?? '').toLowerCase()
     const hayRoles = list.some(u => u.rol)
-    const yo = list.find(u => u.id === session?.user?.id)
-    setSoyAdmin(!hayRoles || yo?.rol === 'admin')
+    const yo = list.find(u => u.id === session?.user?.id || (u.email ?? '').toLowerCase() === emailActual)
+    // Admin si: no hay roles aún, o su rol es admin, o (por seguridad) no se encontró su fila.
+    setSoyAdmin(!hayRoles || yo?.rol === 'admin' || !yo)
     setLoading(false)
   }
 
@@ -42,7 +49,7 @@ export default function UsuariosPage() {
     const res = await fetch('/api/create-user', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}) },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, permisos }),
     })
     const json = await res.json()
     setSaving(false)
@@ -172,6 +179,27 @@ export default function UsuariosPage() {
                   </button>
                 </div>
               </div>
+              {/* Permisos: a qué secciones tendrá acceso */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11.5, fontWeight: 700, color: '#6b7a76', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acceso a secciones</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {SECCIONES.map(s => {
+                    const on = permisos.includes(s.href)
+                    return (
+                      <button key={s.href} type="button" onClick={() => togglePermiso(s.href)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                          border: `1.5px solid ${on ? '#0F7A63' : '#e2e8e4'}`, background: on ? '#e3f1ec' : '#fff' }}>
+                        <span style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: on ? '#0F7A63' : '#fff', border: on ? 'none' : '1.5px solid #cdd8d3' }}>
+                          {on && <Check size={12} color="#fff" />}
+                        </span>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: on ? '#0F7A63' : '#6b7a76' }}>{s.label}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                <p style={{ fontSize: 11.5, color: '#9aaba5', margin: '8px 0 0' }}>El asesor solo verá y podrá abrir las secciones marcadas.</p>
+              </div>
+
               <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
                 <button type="button" onClick={() => setShowModal(false)}
                   style={{ flex: 1, padding: '12px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#6b7a76', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>

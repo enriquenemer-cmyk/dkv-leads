@@ -6,7 +6,9 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID || ''
 const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || ''
 const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID || ''       // p.ej. AW-123456789
 const ADS_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_LABEL || '' // etiqueta de la acción de conversión
-const CLARITY_ID = process.env.NEXT_PUBLIC_CLARITY_ID || ''      // ID de proyecto de Microsoft Clarity (mapas de calor)
+const CLARITY_RAW = process.env.NEXT_PUBLIC_CLARITY_ID || ''     // ID de proyecto de Microsoft Clarity (mapas de calor)
+// Solo cargar Clarity con un ID válido (evita el error 400 con placeholders como "Project ID de Clarity")
+const CLARITY_ID = /^[a-z0-9]{6,}$/i.test(CLARITY_RAW.trim()) ? CLARITY_RAW.trim() : ''
 const KEY = 'dkv-cookie-consent' // 'accepted' | 'rejected'
 
 /* Dispara la conversión de lead en GA4 + Google Ads + Meta Pixel.

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { puedeVer } from '@/lib/secciones'
 import { Sidebar } from '@/components/Sidebar'
 import { CommandPalette } from '@/components/CommandPalette'
 import { NewLeadToast } from '@/components/NewLeadToast'
@@ -40,6 +41,18 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
     return () => subscription.unsubscribe()
   }, [router, pathname])
+
+  // Bloqueo por permisos: si el asesor no tiene acceso a esta sección, se le redirige.
+  useEffect(() => {
+    if (!email || pathname.includes('/login')) return
+    supabase.auth.getUser().then(async ({ data }) => {
+      const uid = data.user?.id
+      if (!uid) return
+      const { data: row } = await supabase.from('asesores').select('rol, permisos').eq('id', uid).single()
+      if (!row || row.rol === 'admin' || !Array.isArray(row.permisos) || row.permisos.length === 0) return
+      if (!puedeVer(row.permisos as string[], pathname)) router.replace((row.permisos as string[])[0])
+    })
+  }, [email, pathname, router])
 
   if (pathname.includes('/login')) return <>{children}</>
   if (!checked) return (

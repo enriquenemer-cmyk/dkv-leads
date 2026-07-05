@@ -809,6 +809,7 @@ export default function DKVClone() {
       )}
 
       <span id="top" />
+      <main>
       {/* Breadcrumb */}
       <div style={{ background: '#fff', borderBottom: `1px solid ${C.border}` }}>
         <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '12px 24px', fontSize: 13.5, color: C.taupe }}>
@@ -1381,6 +1382,8 @@ export default function DKVClone() {
         </div>
       </section>
 
+      </main>
+
       {/* Separador onda hacia el footer */}
       <div style={{ background: '#fff', lineHeight: 0 }}>
         <svg viewBox="0 0 1440 90" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 'clamp(38px,6vw,78px)' }}>
@@ -1399,7 +1402,7 @@ export default function DKVClone() {
               { h: 'DKV', links: ['Conócenos', 'Trabaja con nosotros', 'Blog de salud', 'Sostenibilidad', 'Contacto y oficinas', 'Aviso legal'] },
             ].map(col => (
               <div key={col.h}>
-                <h4 style={{ color: '#fff', fontSize: 15, fontWeight: 800, margin: '0 0 16px' }}>{col.h}</h4>
+                <h3 style={{ color: '#fff', fontSize: 15, fontWeight: 800, margin: '0 0 16px' }}>{col.h}</h3>
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {col.links.map(l => <li key={l}><a href="#" className="dkv-a" style={{ fontSize: 14, color: 'rgba(255,255,255,.72)' }}>{l}</a></li>)}
                 </ul>
@@ -1412,8 +1415,8 @@ export default function DKVClone() {
               <span style={{ fontSize: 13, color: 'rgba(255,255,255,.55)' }}>© 2026 DKV Seguros de Salud · Todos los derechos reservados.</span>
             </div>
             <div style={{ display: 'flex', gap: 14 }}>
-              {[Share2, AtSign, Globe, MessageCircle].map((Ic, i) => (
-                <a key={i} href="#" className="dkv-a soc" style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', transition: 'all .18s' }}><Ic size={17} /></a>
+              {[{ Ic: Share2, l: 'Compartir' }, { Ic: AtSign, l: 'Escríbenos un correo' }, { Ic: Globe, l: 'Nuestra web' }, { Ic: MessageCircle, l: 'Contáctanos por WhatsApp' }].map(({ Ic, l }, i) => (
+                <a key={i} href="#" aria-label={l} title={l} className="dkv-a soc" style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(255,255,255,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', transition: 'all .18s' }}><Ic size={17} /></a>
               ))}
             </div>
           </div>
@@ -1422,7 +1425,7 @@ export default function DKVClone() {
             <a href="/dkv/privacidad" className="dkv-a" style={{ color: 'rgba(255,255,255,.78)' }}>Política de privacidad</a>
             <a href="/dkv/cookies" className="dkv-a" style={{ color: 'rgba(255,255,255,.78)' }}>Política de cookies</a>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12.5, color: 'rgba(255,255,255,.45)' }}><ShieldCheck size={14} /> Tus datos están protegidos y tratados conforme al RGPD. Nunca compartimos tu información con terceros.</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 16, fontSize: 12.5, color: 'rgba(255,255,255,.72)' }}><ShieldCheck size={14} /> Tus datos están protegidos y tratados conforme al RGPD. Nunca compartimos tu información con terceros.</div>
         </div>
       </footer>
 

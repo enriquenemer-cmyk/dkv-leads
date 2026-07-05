@@ -67,7 +67,7 @@ export default function GoogleTranslate() {
         .goog-text-highlight { background: none !important; box-shadow: none !important; }
         #google_translate_element { position: absolute !important; left: -9999px !important; top: 0 !important; height: 0 !important; overflow: hidden; }
       `}</style>
-      <div id="google_translate_element" aria-hidden="true" />
+      <div id="google_translate_element" />
     </>
   )
 }
