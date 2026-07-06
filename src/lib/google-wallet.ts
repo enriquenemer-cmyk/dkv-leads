@@ -39,7 +39,7 @@ function construirClase() {
     reviewStatus: 'UNDER_REVIEW',
     hexBackgroundColor: TEAL,
     programLogo: {
-      sourceUri: { uri: `${BASE_URL}/logo-cuadrado.png` },
+      sourceUri: { uri: `${BASE_URL}/api/wallet/logo` },
       contentDescription: { defaultValue: { language: 'es', value: 'DKV Seguros' } },
     },
   }
