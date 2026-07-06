@@ -14,7 +14,7 @@ export type Producto = {
 
 export const PRODUCTOS: Record<ProductoSlug, Producto> = {
   hogar:   { slug: 'hogar',   nombre: 'Hogar',   emoji: '🏠', accent: '#E0A83D' },
-  decesos: { slug: 'decesos', nombre: 'Decesos', emoji: '🕊️', accent: '#7FA8C9' },
+  decesos: { slug: 'decesos', nombre: 'Decesos', emoji: '👪', accent: '#7FA8C9' },
   vida:    { slug: 'vida',    nombre: 'Vida',    emoji: '❤️', accent: '#D9736A' },
 }
 
