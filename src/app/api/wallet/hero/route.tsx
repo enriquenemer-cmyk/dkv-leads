@@ -6,7 +6,8 @@ import { PRODUCTOS, PRODUCTO_SLUGS, TARJETA, parseSeguros, type ProductoSlug } f
    (no emoji). 3 huecos (Hogar/Decesos/Salud) + regalo. PNG 1032x336. */
 
 const CREMA = '#EDEDE0'
-const ORO = '#EF9F27'
+const LIMA = '#8FAE2C'       // acento DKV
+const LIMA_CLARO = '#B4CF5A' // lima claro para texto sobre teal
 const TEAL = '#0F4A3F'
 
 // Paths de iconos de línea (viewBox 24)
@@ -106,23 +107,23 @@ export async function GET(req: Request) {
                 width: 96,
                 height: 96,
                 borderRadius: 48,
-                backgroundColor: completa ? ORO : 'transparent',
-                border: `2px solid ${ORO}`,
+                backgroundColor: completa ? LIMA : 'transparent',
+                border: `2px solid ${LIMA}`,
               }}
             >
-              <Icono slug="regalo" color={completa ? TEAL : ORO} size={46} />
+              <Icono slug="regalo" color={completa ? TEAL : LIMA} size={46} />
             </div>
-            <div style={{ display: 'flex', fontSize: 18, fontWeight: 600, marginTop: 12, color: completa ? '#F4C77A' : 'rgba(244,199,122,0.65)' }}>Sorpresa</div>
+            <div style={{ display: 'flex', fontSize: 18, fontWeight: 600, marginTop: 12, color: completa ? LIMA_CLARO : 'rgba(180,207,90,0.6)' }}>Sorpresa</div>
           </div>
         </div>
 
         {completa ? (
-          <div style={{ display: 'flex', fontSize: 30, fontWeight: 700, color: '#F4C77A' }}>
+          <div style={{ display: 'flex', fontSize: 30, fontWeight: 700, color: LIMA_CLARO }}>
             ¡Regalo sorpresa desbloqueado!
           </div>
         ) : (
           <div style={{ display: 'flex', fontSize: 29, fontWeight: 500, color: CREMA }}>
-            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: ORO }}>{faltan}</span>&nbsp;{faltan === 1 ? 'seguro' : 'seguros'} para tu regalo sorpresa
+            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: LIMA_CLARO }}>{faltan}</span>&nbsp;{faltan === 1 ? 'seguro' : 'seguros'} para tu regalo sorpresa
           </div>
         )}
       </div>

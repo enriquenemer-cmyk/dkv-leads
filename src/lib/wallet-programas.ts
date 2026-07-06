@@ -13,9 +13,9 @@ export type Producto = {
 }
 
 export const PRODUCTOS: Record<ProductoSlug, Producto> = {
-  hogar:   { slug: 'hogar',   nombre: 'Hogar',   emoji: '🏠', accent: '#E0A83D' },
-  decesos: { slug: 'decesos', nombre: 'Decesos', emoji: '👪', accent: '#7FA8C9' },
-  salud:   { slug: 'salud',   nombre: 'Salud',   emoji: '👨‍⚕️', accent: '#D9736A' },
+  hogar:   { slug: 'hogar',   nombre: 'Hogar',   emoji: '🏠', accent: '#8FAE2C' },
+  decesos: { slug: 'decesos', nombre: 'Decesos', emoji: '👪', accent: '#8FAE2C' },
+  salud:   { slug: 'salud',   nombre: 'Salud',   emoji: '👨‍⚕️', accent: '#8FAE2C' },
 }
 
 // Orden fijo de los huecos en la tarjeta
