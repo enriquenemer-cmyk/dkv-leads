@@ -20,8 +20,8 @@ const SA_EMAIL = process.env.GOOGLE_WALLET_SA_EMAIL || ''
 // La clave privada llega con los saltos de línea escapados (\n) desde el .env
 const SA_KEY = (process.env.GOOGLE_WALLET_SA_KEY || '').replace(/\\n/g, '\n')
 
-// Nº total de sellos para completar el premio
-export const SELLOS_TOTAL = 5
+// Nº total de sellos para completar el premio (el 4º hueco es el regalo)
+export const SELLOS_TOTAL = 3
 
 // Sufijo fijo de la clase (plantilla común a todas las tarjetas)
 const CLASE_ID = `${ISSUER_ID}.club_sonrisa`
@@ -76,8 +76,8 @@ function construirObjeto({ clienteId, nombre, sellos }: DatosTarjeta) {
       balance: { string: `${n}/${SELLOS_TOTAL}` },
     },
     secondaryLoyaltyPoints: {
-      label: completa ? 'Premio' : 'Te faltan',
-      balance: { string: completa ? '¡A canjear!' : `${SELLOS_TOTAL - n} sellos` },
+      label: completa ? 'Premio' : 'Te falta',
+      balance: { string: completa ? '¡A canjear!' : `${SELLOS_TOTAL - n} ${SELLOS_TOTAL - n === 1 ? 'sello' : 'sellos'}` },
     },
     heroImage: {
       sourceUri: { uri: `${BASE_URL}/api/wallet/hero?sellos=${n}` },
@@ -94,12 +94,12 @@ function construirObjeto({ clienteId, nombre, sellos }: DatosTarjeta) {
         header: completa ? '¡Premio desbloqueado!' : 'Tu premio',
         body: completa
           ? 'Blanqueamiento dental gratis. Muestra este código en la clínica para canjearlo.'
-          : `Refiere a ${SELLOS_TOTAL} amigos y consigue un blanqueamiento dental gratis. Te faltan ${SELLOS_TOTAL - n}.`,
+          : `Refiere a ${SELLOS_TOTAL} amigos y consigue un blanqueamiento dental gratis. Te ${SELLOS_TOTAL - n === 1 ? 'falta' : 'faltan'} ${SELLOS_TOTAL - n}.`,
       },
       {
         id: 'como_funciona',
         header: 'Cómo funciona',
-        body: 'Cada amigo que refieras y se dé de alta suma 1 sello. Al llegar a 5 sellos, ganas tu blanqueamiento dental. Tu asesor DKV actualiza tus sellos automáticamente.',
+        body: `Cada amigo que refieras y se dé de alta suma 1 sello. Al llegar a ${SELLOS_TOTAL} sellos, ganas tu blanqueamiento dental. Tu asesor DKV actualiza tus sellos automáticamente.`,
       },
     ],
   }

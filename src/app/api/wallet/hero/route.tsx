@@ -10,12 +10,13 @@ const ORO = '#EF9F27'
 const TEAL = '#0F4A3F'
 
 export async function GET(req: Request) {
+  const TOTAL = 3
   const { searchParams } = new URL(req.url)
   let n = parseInt(searchParams.get('sellos') || '0', 10)
   if (!Number.isFinite(n)) n = 0
-  n = Math.max(0, Math.min(5, n))
-  const completa = n >= 5
-  const faltan = 5 - n
+  n = Math.max(0, Math.min(TOTAL, n))
+  const completa = n >= TOTAL
+  const faltan = TOTAL - n
 
   // Cargamos Poppins desde /public/fonts del propio servidor (sirve en dev y prod).
   // Si por lo que sea fallara, renderizamos con la fuente por defecto (nunca peta).
@@ -55,18 +56,18 @@ export async function GET(req: Request) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 26 }}>
-          {[0, 1, 2, 3, 4].map((i) => (
+          {[0, 1, 2].map((i) => (
             <div
               key={i}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 88,
-                height: 88,
-                marginLeft: i === 0 ? 0 : 16,
-                borderRadius: 44,
-                fontSize: 44,
+                width: 96,
+                height: 96,
+                marginLeft: i === 0 ? 0 : 22,
+                borderRadius: 48,
+                fontSize: 48,
                 backgroundColor: i < n ? LIMA : 'rgba(237,237,224,0.05)',
                 border: i < n ? `3px solid ${LIMA}` : '3px solid rgba(237,237,224,0.28)',
               }}
@@ -74,16 +75,16 @@ export async function GET(req: Request) {
               {i < n ? '🦷' : ''}
             </div>
           ))}
-          <div style={{ display: 'flex', fontSize: 38, color: 'rgba(237,237,224,0.5)', marginLeft: 20, marginRight: 20 }}>›</div>
+          <div style={{ display: 'flex', fontSize: 40, color: 'rgba(237,237,224,0.5)', marginLeft: 22, marginRight: 22 }}>›</div>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 100,
-              height: 100,
-              borderRadius: 50,
-              fontSize: 50,
+              width: 108,
+              height: 108,
+              borderRadius: 54,
+              fontSize: 54,
               backgroundColor: completa ? ORO : 'rgba(239,159,39,0.12)',
               border: `3px solid ${ORO}`,
             }}
@@ -92,8 +93,8 @@ export async function GET(req: Request) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', width: 640, height: 14, borderRadius: 7, backgroundColor: 'rgba(237,237,224,0.16)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', width: (640 * n) / 5, height: 14, borderRadius: 7, backgroundColor: completa ? ORO : LIMA }} />
+        <div style={{ display: 'flex', width: 620, height: 14, borderRadius: 7, backgroundColor: 'rgba(237,237,224,0.16)', marginBottom: 20 }}>
+          <div style={{ display: 'flex', width: (620 * n) / TOTAL, height: 14, borderRadius: 7, backgroundColor: completa ? ORO : LIMA }} />
         </div>
 
         {completa ? (
@@ -102,7 +103,7 @@ export async function GET(req: Request) {
           </div>
         ) : (
           <div style={{ display: 'flex', fontSize: 32, fontWeight: 500, color: CREMA }}>
-            Te faltan&nbsp;<span style={{ fontWeight: 700, color: LIMA }}>{faltan}</span>&nbsp;para tu blanqueamiento gratis
+            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: LIMA }}>{faltan}</span>&nbsp;{faltan === 1 ? 'sello' : 'sellos'} para tu blanqueamiento
           </div>
         )}
       </div>

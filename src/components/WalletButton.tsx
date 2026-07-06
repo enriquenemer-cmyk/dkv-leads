@@ -5,14 +5,14 @@ import { logActividad } from '@/lib/actividad'
 import { Wallet, MessageCircle, Copy, ExternalLink, Minus, Plus, RefreshCw, Check } from 'lucide-react'
 
 /* Tarjeta de fidelización "Club Sonrisa" para Google Wallet.
-   El asesor elige cuántos sellos lleva el cliente (0..5, cada uno = 1 referido).
+   El asesor elige cuántos sellos lleva el cliente (0..3, cada uno = 1 referido).
    - "Generar tarjeta": crea el enlace para que el cliente la guarde (por WhatsApp).
    - "Actualizar en el móvil": para tarjetas ya guardadas, actualiza los sellos y
      Google envía el push automático al móvil del cliente.
-   5 sellos = blanqueamiento dental gratis. */
+   3 sellos = blanqueamiento dental gratis (el 4º hueco es el regalo). */
 
 const VERDE = '#0F7A63'
-const SELLOS_TOTAL = 5
+const SELLOS_TOTAL = 3
 
 type LeadWallet = { id: string; nombre: string; telefono: string | null; wallet_sellos?: number | null; wallet_guardada?: boolean | null }
 

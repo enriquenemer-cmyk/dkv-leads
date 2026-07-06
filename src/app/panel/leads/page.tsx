@@ -227,9 +227,9 @@ function LeadsContent() {
                     {l.recordatorio && <span title="Tiene recordatorio" style={{ fontSize: 10, background: '#f8efd9', color: '#a8741a', padding: '1px 6px', borderRadius: 999, fontWeight: 700, flexShrink: 0 }}>📅</span>}
                     {leadSucursal(l) && <span title={`Sucursal: ${leadSucursal(l)}`} style={{ fontSize: 10, background: '#eef3f1', color: '#0F7A63', padding: '1px 7px', borderRadius: 999, fontWeight: 700, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 2 }}>📍 {leadSucursal(l)}</span>}
                     {(l.wallet_guardada || (l.wallet_sellos ?? 0) > 0) && (() => {
-                      const n = l.wallet_sellos ?? 0, premio = n >= 5
-                      return <span title={premio ? 'Club Sonrisa: ¡premio desbloqueado!' : `Club Sonrisa: ${n}/5 sellos`}
-                        style={{ fontSize: 10, background: premio ? '#f8efd9' : '#e3f1ec', color: premio ? '#a8741a' : '#0F7A63', padding: '1px 7px', borderRadius: 999, fontWeight: 700, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 2 }}>🦷 {n}/5</span>
+                      const n = l.wallet_sellos ?? 0, premio = n >= 3
+                      return <span title={premio ? 'Club Sonrisa: ¡premio desbloqueado!' : `Club Sonrisa: ${n}/3 sellos`}
+                        style={{ fontSize: 10, background: premio ? '#f8efd9' : '#e3f1ec', color: premio ? '#a8741a' : '#0F7A63', padding: '1px 7px', borderRadius: 999, fontWeight: 700, flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 2 }}>🦷 {n}/3</span>
                     })()}
                   </div>
                   {l.email && <div style={{ fontSize: 12, color: '#9aaba5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
