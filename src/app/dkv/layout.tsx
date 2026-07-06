@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import JsonLd from '@/components/JsonLd'
+import ChatWidget from '@/components/ChatWidget'
 import { TITULAR } from './legal-data'
 
 const BASE = 'https://dkv-ergo.es'
@@ -83,6 +84,7 @@ export default function DkvLayout({ children }: { children: React.ReactNode }) {
       />
       <JsonLd data={[orgLd, websiteLd]} />
       {children}
+      <ChatWidget />
     </>
   )
 }
