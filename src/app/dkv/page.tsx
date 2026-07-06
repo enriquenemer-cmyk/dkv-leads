@@ -21,7 +21,7 @@ import {
   Share2, AtSign, Globe, MessageCircle, ShieldCheck, Heart, Plus, Loader2, Sparkles, Plane, MapPin,
   Activity, TrendingUp, ThumbsUp, Timer, HeartPulse,
   Smile, Home, Feather, Quote, Minus, Umbrella,
-  Users, Gift, HardHat, FileText, Wrench, Scale,
+  Users, Gift, HardHat, FileText, Wrench, Scale, CheckCircle2,
 } from 'lucide-react'
 
 /* ── Paleta oficial DKV ─────────────────────────────
@@ -533,6 +533,43 @@ export default function DKVClone() {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
+  // ─── Gancho 1: cuenta atrás de la oferta (hasta fin de mes) ───
+  const [left, setLeft] = useState<{ d: number; h: number; m: number; s: number } | null>(null)
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date()
+      const fin = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
+      let diff = Math.max(0, Math.floor((fin.getTime() - now.getTime()) / 1000))
+      const d = Math.floor(diff / 86400); diff -= d * 86400
+      const h = Math.floor(diff / 3600); diff -= h * 3600
+      const m = Math.floor(diff / 60); const s = diff - m * 60
+      setLeft({ d, h, m, s })
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // ─── Gancho 2: avisos de prueba social ("alguien pidió presupuesto") ───
+  const [proof, setProof] = useState<{ nombre: string; ciudad: string; hace: number } | null>(null)
+  useEffect(() => {
+    const nombres = ['María', 'Javier', 'Lucía', 'Carlos', 'Ana', 'David', 'Elena', 'Sergio', 'Marta', 'Pablo', 'Rocío', 'Alberto', 'Nuria', 'Iván']
+    const ciudades = ['Madrid', 'Sevilla', 'Valladolid', 'León', 'Salamanca', 'Getafe', 'Alcalá de Henares', 'Dos Hermanas', 'Móstoles', 'Zamora']
+    let i = 0
+    let hideT: ReturnType<typeof setTimeout>
+    const show = () => {
+      const nombre = nombres[Math.floor(Math.random() * nombres.length)]
+      const ciudad = ciudades[Math.floor(Math.random() * ciudades.length)]
+      const hace = 1 + Math.floor(Math.random() * 14)
+      setProof({ nombre, ciudad, hace })
+      hideT = setTimeout(() => setProof(null), 5200)
+      i++
+    }
+    const firstT = setTimeout(show, 6000)
+    const loop = setInterval(show, 15000)
+    return () => { clearTimeout(firstT); clearTimeout(hideT); clearInterval(loop) }
+  }, [])
+
   const set = (k: string, v: string) => { setForm(f => ({ ...f, [k]: v })); setError('') }
   const emailOk = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e.trim())
   const telOk = (t: string) => /^(\+?34)?[6789]\d{8}$/.test(t.replace(/[\s-]/g, ''))
@@ -619,6 +656,9 @@ export default function DKVClone() {
         .h-rise.d1{animation-delay:.1s}.h-rise.d2{animation-delay:.22s}.h-rise.d3{animation-delay:.34s}.h-rise.d4{animation-delay:.46s}
         .btn-glass:hover{background:rgba(255,255,255,.26)!important;transform:translateY(-2px)}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes proofIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+        .proof-toast{animation:proofIn .45s cubic-bezier(.2,.8,.2,1)}
+        .promo-bar:hover{filter:brightness(1.06)}
         @keyframes modalUp{from{opacity:0;transform:translateY(34px) scale(.97)}to{opacity:1;transform:none}}
         .modal-close:hover{background:rgba(255,255,255,.28)!important}
         @keyframes menuDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
@@ -684,6 +724,19 @@ export default function DKVClone() {
         <MessageCircle size={30} color="#fff" />
       </a>
 
+      {/* Aviso de prueba social (solo escritorio) */}
+      {proof && (
+        <div className="proof-toast hide-mobile" style={{ position: 'fixed', right: 24, bottom: 100, zIndex: 84, background: '#fff', borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: '0 16px 40px -12px rgba(10,47,39,.28)', padding: '11px 15px 11px 12px', display: 'flex', alignItems: 'center', gap: 12, maxWidth: 320 }}>
+          <span style={{ width: 38, height: 38, borderRadius: '50%', background: `${C.teal}14`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <CheckCircle2 size={20} color={C.teal} />
+          </span>
+          <span style={{ lineHeight: 1.35 }}>
+            <span style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: C.text }}>{proof.nombre} de {proof.ciudad}</span>
+            <span style={{ display: 'block', fontSize: 12.5, color: C.taupe }}>acaba de pedir su presupuesto · hace {proof.hace} min</span>
+          </span>
+        </div>
+      )}
+
       {/* Barra fija móvil (SEM): click-to-call + CTA principal */}
       <div className="sem-bar" style={{ display: 'none', position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 86, background: '#fff', borderTop: `1px solid ${C.border}`, padding: '10px 14px', gap: 10, boxShadow: '0 -8px 24px -12px rgba(0,0,0,.25)' }}>
         <a href="tel:699669603" onClick={() => trackContact('phone')} className="dkv-a" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '13px', borderRadius: 12, border: `1.6px solid ${C.teal}`, color: C.teal, fontWeight: 800, fontSize: 15 }}><Phone size={17} /> Llamar</a>
@@ -695,19 +748,34 @@ export default function DKVClone() {
         <div className="pad" style={{ maxWidth: 1240, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 24, height: 44, fontSize: 13.5, fontWeight: 600 }}>
           {[
             { t: 'Contacto', on: () => scrollTo('contacto') },
-            { t: 'Oficinas', href: 'https://www.google.com/maps/search/?api=1&query=Pr%C3%ADncipe+de+Vergara+80+28006+Madrid' },
             { t: 'Blog', on: () => scrollTo('blog') },
-            { t: 'Yo soy DKV', href: 'https://wa.me/34699669603?text=Hola,%20ya%20soy%20cliente%20DKV%20y%20necesito%20ayuda' },
-          ].map(i => i.href
-            ? <a key={i.t} href={i.href} target="_blank" rel="noopener noreferrer" className="dkv-a" style={{ opacity: 0.96 }}>{i.t}</a>
-            : <button key={i.t} onClick={i.on} className="dkv-a" style={{ opacity: 0.96, background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, padding: 0 }}>{i.t}</button>
-          )}
+          ].map(i => (
+            <button key={i.t} onClick={i.on} className="dkv-a" style={{ opacity: 0.96, background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, fontWeight: 600, padding: 0 }}>{i.t}</button>
+          ))}
           <span style={{ opacity: 0.45 }}>|</span>
           {[{ t: 'Español', c: 'es' }, { t: 'Gallego', c: 'gl' }, { t: 'Català', c: 'ca' }, { t: 'English', c: 'en' }, { t: 'Deutsch', c: 'de' }].map(l => (
             <button key={l.c} onClick={() => (window as unknown as { changeLanguage?: (x: string) => void }).changeLanguage?.(l.c)} className="dkv-a hide-md notranslate" translate="no" style={{ opacity: 0.9, fontWeight: 500, background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13.5, padding: 0 }}>{l.t}</button>
           ))}
         </div>
       </div>
+
+      {/* ═══ BANNER OFERTA + CUENTA ATRÁS ═══ */}
+      {left && (
+        <button onClick={() => scrollTo('calcula')} className="promo-bar" aria-label="Aprovecha la oferta, calcula tu seguro"
+          style={{ width: '100%', border: 'none', cursor: 'pointer', fontFamily: 'inherit', color: '#fff', background: `linear-gradient(90deg, ${C.red}, #b52b2b)`, padding: '9px 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 14.5, fontWeight: 800, letterSpacing: '-0.01em' }}>
+            🎁 Hasta <span style={{ color: '#ffe08a' }}>-35% de descuento</span> · la oferta termina en
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {[{ v: left.d, l: 'd' }, { v: left.h, l: 'h' }, { v: left.m, l: 'm' }, { v: left.s, l: 's' }].map(u => (
+              <span key={u.l} style={{ display: 'inline-flex', alignItems: 'baseline', gap: 2, background: 'rgba(0,0,0,.22)', borderRadius: 7, padding: '3px 7px', fontWeight: 800, fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
+                {String(u.v).padStart(2, '0')}<span style={{ fontSize: 10.5, opacity: 0.85, fontWeight: 700 }}>{u.l}</span>
+              </span>
+            ))}
+          </span>
+          <span className="hide-md" style={{ fontSize: 13.5, fontWeight: 800, textDecoration: 'underline', textUnderlineOffset: 3 }}>Calcula tu precio →</span>
+        </button>
+      )}
 
       {/* ═══ HEADER ═══ */}
       <header onMouseLeave={() => setOpenMenu(null)} style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(255,255,255,.9)', backdropFilter: 'saturate(180%) blur(12px)', borderBottom: `1px solid ${scrolled || openMenu ? C.border : 'transparent'}`, boxShadow: scrolled ? '0 6px 22px -14px rgba(0,0,0,.25)' : 'none', transition: 'box-shadow .25s, border-color .25s' }}>
