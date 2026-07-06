@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Phone, Mail, Clock, CheckCircle2, ArrowLeft } from 'lucide-react'
 import { trackLead } from '@/components/Analytics'
+import ChatWidget from '@/components/ChatWidget'
 
 const PASOS = [
   { icon: Phone, num: '01', titulo: 'Te llamamos hoy', texto: 'Un asesor personal te contactará antes de las 24h. Revisa tu teléfono.' },
@@ -73,5 +74,10 @@ function GraciasContent() {
 }
 
 export default function GraciasPage() {
-  return <Suspense><GraciasContent /></Suspense>
+  return (
+    <>
+      <Suspense><GraciasContent /></Suspense>
+      <ChatWidget />
+    </>
+  )
 }
