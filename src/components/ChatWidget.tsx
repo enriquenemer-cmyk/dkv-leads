@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, X, Send, Phone, Check } from 'lucide-react'
 import { SALUDO_INICIAL } from '@/lib/chatbot-kb'
 import { supabase } from '@/lib/supabase'
-import { trackLead } from '@/components/Analytics'
+import { trackLead, trackEvent } from '@/components/Analytics'
 
 type Msg = { role: 'user' | 'assistant'; content: string }
 
@@ -15,11 +15,25 @@ const RED = '#DD3636'
 // Botones de respuesta rápida (guían la conversación y suben la conversión)
 const CHIPS = ['🦷 Seguro dental', '💰 ¿Cuánto cuesta?', '👨‍👩‍👧 Para mi familia', '🏥 Sin listas de espera']
 
+// WhatsApp de contacto (mismo número que usa la web)
+const WA_NUM = '34699669603'
+
+// Reutiliza el id de sesión de la analítica de la web (o crea uno).
+function sid(): string {
+  try {
+    const K = 'dkv-analytics-sid'
+    let s = sessionStorage.getItem(K)
+    if (!s) { s = Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem(K, s) }
+    return s
+  } catch { return 'chat' }
+}
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: SALUDO_INICIAL }])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [typing, setTyping] = useState(false)
   const [mode, setMode] = useState<'chat' | 'lead' | 'done'>('chat')
   const [lead, setLead] = useState({ nombre: '', telefono: '', interes: '' })
   const [leadErr, setLeadErr] = useState('')
@@ -28,7 +42,7 @@ export default function ChatWidget() {
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, sending, open, mode])
+  }, [messages, sending, typing, open, mode])
 
   // Aviso flotante que invita a abrir el chat (una sola vez)
   useEffect(() => {
@@ -48,15 +62,43 @@ export default function ChatWidget() {
     setMessages(nuevos)
     setInput('')
     setSending(true)
+    setTyping(true)
+    trackEvent('chat_message')
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: nuevos }),
+        body: JSON.stringify({ messages: nuevos, sessionId: sid(), path: typeof location !== 'undefined' ? location.pathname : '' }),
       })
-      const data = await res.json()
-      setMessages((m) => [...m, { role: 'assistant', content: data.reply || '…' }])
+      // Respuesta en streaming (texto plano): la mostramos según va llegando.
+      const ct = res.headers.get('content-type') || ''
+      if (res.body && ct.includes('text/plain')) {
+        const reader = res.body.getReader()
+        const dec = new TextDecoder()
+        let acc = ''
+        let empezado = false
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          acc += dec.decode(value, { stream: true })
+          if (!acc) continue
+          if (!empezado) {
+            empezado = true
+            setTyping(false)
+            setMessages((m) => [...m, { role: 'assistant', content: acc }])
+          } else {
+            setMessages((m) => { const c = [...m]; c[c.length - 1] = { role: 'assistant', content: acc }; return c })
+          }
+        }
+        if (!empezado) { setTyping(false); setMessages((m) => [...m, { role: 'assistant', content: '…' }]) }
+      } else {
+        // Compatibilidad: respuesta en JSON de una sola pieza.
+        const data = await res.json()
+        setTyping(false)
+        setMessages((m) => [...m, { role: 'assistant', content: data.reply || '…' }])
+      }
     } catch {
+      setTyping(false)
       setMessages((m) => [...m, { role: 'assistant', content: 'Ups, ha fallado la conexión. Inténtalo de nuevo en un momento.' }])
     } finally {
       setSending(false)
@@ -84,6 +126,9 @@ export default function ChatWidget() {
     setMode('done')
     setMessages((m) => [...m, { role: 'assistant', content: `¡Perfecto, ${lead.nombre.trim().split(' ')[0]}! ✅ Un asesor te llamará en menos de 24 h, sin compromiso. Gracias por confiar en DKV. 💚` }])
   }
+
+  const ultimaDuda = [...messages].reverse().find((m) => m.role === 'user')?.content || ''
+  const waHref = `https://wa.me/${WA_NUM}?text=${encodeURIComponent('Hola, tengo una consulta sobre un seguro DKV' + (ultimaDuda ? `: ${ultimaDuda}` : ''))}`
 
   return (
     <>
@@ -153,7 +198,7 @@ export default function ChatWidget() {
                 {m.content}
               </div>
             ))}
-            {sending && mode !== 'lead' && (
+            {typing && mode !== 'lead' && (
               <div style={{ alignSelf: 'flex-start', padding: '12px 14px', borderRadius: 15, background: '#fff', border: '1px solid #e6ece9', display: 'flex', gap: 4 }}>
                 <span className="dkv-dot" /><span className="dkv-dot" style={{ animationDelay: '.15s' }} /><span className="dkv-dot" style={{ animationDelay: '.3s' }} />
               </div>
@@ -188,8 +233,11 @@ export default function ChatWidget() {
             </div>
           ) : (
             <>
-              {/* Botón fijo "que me llamen" */}
-              <button onClick={() => setMode('lead')} style={{ margin: '0 12px', padding: '11px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${RED}, #c02d2d)`, color: '#fff', fontWeight: 800, fontSize: 13.5, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: '0 8px 20px -8px rgba(221,54,54,.55)' }}><Phone size={15} /> Quiero que me llamen gratis</button>
+              {/* Contacto directo: que me llamen (rojo) + WhatsApp (verde) */}
+              <div style={{ display: 'flex', gap: 8, margin: '0 12px' }}>
+                <button onClick={() => setMode('lead')} style={{ flex: 1, padding: '11px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${RED}, #c02d2d)`, color: '#fff', fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: '0 8px 20px -8px rgba(221,54,54,.55)' }}><Phone size={15} /> Que me llamen</button>
+                <a href={waHref} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('chat_whatsapp')} style={{ padding: '11px 14px', borderRadius: 12, background: '#25D366', color: '#fff', fontWeight: 800, fontSize: 13, textDecoration: 'none', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><MessageCircle size={15} /> WhatsApp</a>
+              </div>
               {/* Entrada */}
               <div style={{ display: 'flex', gap: 8, padding: 12, background: '#fff' }}>
                 <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') enviar() }} placeholder="Escribe tu pregunta…" style={{ flex: 1, padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />

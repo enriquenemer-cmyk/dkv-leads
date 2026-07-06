@@ -78,6 +78,71 @@ function origenValido(req: NextRequest): boolean {
   }
 }
 
+// Registra la pregunta del visitante en la analítica propia (tabla web_eventos).
+async function logPregunta(sessionId: string, path: string, pregunta: string) {
+  try {
+    await supabaseServer().from('web_eventos').insert({
+      session_id: sessionId || 'chatbot',
+      tipo: 'chat',
+      path: path || '/dkv',
+      elemento: pregunta.slice(0, 300),
+    })
+  } catch (e) {
+    console.error('[chatbot] no pude registrar la pregunta:', e)
+  }
+}
+
+// ---- Gemini en STREAMING (SSE): va emitiendo el texto según lo genera ----
+async function* geminiStream(messages: Msg[]): AsyncGenerator<string> {
+  const key = process.env.GEMINI_API_KEY
+  if (!key) throw new Error('Falta GEMINI_API_KEY')
+  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${key}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM }] },
+        contents: messages.map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        })),
+        generationConfig: { temperature: 0.6, maxOutputTokens: 500 },
+      }),
+    }
+  )
+  if (!res.ok || !res.body) throw new Error(`Gemini ${res.status}: ${await res.text().catch(() => '')}`)
+  const reader = res.body.getReader()
+  const dec = new TextDecoder()
+  let buf = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buf += dec.decode(value, { stream: true })
+    let nl: number
+    while ((nl = buf.indexOf('\n')) !== -1) {
+      const linea = buf.slice(0, nl).trim()
+      buf = buf.slice(nl + 1)
+      if (!linea.startsWith('data:')) continue
+      const json = linea.slice(5).trim()
+      if (!json || json === '[DONE]') continue
+      try {
+        const d = JSON.parse(json)
+        const txt = d?.candidates?.[0]?.content?.parts?.[0]?.text
+        if (txt) yield txt
+      } catch {
+        /* fragmento incompleto entre chunks: se ignora */
+      }
+    }
+  }
+}
+
+// Para OpenAI/Anthropic: no hacemos streaming, devolvemos la respuesta entera de golpe.
+async function* unaPieza(messages: Msg[]): AsyncGenerator<string> {
+  yield await preguntarIA(messages)
+}
+
 // --- Llama al motor de IA elegido y devuelve el texto de respuesta ---
 async function preguntarIA(messages: Msg[]): Promise<string> {
   if (PROVIDER === 'openai') return openai(messages)
@@ -224,9 +289,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sin mensajes válidos' }, { status: 400 })
     }
 
-    const bruto = await preguntarIA(messages)
-    const reply = await capturarLead(bruto)
-    return NextResponse.json({ reply })
+    // Registra la última pregunta del visitante (analítica), sin bloquear la respuesta.
+    const pregunta = [...messages].reverse().find((m) => m.role === 'user')?.content || ''
+    const path = typeof body?.path === 'string' ? body.path : ''
+    const sessionId = typeof body?.sessionId === 'string' ? body.sessionId : ''
+    if (pregunta) void logPregunta(sessionId, path, pregunta)
+
+    // Respuesta en STREAMING (texto plano): el texto llega al chat según se genera.
+    const encoder = new TextEncoder()
+    let full = ''
+    let emitido = 0
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const gen = PROVIDER === 'gemini' ? geminiStream(messages) : unaPieza(messages)
+          for await (const delta of gen) {
+            full += delta
+            // No emitimos la señal interna @@LEAD hacia el visitante.
+            const at = full.indexOf('@@')
+            const hasta = at === -1 ? full.length : at
+            if (hasta > emitido) {
+              controller.enqueue(encoder.encode(full.slice(emitido, hasta)))
+              emitido = hasta
+            }
+          }
+          // Al terminar: procesa @@LEAD (guarda el lead) y emite lo que quede visible.
+          const visible = await capturarLead(full)
+          if (visible.length > emitido) controller.enqueue(encoder.encode(visible.slice(emitido)))
+        } catch (e) {
+          console.error('[chatbot]', e)
+          if (emitido === 0) {
+            controller.enqueue(
+              encoder.encode('Vaya, ahora mismo no puedo responder. Si quieres, déjanos tu teléfono y un asesor te llama enseguida. 🙏')
+            )
+          }
+        } finally {
+          controller.close()
+        }
+      },
+    })
+    return new Response(stream, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' },
+    })
   } catch (e) {
     console.error('[chatbot]', e)
     return NextResponse.json(
