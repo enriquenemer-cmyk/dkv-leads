@@ -75,6 +75,10 @@ function construirObjeto({ clienteId, nombre, sellos }: DatosTarjeta) {
       label: 'Sellos',
       balance: { string: `${n}/${SELLOS_TOTAL}` },
     },
+    secondaryLoyaltyPoints: {
+      label: completa ? 'Premio' : 'Te faltan',
+      balance: { string: completa ? '¡A canjear!' : `${SELLOS_TOTAL - n} sellos` },
+    },
     heroImage: {
       sourceUri: { uri: `${BASE_URL}/api/wallet/hero?sellos=${n}` },
       contentDescription: { defaultValue: { language: 'es', value: `${n} de ${SELLOS_TOTAL} sellos` } },
@@ -91,6 +95,11 @@ function construirObjeto({ clienteId, nombre, sellos }: DatosTarjeta) {
         body: completa
           ? 'Blanqueamiento dental gratis. Muestra este código en la clínica para canjearlo.'
           : `Refiere a ${SELLOS_TOTAL} amigos y consigue un blanqueamiento dental gratis. Te faltan ${SELLOS_TOTAL - n}.`,
+      },
+      {
+        id: 'como_funciona',
+        header: 'Cómo funciona',
+        body: 'Cada amigo que refieras y se dé de alta suma 1 sello. Al llegar a 5 sellos, ganas tu blanqueamiento dental. Tu asesor DKV actualiza tus sellos automáticamente.',
       },
     ],
   }
