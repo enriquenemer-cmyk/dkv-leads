@@ -34,7 +34,10 @@ export default function GoogleTranslate() {
       if (TE) new TE({ pageLanguage: 'es', includedLanguages: 'es,gl,ca,en,de', autoDisplay: false }, 'google_translate_element')
     }
 
-    if (!document.getElementById('google-translate-script')) {
+    // Carga diferida: el traductor de Google (y sus cookies) solo se carga cuando el
+    // usuario pulsa un idioma → páginas más rápidas y sin cookies de terceros por defecto.
+    const ensureLoaded = () => {
+      if (document.getElementById('google-translate-script')) return
       const s = document.createElement('script')
       s.id = 'google-translate-script'
       s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
@@ -43,16 +46,20 @@ export default function GoogleTranslate() {
 
     // Función global que usan los botones de idioma del top bar
     w.changeLanguage = (lang: string) => {
+      ensureLoaded()
       const val = lang === 'es' ? '' : `/es/${lang}`
       document.cookie = `googtrans=${val};path=/`
       try { document.cookie = `googtrans=${val};path=/;domain=.${location.hostname}` } catch { /* noop */ }
       const trySet = (t = 0) => {
         const sel = document.querySelector('.goog-te-combo') as HTMLSelectElement | null
         if (sel) { sel.value = lang; sel.dispatchEvent(new Event('change')) }
-        else if (t < 30) setTimeout(() => trySet(t + 1), 180)
+        else if (t < 40) setTimeout(() => trySet(t + 1), 180)
       }
       trySet()
     }
+
+    // Si el usuario ya eligió idioma antes (cookie), cargamos el traductor para mantenerlo
+    if (/googtrans=\/es\/\w/.test(document.cookie)) ensureLoaded()
   }, [])
 
   return (
