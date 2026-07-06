@@ -34,6 +34,50 @@ function supabaseServer() {
   })
 }
 
+// ============================================================
+//  PROTECCIÓN ANTI-ABUSO / CONTROL DE COSTE
+//  Evita que scripts externos o spammers disparen la factura de IA.
+// ============================================================
+const LIMITE_MENSAJES_POR_MINUTO = Number(process.env.CHAT_RATE_LIMIT || 15)
+const LIMITE_LARGO_MENSAJE = 800 // caracteres por mensaje
+const LIMITE_MENSAJES_HISTORIAL = 12 // turnos de conversación que enviamos a la IA
+
+// Ventana deslizante en memoria: IP -> marcas de tiempo (ms) de sus peticiones.
+// Nota: en serverless es "best-effort" por instancia; frena el abuso evidente.
+const visitas = new Map<string, number[]>()
+
+function ipDe(req: NextRequest): string {
+  const fwd = req.headers.get('x-forwarded-for')
+  if (fwd) return fwd.split(',')[0].trim()
+  return req.headers.get('x-real-ip') || 'desconocida'
+}
+
+/** true si la IP ha superado el límite de mensajes por minuto. */
+function superaLimite(ip: string, ahora: number): boolean {
+  const desde = ahora - 60_000
+  const previas = (visitas.get(ip) || []).filter((t) => t > desde)
+  previas.push(ahora)
+  visitas.set(ip, previas)
+  // Limpieza esporádica para no acumular IPs viejas en memoria.
+  if (visitas.size > 5000) {
+    for (const [k, v] of visitas) if (v.every((t) => t <= desde)) visitas.delete(k)
+  }
+  return previas.length > LIMITE_MENSAJES_POR_MINUTO
+}
+
+/** true si la petición viene de nuestra propia web (mismo dominio). */
+function origenValido(req: NextRequest): boolean {
+  const host = req.headers.get('host')
+  if (!host) return false
+  const ref = req.headers.get('origin') || req.headers.get('referer')
+  if (!ref) return false // sin origen (p.ej. curl/scripts) → se bloquea
+  try {
+    return new URL(ref).host === host
+  } catch {
+    return false
+  }
+}
+
 // --- Llama al motor de IA elegido y devuelve el texto de respuesta ---
 async function preguntarIA(messages: Msg[]): Promise<string> {
   if (PROVIDER === 'openai') return openai(messages)
@@ -148,14 +192,39 @@ async function capturarLead(texto: string): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
+    // 1) Solo desde nuestra propia web (bloquea scripts externos).
+    if (!origenValido(req)) {
+      return NextResponse.json(
+        { reply: 'Para hablar con el asistente, abre el chat desde nuestra web. 🙂' },
+        { status: 403 }
+      )
+    }
+
+    // 2) Límite de mensajes por minuto y por visitante.
+    if (superaLimite(ipDe(req), Date.now())) {
+      return NextResponse.json(
+        { reply: 'Vas muy rápido 😅 Espera un momento antes de enviar otro mensaje, por favor.' },
+        { status: 429 }
+      )
+    }
+
     const body = await req.json()
-    const messages: Msg[] = Array.isArray(body?.messages) ? body.messages : []
-    if (messages.length === 0) {
+    const crudos: Msg[] = Array.isArray(body?.messages) ? body.messages : []
+    if (crudos.length === 0) {
       return NextResponse.json({ error: 'Sin mensajes' }, { status: 400 })
     }
-    // Limitamos el historial para controlar coste y latencia.
-    const recientes = messages.slice(-12)
-    const bruto = await preguntarIA(recientes)
+
+    // 3) Sanea y limita tamaño: solo roles válidos, recorta textos largos y
+    //    quédate con los últimos turnos (controla coste y latencia).
+    const messages: Msg[] = crudos
+      .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .map((m) => ({ role: m.role, content: m.content.slice(0, LIMITE_LARGO_MENSAJE) }))
+      .slice(-LIMITE_MENSAJES_HISTORIAL)
+    if (messages.length === 0) {
+      return NextResponse.json({ error: 'Sin mensajes válidos' }, { status: 400 })
+    }
+
+    const bruto = await preguntarIA(messages)
     const reply = await capturarLead(bruto)
     return NextResponse.json({ reply })
   } catch (e) {
