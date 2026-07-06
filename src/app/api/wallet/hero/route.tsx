@@ -1,17 +1,22 @@
 import { ImageResponse } from 'next/og'
+import { PROGRAMAS, esProgramaValido } from '@/lib/wallet-programas'
 
-/* Banner (heroImage) de la tarjeta Club Sonrisa para Google Wallet.
-   Dibuja los 5 sellos según ?sellos=N (0..5), la meta con regalo y una
-   barra de progreso, con tipografía Poppins incrustada. PNG 1032x336. */
+/* Banner (heroImage) de las tarjetas "Club DKV" para Google Wallet.
+   ?programa=sonrisa|hogar|decesos|vida y ?sellos=N. Dibuja los sellos con el
+   icono/color del programa, la meta con regalo y una barra de progreso, con
+   tipografía Poppins incrustada. PNG 1032x336. */
 
 const CREMA = '#EDEDE0'
-const LIMA = '#8FAE2C'
 const ORO = '#EF9F27'
 const TEAL = '#0F4A3F'
 
 export async function GET(req: Request) {
-  const TOTAL = 3
   const { searchParams } = new URL(req.url)
+  const progRaw = searchParams.get('programa') || 'sonrisa'
+  const prog = PROGRAMAS[esProgramaValido(progRaw) ? progRaw : 'sonrisa']
+  const TOTAL = prog.total
+  const ACCENT = prog.accent
+
   let n = parseInt(searchParams.get('sellos') || '0', 10)
   if (!Number.isFinite(n)) n = 0
   n = Math.max(0, Math.min(TOTAL, n))
@@ -19,7 +24,6 @@ export async function GET(req: Request) {
   const faltan = TOTAL - n
 
   // Cargamos Poppins desde /public/fonts del propio servidor (sirve en dev y prod).
-  // Si por lo que sea fallara, renderizamos con la fuente por defecto (nunca peta).
   const origin = new URL(req.url).origin
   let fonts: { name: string; data: ArrayBuffer; weight: 500 | 600 | 700; style: 'normal' }[] = []
   try {
@@ -36,6 +40,8 @@ export async function GET(req: Request) {
   } catch {
     fonts = []
   }
+
+  const stamps = Array.from({ length: TOTAL }, (_, i) => i)
 
   return new ImageResponse(
     (
@@ -56,7 +62,7 @@ export async function GET(req: Request) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 26 }}>
-          {[0, 1, 2].map((i) => (
+          {stamps.map((i) => (
             <div
               key={i}
               style={{
@@ -67,12 +73,12 @@ export async function GET(req: Request) {
                 height: 96,
                 marginLeft: i === 0 ? 0 : 22,
                 borderRadius: 48,
-                fontSize: 48,
-                backgroundColor: i < n ? LIMA : 'rgba(237,237,224,0.05)',
-                border: i < n ? `3px solid ${LIMA}` : '3px solid rgba(237,237,224,0.28)',
+                fontSize: 46,
+                backgroundColor: i < n ? ACCENT : 'rgba(237,237,224,0.05)',
+                border: i < n ? `3px solid ${ACCENT}` : '3px solid rgba(237,237,224,0.28)',
               }}
             >
-              {i < n ? '🦷' : ''}
+              {i < n ? prog.emoji : ''}
             </div>
           ))}
           <div style={{ display: 'flex', fontSize: 40, color: 'rgba(237,237,224,0.5)', marginLeft: 22, marginRight: 22 }}>›</div>
@@ -94,16 +100,16 @@ export async function GET(req: Request) {
         </div>
 
         <div style={{ display: 'flex', width: 620, height: 14, borderRadius: 7, backgroundColor: 'rgba(237,237,224,0.16)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', width: (620 * n) / TOTAL, height: 14, borderRadius: 7, backgroundColor: completa ? ORO : LIMA }} />
+          <div style={{ display: 'flex', width: (620 * n) / TOTAL, height: 14, borderRadius: 7, backgroundColor: completa ? ORO : ACCENT }} />
         </div>
 
         {completa ? (
           <div style={{ display: 'flex', fontSize: 33, fontWeight: 700, color: '#F4C77A' }}>
-            ¡Blanqueamiento dental desbloqueado!
+            ¡Premio desbloqueado!
           </div>
         ) : (
           <div style={{ display: 'flex', fontSize: 32, fontWeight: 500, color: CREMA }}>
-            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: LIMA }}>{faltan}</span>&nbsp;{faltan === 1 ? 'sello' : 'sellos'} para tu blanqueamiento
+            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: ACCENT }}>{faltan}</span>&nbsp;{faltan === 1 ? 'sello' : 'sellos'} para {prog.premioCorto}
           </div>
         )}
       </div>

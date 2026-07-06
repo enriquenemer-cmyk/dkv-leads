@@ -2,72 +2,82 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
+import { PROGRAMAS, PROGRAMA_SLUGS, type ProgramaSlug } from '@/lib/wallet-programas'
 import { Wallet, MessageCircle, Copy, ExternalLink, Minus, Plus, RefreshCw, Check } from 'lucide-react'
 
-/* Tarjeta de fidelización "Club Sonrisa" para Google Wallet.
-   El asesor elige cuántos sellos lleva el cliente (0..3, cada uno = 1 referido).
-   - "Generar tarjeta": crea el enlace para que el cliente la guarde (por WhatsApp).
-   - "Actualizar en el móvil": para tarjetas ya guardadas, actualiza los sellos y
-     Google envía el push automático al móvil del cliente.
-   3 sellos = blanqueamiento dental gratis (el 4º hueco es el regalo). */
+/* Tarjetas de fidelización "Club DKV" para Google Wallet (4 ramos).
+   El asesor elige el ramo (sonrisa/hogar/decesos/vida) y cuántos sellos
+   lleva el cliente. Genera el enlace (WhatsApp) o actualiza en el móvil (push).
+   Nota: la copia en Supabase (pill de la lista) sólo se guarda para "sonrisa";
+   los otros ramos funcionan leyendo el estado real de Google. */
 
 const VERDE = '#0F7A63'
-const SELLOS_TOTAL = 3
 
 type LeadWallet = { id: string; nombre: string; telefono: string | null; wallet_sellos?: number | null; wallet_guardada?: boolean | null }
 
 export function WalletButton({ lead }: { lead: LeadWallet }) {
+  const [programa, setPrograma] = useState<ProgramaSlug>('sonrisa')
+  const prog = PROGRAMAS[programa]
+  const total = prog.total
+  const esSonrisa = programa === 'sonrisa'
+
   const [sellos, setSellos] = useState(lead.wallet_sellos ?? 0)
   const [estado, setEstado] = useState<'idle' | 'cargando' | 'listo' | 'error' | 'no-config'>('idle')
   const [url, setUrl] = useState('')
   const [msgError, setMsgError] = useState('')
   const [copiado, setCopiado] = useState(false)
-  const [existe, setExiste] = useState<boolean | null>(lead.wallet_guardada ?? null) // ¿ya guardó la tarjeta?
+  const [existe, setExiste] = useState<boolean | null>(lead.wallet_guardada ?? null)
   const [push, setPush] = useState<'idle' | 'enviando' | 'ok' | 'error'>('idle')
   const [pushMsg, setPushMsg] = useState('')
 
-  // Código de cliente corto y estable a partir del id del lead (más limpio que el UUID)
   const clienteId = 'DKV-' + lead.id.replace(/-/g, '').slice(0, 8).toUpperCase()
   const nombre1 = lead.nombre.split(' ')[0]
   const waNum = (lead.telefono ?? '').replace(/\D/g, '')
 
-  // Guarda campos de wallet en el lead (Supabase es la copia local; Google es la fuente real del pase)
   async function persistir(campos: { wallet_sellos?: number; wallet_guardada?: boolean }) {
+    if (!esSonrisa) return // sólo el ramo dental se refleja en la lista (columna única)
     try { await supabase.from('leads').update(campos).eq('id', lead.id) } catch { /* se ignora */ }
   }
 
-  // Al abrir la ficha: reconcilia con Google los sellos reales del pase (si el cliente ya lo guardó)
+  function cambiarPrograma(s: ProgramaSlug) {
+    if (s === programa) return
+    setPrograma(s)
+    setEstado('idle'); setUrl(''); setPush('idle'); setMsgError('')
+    setSellos(s === 'sonrisa' ? (lead.wallet_sellos ?? 0) : 0)
+    setExiste(s === 'sonrisa' ? (lead.wallet_guardada ?? null) : null)
+  }
+
+  // Al abrir la ficha o cambiar de ramo: reconcilia con Google los sellos reales del pase
   useEffect(() => {
     let vivo = true
     ;(async () => {
       try {
-        const res = await fetch(`/api/wallet/google?cliente=${clienteId}&estado=1`)
+        const res = await fetch(`/api/wallet/google?programa=${programa}&cliente=${clienteId}&estado=1`)
         if (!res.ok || !vivo) return
         const data = await res.json()
         if (!vivo || !data.existe) return
         setExiste(true)
         if (typeof data.sellos === 'number') setSellos(data.sellos)
-        // Sincroniza la copia en Supabase si difiere de lo que dice Google
-        if (data.sellos !== (lead.wallet_sellos ?? 0) || !lead.wallet_guardada) {
+        if (esSonrisa && (data.sellos !== (lead.wallet_sellos ?? 0) || !lead.wallet_guardada)) {
           persistir({ wallet_sellos: data.sellos ?? 0, wallet_guardada: true })
         }
       } catch { /* sin conexión o sin config: se ignora */ }
     })()
     return () => { vivo = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clienteId])
+  }, [clienteId, programa])
 
   async function generar() {
     setEstado('cargando'); setMsgError('')
     try {
-      const q = new URLSearchParams({ cliente: clienteId, nombre: lead.nombre, sellos: String(sellos) })
+      const q = new URLSearchParams({ programa, cliente: clienteId, nombre: lead.nombre, sellos: String(sellos) })
       const res = await fetch(`/api/wallet/google?${q}`)
       const data = await res.json()
       if (res.status === 503) { setEstado('no-config'); return }
       if (!res.ok) { setEstado('error'); setMsgError(data.error || 'No se pudo generar la tarjeta'); return }
       setUrl(data.url); setEstado('listo')
       persistir({ wallet_sellos: sellos })
-      logActividad('wallet_enviada', `Tarjeta Club Sonrisa generada para ${lead.nombre} (${sellos}/${SELLOS_TOTAL} sellos)`, { lead_id: lead.id, lead_nombre: lead.nombre })
+      logActividad('wallet_enviada', `${prog.nombre} generada para ${lead.nombre} (${sellos}/${total} sellos)`, { lead_id: lead.id, lead_nombre: lead.nombre })
     } catch {
       setEstado('error'); setMsgError('Error de red al generar la tarjeta')
     }
@@ -79,18 +89,18 @@ export function WalletButton({ lead }: { lead: LeadWallet }) {
       const res = await fetch('/api/wallet/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cliente: clienteId, nombre: lead.nombre, sellos }),
+        body: JSON.stringify({ programa, cliente: clienteId, nombre: lead.nombre, sellos }),
       })
       const data = await res.json()
       if (res.ok) {
         setPush('ok'); setExiste(true)
         persistir({ wallet_sellos: sellos, wallet_guardada: true })
-        logActividad('wallet_actualizada', `Sellos actualizados a ${sellos}/${SELLOS_TOTAL} en el móvil de ${lead.nombre}${sellos >= SELLOS_TOTAL ? ' · ¡premio desbloqueado!' : ''}`, { lead_id: lead.id, lead_nombre: lead.nombre })
+        logActividad('wallet_actualizada', `${prog.nombre}: sellos a ${sellos}/${total} en el móvil de ${lead.nombre}${sellos >= total ? ' · ¡premio!' : ''}`, { lead_id: lead.id, lead_nombre: lead.nombre })
         setTimeout(() => setPush('idle'), 2500); return
       }
       setPush('error')
       setPushMsg(res.status === 409
-        ? 'El cliente aún no ha guardado la tarjeta. Envíale primero el enlace.'
+        ? 'El cliente aún no ha guardado esta tarjeta. Envíale primero el enlace.'
         : (data.error || 'No se pudo actualizar'))
     } catch {
       setPush('error'); setPushMsg('Error de red al actualizar')
@@ -102,31 +112,50 @@ export function WalletButton({ lead }: { lead: LeadWallet }) {
     setCopiado(true); setTimeout(() => setCopiado(false), 2000)
   }
 
-  const waTexto = `Hola ${nombre1}, aquí tienes tu tarjeta Club Sonrisa de DKV 🦷. Ábrela en el móvil y guárdala en tu Google Wallet: ${url}`
+  const waTexto = `Hola ${nombre1}, aquí tienes tu tarjeta ${prog.nombre} de DKV ${prog.emoji}. Ábrela en el móvil y guárdala en tu Google Wallet: ${url}`
 
   return (
     <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: 24, boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }} className="no-print">
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <div style={{ width: 32, height: 32, borderRadius: 10, background: '#e9f3ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Wallet size={15} style={{ color: VERDE }} />
         </div>
-        <h2 style={{ fontSize: 14.5, fontWeight: 700, color: '#16201d', margin: 0 }}>Tarjeta de fidelización</h2>
+        <h2 style={{ fontSize: 14.5, fontWeight: 700, color: '#16201d', margin: 0 }}>Tarjetas de fidelización</h2>
         {existe && (
           <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: VERDE, background: '#e3f1ec', padding: '3px 9px', borderRadius: 20 }}>Guardada</span>
         )}
       </div>
-      <p style={{ fontSize: 12, color: '#9aaba5', margin: '0 0 16px', lineHeight: 1.5 }}>
-        Club Sonrisa · {SELLOS_TOTAL} referidos = 1 blanqueamiento dental
+
+      {/* Selector de programa/ramo */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
+        {PROGRAMA_SLUGS.map((s) => {
+          const p = PROGRAMAS[s]; const activo = s === programa
+          return (
+            <button key={s} onClick={() => cambiarPrograma(s)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 7, padding: '9px 11px', borderRadius: 11, cursor: 'pointer', fontFamily: 'inherit',
+                border: activo ? `2px solid ${p.accent}` : '1.5px solid #e2e8e4',
+                background: activo ? '#f8fbf9' : '#fff',
+                color: '#16201d', fontSize: 12.5, fontWeight: activo ? 700 : 500, textAlign: 'left',
+              }}>
+              <span style={{ fontSize: 15 }}>{p.emoji}</span> {p.nombre.replace('Club ', '')}
+            </button>
+          )
+        })}
+      </div>
+
+      <p style={{ fontSize: 12, color: '#9aaba5', margin: '0 0 14px', lineHeight: 1.5 }}>
+        {prog.nombre} · {total} referidos = {prog.premio}
       </p>
 
       {/* Selector de sellos */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          {Array.from({ length: SELLOS_TOTAL }).map((_, i) => (
+          {Array.from({ length: total }).map((_, i) => (
             <span key={i} style={{
               width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 11, fontWeight: 700,
-              background: i < sellos ? VERDE : '#f0f4f1',
+              background: i < sellos ? prog.accent : '#f0f4f1',
               color: i < sellos ? '#fff' : '#c8d4ce',
               border: i < sellos ? 'none' : '1px solid #e2e8e4',
             }}>{i < sellos ? '✓' : ''}</span>
@@ -137,8 +166,8 @@ export function WalletButton({ lead }: { lead: LeadWallet }) {
             style={{ width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e2e8e4', background: '#fff', color: '#6b7a76', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Minus size={14} />
           </button>
-          <span style={{ fontSize: 15, fontWeight: 700, color: '#16201d', minWidth: 30, textAlign: 'center' }}>{sellos}/{SELLOS_TOTAL}</span>
-          <button onClick={() => setSellos(s => Math.min(SELLOS_TOTAL, s + 1))} aria-label="Añadir sello"
+          <span style={{ fontSize: 15, fontWeight: 700, color: '#16201d', minWidth: 30, textAlign: 'center' }}>{sellos}/{total}</span>
+          <button onClick={() => setSellos(s => Math.min(total, s + 1))} aria-label="Añadir sello"
             style={{ width: 28, height: 28, borderRadius: 8, border: '1.5px solid #e2e8e4', background: '#fff', color: '#6b7a76', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Plus size={14} />
           </button>
