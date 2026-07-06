@@ -1,55 +1,41 @@
 import jwt from 'jsonwebtoken'
 import { GoogleAuth } from 'google-auth-library'
-import { PROGRAMAS, type ProgramaSlug } from './wallet-programas'
+import { PRODUCTOS, PRODUCTO_SLUGS, TARJETA, type ProductoSlug } from './wallet-programas'
 
 /* ─────────────────────────────────────────────────────────────
-   Google Wallet · Tarjetas de sellos "Club DKV" (multi-programa)
-   Genera el enlace "Añadir a Google Wallet" para un cliente y un ramo
-   (sonrisa / hogar / decesos / vida). Cada ramo tiene su clase, icono,
-   color y premio (ver wallet-programas.ts).
+   Google Wallet · Tarjeta "Club Protección DKV"
+   UNA tarjeta: quien contrate los 3 seguros (hogar + decesos + vida)
+   se lleva un regalo sorpresa. Cada hueco es un producto concreto.
 
-   Mecánica: 3 referidos = premio (el 4º hueco de la tarjeta es el regalo).
-   La clase y el objeto viajan firmados dentro del JWT; Google los crea
-   en el primer "guardar". Para leer/actualizar sellos (push) sí usamos
-   la API REST con la cuenta de servicio.
+   La clase y el objeto viajan firmados dentro del JWT (Google los crea
+   en el primer "guardar"). Para leer/actualizar (push) usamos la API REST.
    ───────────────────────────────────────────────────────────── */
 
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || ''
 const SA_EMAIL = process.env.GOOGLE_WALLET_SA_EMAIL || ''
-// La clave privada llega con los saltos de línea escapados (\n) desde el .env
 const SA_KEY = (process.env.GOOGLE_WALLET_SA_KEY || '').replace(/\\n/g, '\n')
-
-// URL pública del sitio (para logo y banner del pase; Google los descarga de aquí)
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dkv-leads.vercel.app'
-
 const TEAL = '#0F4A3F'
 
+const CLASE_ID = `${ISSUER_ID}.${TARJETA.clase}`
+const objetoId = (clienteId: string) => `${ISSUER_ID}.${clienteId}`
+
 export type DatosTarjeta = {
-  /** Ramo de seguro / programa de fidelización */
-  programa: ProgramaSlug
-  /** Identificador único del cliente, p. ej. "DKV-4821". Sin espacios ni acentos. */
   clienteId: string
-  /** Nombre visible del titular */
   nombre: string
-  /** Sellos conseguidos (0..total del programa) */
-  sellos: number
+  /** Seguros ya contratados por el cliente */
+  seguros: ProductoSlug[]
 }
 
-/** True si Google Wallet está configurado (hay credenciales en el entorno). */
 export function walletConfigurado(): boolean {
   return Boolean(ISSUER_ID && SA_EMAIL && SA_KEY)
 }
 
-const claseId = (programa: ProgramaSlug) => `${ISSUER_ID}.${PROGRAMAS[programa].clase}`
-const objetoId = (programa: ProgramaSlug, clienteId: string) => `${ISSUER_ID}.${clienteId}-${programa}`
-
-/* La CLASE es la plantilla compartida de un programa: nombre, logo, color. */
-function construirClase(programa: ProgramaSlug) {
-  const p = PROGRAMAS[programa]
+function construirClase() {
   return {
-    id: claseId(programa),
+    id: CLASE_ID,
     issuerName: 'DKV Seguros',
-    programName: p.nombre,
+    programName: TARJETA.nombre,
     reviewStatus: 'UNDER_REVIEW',
     hexBackgroundColor: TEAL,
     programLogo: {
@@ -59,32 +45,31 @@ function construirClase(programa: ProgramaSlug) {
   }
 }
 
-/* El OBJETO es la tarjeta concreta de un cliente para un programa. */
-function construirObjeto({ programa, clienteId, nombre, sellos }: DatosTarjeta) {
-  const p = PROGRAMAS[programa]
-  const total = p.total
-  const n = Math.max(0, Math.min(total, Math.round(sellos)))
+function construirObjeto({ clienteId, nombre, seguros }: DatosTarjeta) {
+  const total = TARJETA.total
+  const tiene = PRODUCTO_SLUGS.filter((s) => seguros.includes(s))
+  const faltan = PRODUCTO_SLUGS.filter((s) => !seguros.includes(s))
+  const n = tiene.length
   const completa = n >= total
-  const faltan = total - n
-  const codigoQR = `${clienteId}-${programa.toUpperCase()}${completa ? '-PREMIO' : ''}`
+  const codigoQR = `${clienteId}${completa ? '-PREMIO' : ''}`
 
   return {
-    id: objetoId(programa, clienteId),
-    classId: claseId(programa),
+    id: objetoId(clienteId),
+    classId: CLASE_ID,
     state: 'ACTIVE',
     accountName: nombre,
     accountId: clienteId,
     loyaltyPoints: {
-      label: 'Sellos',
+      label: 'Seguros',
       balance: { string: `${n}/${total}` },
     },
     secondaryLoyaltyPoints: {
       label: completa ? 'Premio' : 'Te falta',
-      balance: { string: completa ? '¡A canjear!' : `${faltan} ${faltan === 1 ? 'sello' : 'sellos'}` },
+      balance: { string: completa ? '¡Sorpresa!' : `${total - n} ${total - n === 1 ? 'seguro' : 'seguros'}` },
     },
     heroImage: {
-      sourceUri: { uri: `${BASE_URL}/api/wallet/hero?programa=${programa}&sellos=${n}` },
-      contentDescription: { defaultValue: { language: 'es', value: `${n} de ${total} sellos` } },
+      sourceUri: { uri: `${BASE_URL}/api/wallet/hero?seguros=${tiene.join(',')}` },
+      contentDescription: { defaultValue: { language: 'es', value: `${n} de ${total} seguros contratados` } },
     },
     barcode: {
       type: 'QR_CODE',
@@ -94,26 +79,25 @@ function construirObjeto({ programa, clienteId, nombre, sellos }: DatosTarjeta) 
     textModulesData: [
       {
         id: 'premio',
-        header: completa ? '¡Premio desbloqueado!' : 'Tu premio',
+        header: completa ? '¡Regalo sorpresa desbloqueado!' : 'Tu regalo sorpresa',
         body: completa
-          ? `Ya tienes ${p.premio}. Muestra este código a tu asesor DKV para canjearlo.`
-          : `Refiere a ${total} amigos y consigue ${p.premio}. Te ${faltan === 1 ? 'falta' : 'faltan'} ${faltan}.`,
+          ? 'Ya tienes los 3 seguros DKV. Enséñale este código a tu asesor para recibir tu regalo sorpresa.'
+          : `Contrata los 3 seguros DKV (Hogar, Decesos y Vida) y llévate un regalo sorpresa. Te ${faltan.length === 1 ? 'falta' : 'faltan'}: ${faltan.map((s) => PRODUCTOS[s].nombre).join(', ')}.`,
       },
       {
         id: 'como_funciona',
         header: 'Cómo funciona',
-        body: `Cada amigo que refieras y contrate suma 1 sello. Al llegar a ${total} sellos, ganas ${p.premio}. Tu asesor DKV actualiza tus sellos automáticamente.`,
+        body: 'Cada seguro DKV que contrates marca un hueco de tu tarjeta. Al completar los 3 (Hogar, Decesos y Vida), ganas un regalo sorpresa. Tu asesor DKV actualiza la tarjeta automáticamente.',
       },
     ],
   }
 }
 
-/** Devuelve la URL "Añadir a Google Wallet" para el cliente y programa indicados. */
+/** URL "Añadir a Google Wallet" para el cliente. */
 export function enlaceGoogleWallet(datos: DatosTarjeta): string {
   if (!walletConfigurado()) {
     throw new Error('Google Wallet no está configurado (faltan variables GOOGLE_WALLET_*).')
   }
-
   const payload = {
     iss: SA_EMAIL,
     aud: 'google',
@@ -121,23 +105,19 @@ export function enlaceGoogleWallet(datos: DatosTarjeta): string {
     iat: Math.floor(Date.now() / 1000),
     origins: [BASE_URL],
     payload: {
-      loyaltyClasses: [construirClase(datos.programa)],
+      loyaltyClasses: [construirClase()],
       loyaltyObjects: [construirObjeto(datos)],
     },
   }
-
   const token = jwt.sign(payload, SA_KEY, { algorithm: 'RS256' })
   return `https://pay.google.com/gp/v/save/${token}`
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Lectura y actualización con push automático (API REST)
-   ───────────────────────────────────────────────────────────── */
+/* ── Lectura y actualización con push (API REST) ── */
 
 const WALLET_API = 'https://walletobjects.googleapis.com/walletobjects/v1'
 const SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer'
 
-// Error específico cuando el cliente todavía no ha guardado la tarjeta
 export class TarjetaNoExiste extends Error {
   constructor() {
     super('La tarjeta aún no existe en el móvil del cliente. Envíale primero el enlace para que la guarde.')
@@ -156,11 +136,11 @@ async function accessToken(): Promise<string> {
   return token
 }
 
-/** Lee los sellos actuales de la tarjeta del cliente para un programa. Null si aún no la ha guardado. */
-export async function leerSellos(programa: ProgramaSlug, clienteId: string): Promise<number | null> {
+/** Nº de seguros contratados en la tarjeta del cliente. Null si aún no la ha guardado. */
+export async function leerSellos(clienteId: string): Promise<number | null> {
   if (!walletConfigurado()) throw new Error('Google Wallet no está configurado.')
   const token = await accessToken()
-  const res = await fetch(`${WALLET_API}/loyaltyObject/${objetoId(programa, clienteId)}`, {
+  const res = await fetch(`${WALLET_API}/loyaltyObject/${objetoId(clienteId)}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   if (res.status === 404) return null
@@ -171,12 +151,12 @@ export async function leerSellos(programa: ProgramaSlug, clienteId: string): Pro
   return Number.isFinite(n) ? n : 0
 }
 
-/** Actualiza los sellos de una tarjeta ya guardada y dispara el push a su móvil. */
+/** Actualiza los seguros de una tarjeta ya guardada y dispara el push al móvil. */
 export async function actualizarSellos(datos: DatosTarjeta): Promise<void> {
   if (!walletConfigurado()) throw new Error('Google Wallet no está configurado.')
   const token = await accessToken()
   const cuerpo = construirObjeto(datos)
-  const res = await fetch(`${WALLET_API}/loyaltyObject/${objetoId(datos.programa, datos.clienteId)}`, {
+  const res = await fetch(`${WALLET_API}/loyaltyObject/${objetoId(datos.clienteId)}`, {
     method: 'PATCH',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(cuerpo),

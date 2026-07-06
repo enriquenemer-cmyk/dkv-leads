@@ -1,10 +1,9 @@
 import { ImageResponse } from 'next/og'
-import { PROGRAMAS, esProgramaValido } from '@/lib/wallet-programas'
+import { PRODUCTOS, PRODUCTO_SLUGS, TARJETA, parseSeguros } from '@/lib/wallet-programas'
 
-/* Banner (heroImage) de las tarjetas "Club DKV" para Google Wallet.
-   ?programa=sonrisa|hogar|decesos|vida y ?sellos=N. Dibuja los sellos con el
-   icono/color del programa, la meta con regalo y una barra de progreso, con
-   tipografía Poppins incrustada. PNG 1032x336. */
+/* Banner (heroImage) de la tarjeta "Club Protección DKV" para Google Wallet.
+   ?seguros=hogar,vida → marca esos huecos. 3 huecos (Hogar/Decesos/Vida) +
+   regalo sorpresa. Tipografía Poppins incrustada. PNG 1032x336. */
 
 const CREMA = '#EDEDE0'
 const ORO = '#EF9F27'
@@ -12,18 +11,12 @@ const TEAL = '#0F4A3F'
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
-  const progRaw = searchParams.get('programa') || 'sonrisa'
-  const prog = PROGRAMAS[esProgramaValido(progRaw) ? progRaw : 'sonrisa']
-  const TOTAL = prog.total
-  const ACCENT = prog.accent
+  const tiene = new Set(parseSeguros(searchParams.get('seguros')))
+  const total = TARJETA.total
+  const n = tiene.size
+  const completa = n >= total
+  const faltan = total - n
 
-  let n = parseInt(searchParams.get('sellos') || '0', 10)
-  if (!Number.isFinite(n)) n = 0
-  n = Math.max(0, Math.min(TOTAL, n))
-  const completa = n >= TOTAL
-  const faltan = TOTAL - n
-
-  // Cargamos Poppins desde /public/fonts del propio servidor (sirve en dev y prod).
   const origin = new URL(req.url).origin
   let fonts: { name: string; data: ArrayBuffer; weight: 500 | 600 | 700; style: 'normal' }[] = []
   try {
@@ -41,7 +34,26 @@ export async function GET(req: Request) {
     fonts = []
   }
 
-  const stamps = Array.from({ length: TOTAL }, (_, i) => i)
+  const slot = (emoji: string, name: string, activo: boolean, accent: string) => (
+    <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginLeft: 18, marginRight: 18 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: 92,
+          height: 92,
+          borderRadius: 46,
+          fontSize: 44,
+          backgroundColor: activo ? accent : 'rgba(237,237,224,0.05)',
+          border: activo ? `3px solid ${accent}` : '3px solid rgba(237,237,224,0.26)',
+        }}
+      >
+        {emoji}
+      </div>
+      <div style={{ display: 'flex', fontSize: 18, fontWeight: 600, marginTop: 10, color: activo ? CREMA : 'rgba(237,237,224,0.5)' }}>{name}</div>
+    </div>
+  )
 
   return new ImageResponse(
     (
@@ -57,59 +69,40 @@ export async function GET(req: Request) {
           fontFamily: 'Poppins',
         }}
       >
-        <div style={{ display: 'flex', fontSize: 21, fontWeight: 600, letterSpacing: 6, color: 'rgba(237,237,224,0.55)', marginBottom: 20 }}>
-          REFIERE Y GANA
+        <div style={{ display: 'flex', fontSize: 20, fontWeight: 600, letterSpacing: 5, color: 'rgba(237,237,224,0.55)', marginBottom: 16 }}>
+          COMPLETA TU PROTECCIÓN
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 26 }}>
-          {stamps.map((i) => (
+        <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: 20 }}>
+          {PRODUCTO_SLUGS.map((s) => slot(PRODUCTOS[s].emoji, PRODUCTOS[s].nombre, tiene.has(s), PRODUCTOS[s].accent))}
+          <div style={{ display: 'flex', fontSize: 38, color: 'rgba(237,237,224,0.5)', marginLeft: 8, marginRight: 18, marginTop: 26 }}>›</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div
-              key={i}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 96,
-                height: 96,
-                marginLeft: i === 0 ? 0 : 22,
-                borderRadius: 48,
-                fontSize: 46,
-                backgroundColor: i < n ? ACCENT : 'rgba(237,237,224,0.05)',
-                border: i < n ? `3px solid ${ACCENT}` : '3px solid rgba(237,237,224,0.28)',
+                width: 98,
+                height: 98,
+                borderRadius: 49,
+                fontSize: 48,
+                backgroundColor: completa ? ORO : 'rgba(239,159,39,0.12)',
+                border: `3px solid ${ORO}`,
               }}
             >
-              {i < n ? prog.emoji : ''}
+              🎁
             </div>
-          ))}
-          <div style={{ display: 'flex', fontSize: 40, color: 'rgba(237,237,224,0.5)', marginLeft: 22, marginRight: 22 }}>›</div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 108,
-              height: 108,
-              borderRadius: 54,
-              fontSize: 54,
-              backgroundColor: completa ? ORO : 'rgba(239,159,39,0.12)',
-              border: `3px solid ${ORO}`,
-            }}
-          >
-            🎁
+            <div style={{ display: 'flex', fontSize: 18, fontWeight: 600, marginTop: 10, color: completa ? '#F4C77A' : 'rgba(244,199,122,0.6)' }}>Sorpresa</div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', width: 620, height: 14, borderRadius: 7, backgroundColor: 'rgba(237,237,224,0.16)', marginBottom: 20 }}>
-          <div style={{ display: 'flex', width: (620 * n) / TOTAL, height: 14, borderRadius: 7, backgroundColor: completa ? ORO : ACCENT }} />
         </div>
 
         {completa ? (
-          <div style={{ display: 'flex', fontSize: 33, fontWeight: 700, color: '#F4C77A' }}>
-            ¡Premio desbloqueado!
+          <div style={{ display: 'flex', fontSize: 30, fontWeight: 700, color: '#F4C77A' }}>
+            ¡Regalo sorpresa desbloqueado!
           </div>
         ) : (
-          <div style={{ display: 'flex', fontSize: 32, fontWeight: 500, color: CREMA }}>
-            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: ACCENT }}>{faltan}</span>&nbsp;{faltan === 1 ? 'sello' : 'sellos'} para {prog.premioCorto}
+          <div style={{ display: 'flex', fontSize: 29, fontWeight: 500, color: CREMA }}>
+            Te {faltan === 1 ? 'falta' : 'faltan'}&nbsp;<span style={{ fontWeight: 700, color: ORO }}>{faltan}</span>&nbsp;{faltan === 1 ? 'seguro' : 'seguros'} para tu regalo sorpresa
           </div>
         )}
       </div>

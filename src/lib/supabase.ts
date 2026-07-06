@@ -46,4 +46,5 @@ export type Lead = {
   created_at: string
   wallet_sellos?: number | null
   wallet_guardada?: boolean | null
+  wallet_seguros?: string[] | null
 }
