@@ -3,7 +3,7 @@
    se lleva un regalo sorpresa. Cada hueco es un producto concreto.
    Sin dependencias pesadas: lo importan la librería del pase y el banner (next/og). */
 
-export type ProductoSlug = 'hogar' | 'decesos' | 'vida'
+export type ProductoSlug = 'hogar' | 'decesos' | 'salud'
 
 export type Producto = {
   slug: ProductoSlug
@@ -15,11 +15,11 @@ export type Producto = {
 export const PRODUCTOS: Record<ProductoSlug, Producto> = {
   hogar:   { slug: 'hogar',   nombre: 'Hogar',   emoji: '🏠', accent: '#E0A83D' },
   decesos: { slug: 'decesos', nombre: 'Decesos', emoji: '👪', accent: '#7FA8C9' },
-  vida:    { slug: 'vida',    nombre: 'Vida',    emoji: '❤️', accent: '#D9736A' },
+  salud:   { slug: 'salud',   nombre: 'Salud',   emoji: '👨‍⚕️', accent: '#D9736A' },
 }
 
 // Orden fijo de los huecos en la tarjeta
-export const PRODUCTO_SLUGS: ProductoSlug[] = ['hogar', 'decesos', 'vida']
+export const PRODUCTO_SLUGS: ProductoSlug[] = ['hogar', 'decesos', 'salud']
 
 export function esProducto(s: string): s is ProductoSlug {
   return (PRODUCTO_SLUGS as string[]).includes(s)

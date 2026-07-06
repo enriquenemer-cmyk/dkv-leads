@@ -52,6 +52,8 @@ function construirObjeto({ clienteId, nombre, seguros }: DatosTarjeta) {
   const n = tiene.length
   const completa = n >= total
   const codigoQR = `${clienteId}${completa ? '-PREMIO' : ''}`
+  const nombres = PRODUCTO_SLUGS.map((s) => PRODUCTOS[s].nombre)
+  const nombresTexto = `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}`
 
   return {
     id: objetoId(clienteId),
@@ -82,12 +84,12 @@ function construirObjeto({ clienteId, nombre, seguros }: DatosTarjeta) {
         header: completa ? '¡Regalo sorpresa desbloqueado!' : 'Tu regalo sorpresa',
         body: completa
           ? 'Ya tienes los 3 seguros DKV. Enséñale este código a tu asesor para recibir tu regalo sorpresa.'
-          : `Contrata los 3 seguros DKV (Hogar, Decesos y Vida) y llévate un regalo sorpresa. Te ${faltan.length === 1 ? 'falta' : 'faltan'}: ${faltan.map((s) => PRODUCTOS[s].nombre).join(', ')}.`,
+          : `Contrata los 3 seguros DKV (${nombresTexto}) y llévate un regalo sorpresa. Te ${faltan.length === 1 ? 'falta' : 'faltan'}: ${faltan.map((s) => PRODUCTOS[s].nombre).join(', ')}.`,
       },
       {
         id: 'como_funciona',
         header: 'Cómo funciona',
-        body: 'Cada seguro DKV que contrates marca un hueco de tu tarjeta. Al completar los 3 (Hogar, Decesos y Vida), ganas un regalo sorpresa. Tu asesor DKV actualiza la tarjeta automáticamente.',
+        body: `Cada seguro DKV que contrates marca un hueco de tu tarjeta. Al completar los 3 (${nombresTexto}), ganas un regalo sorpresa. Tu asesor DKV actualiza la tarjeta automáticamente.`,
       },
     ],
   }
