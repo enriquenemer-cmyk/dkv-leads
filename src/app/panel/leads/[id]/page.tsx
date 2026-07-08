@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, Lead, leadSucursal, fuenteOrigen } from '@/lib/supabase'
+import { limpiarInteres } from '@/lib/interes'
 import { logActividad } from '@/lib/actividad'
 import { TagPill, TAG_STYLES } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
 import { WalletButton } from '@/components/WalletButton'
-import { ArrowLeft, MessageCircle, Mail, Phone, Bell, X, Plus, Calendar, Edit3, ExternalLink, Printer, ChevronDown } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Mail, Phone, Bell, X, Plus, Calendar, Edit3, ExternalLink, Printer, ChevronDown, Trash2 } from 'lucide-react'
 
 const TAGS = ['caliente', 'tibio', 'frio', 'cliente'] as const
 const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
@@ -87,6 +88,14 @@ export default function LeadDetallePage() {
     fetchLead(); fetchHistorial()
   }
 
+  async function eliminarLead() {
+    if (!lead) return
+    if (!confirm(`¿Eliminar a ${lead.nombre}? Esta acción no se puede deshacer.`)) return
+    const { error } = await supabase.from('leads').delete().eq('id', id)
+    if (error) { alert('No se pudo eliminar el lead. Inténtalo de nuevo.'); return }
+    router.push('/panel/leads')
+  }
+
   function copyTemplate(text: string, idx: number) {
     navigator.clipboard.writeText(text)
     setWaCopied(idx)
@@ -100,7 +109,7 @@ export default function LeadDetallePage() {
   )
 
   const waNum = (lead.telefono ?? '').replace(/\D/g, '')
-  const templates = buildWaTemplates(lead.nombre, lead.interes)
+  const templates = buildWaTemplates(lead.nombre, limpiarInteres(lead.interes) || null)
 
   return (
     <>
@@ -122,10 +131,16 @@ export default function LeadDetallePage() {
             style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13.5, fontWeight: 600, color: '#6b7a76', textDecoration: 'none' }}>
             <ArrowLeft size={14} /> Volver a leads
           </Link>
-          <button onClick={() => window.print()}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 11, border: '1.5px solid #e2e8e4', background: '#fff', color: '#6b7a76', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Printer size={14} /> Imprimir ficha
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => window.print()}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 11, border: '1.5px solid #e2e8e4', background: '#fff', color: '#6b7a76', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Printer size={14} /> Imprimir ficha
+            </button>
+            <button onClick={eliminarLead}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 11, border: '1.5px solid #f1c9bf', background: '#fff', color: '#c23a22', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Trash2 size={14} /> Eliminar
+            </button>
+          </div>
         </div>
 
         <div id="lead-print">
@@ -140,9 +155,6 @@ export default function LeadDetallePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <ExternalLink size={11} /> {fuenteOrigen(lead.fuente) === 'formulario' ? 'Formulario público' : 'Alta manual'}
-                </span>
-                <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <Calendar size={11} /> {new Date(lead.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
               </div>
             </div>
@@ -187,7 +199,7 @@ export default function LeadDetallePage() {
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f4f1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🛡️</div>
                       <div>
                         <div style={{ fontSize: 11, color: '#9aaba5', fontWeight: 600 }}>Interés</div>
-                        <div style={{ fontSize: 14.5, color: '#16201d', fontWeight: 600 }}>{lead.interes}</div>
+                        <div style={{ fontSize: 14.5, color: '#16201d', fontWeight: 600 }}>{limpiarInteres(lead.interes)}</div>
                       </div>
                     </div>
                   )}

@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import Link from 'next/link'
 import { supabase, Lead, leadSucursal, fuenteOrigen } from '@/lib/supabase'
+import { limpiarInteres } from '@/lib/interes'
 import { TagPill } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
@@ -335,7 +336,7 @@ export default function DashboardPage() {
                     <Avatar nombre={l.nombre} size={38} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.nombre}</div>
-                      <div style={{ fontSize: 12, color: '#9aaba5', marginTop: 1 }}>{l.interes ?? '—'}</div>
+                      <div style={{ fontSize: 12, color: '#9aaba5', marginTop: 1 }}>{limpiarInteres(l.interes) || '—'}</div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
                       <TagPill tag={l.tag} />

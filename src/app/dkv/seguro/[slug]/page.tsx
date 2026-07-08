@@ -126,7 +126,7 @@ export default async function SeguroPage({ params }: { params: Promise<{ slug: s
           )}
           <p style={{ fontSize: 13.5, color: C.taupe, margin: '6px 0 20px', lineHeight: 1.5 }}>Un asesor calcula tu precio exacto en 1 minuto, sin compromiso.</p>
           <Link href="/dkv#calcula" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: C.red, color: '#fff', textDecoration: 'none', borderRadius: 13, padding: '15px', fontSize: 16, fontWeight: 700, boxShadow: '0 14px 30px -10px rgba(221,54,54,.5)' }}>Calcular mi precio <ArrowRight size={18} /></Link>
-          <a href="tel:900500101" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: C.teal, textDecoration: 'none', borderRadius: 13, padding: '13px', fontSize: 15, fontWeight: 700, marginTop: 10, border: `1.5px solid ${C.border}` }}><Phone size={16} /> 900 500 101</a>
+          <a href="tel:699669603" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, color: C.teal, textDecoration: 'none', borderRadius: 13, padding: '13px', fontSize: 15, fontWeight: 700, marginTop: 10, border: `1.5px solid ${C.border}` }}><Phone size={16} /> 699 66 96 03</a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginTop: 14, fontSize: 11.5, color: C.taupe }}><ShieldCheck size={13} style={{ color: C.teal }} /> Sin compromiso · Datos protegidos</div>
         </aside>
       </section>

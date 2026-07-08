@@ -8,7 +8,7 @@ export const TITULAR = {
   nif: 'B-86801594',                     // CIF de la empresa
   domicilio: 'C/ Príncipe de Vergara 80, 28006 Madrid',
   email: 'info@dkv-ergo.es',             // revisa que esta cuenta exista o cámbiala
-  telefono: '+34 699 669 603',
+  telefono: '+34 699 66 96 03',
   dominio: 'dkv-ergo.es',
   actividad: 'mediación y asesoramiento en la contratación de seguros de salud',
 }

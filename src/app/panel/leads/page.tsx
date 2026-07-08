@@ -8,6 +8,7 @@ import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
 import { EmptyState } from '@/components/EmptyState'
 import { exportCSV } from '@/lib/export'
+import { limpiarInteres } from '@/lib/interes'
 import { Search, Plus, Download, ChevronRight, Phone, Mail, Filter, X } from 'lucide-react'
 
 const TAGS_FILTRO = [
@@ -200,8 +201,8 @@ function LeadsContent() {
       <style>{`@media(max-width:720px){.leads-table{min-width:640px}}`}</style>
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 18 }}>
       <div className="leads-table" style={{ background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', overflow: 'hidden', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.3fr 1.3fr 1fr 0.8fr 40px', padding: '12px 20px', background: '#f8fbf9', borderBottom: '1px solid #eaeeed' }}>
-          {['Contacto', 'Teléfono', 'Interés', 'Estado', 'Fecha', ''].map(h => (
+        <div style={{ display: 'grid', gridTemplateColumns: '2.2fr 1.3fr 1.3fr 1fr 40px', padding: '12px 20px', background: '#f8fbf9', borderBottom: '1px solid #eaeeed' }}>
+          {['Contacto', 'Teléfono', 'Interés', 'Estado', ''].map(h => (
             <span key={h} style={{ fontSize: 11.5, fontWeight: 700, color: '#9aaba5', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h}</span>
           ))}
         </div>
@@ -212,7 +213,7 @@ function LeadsContent() {
           : filtered.map(l => (
             <Link key={l.id} href={`/panel/leads/${l.id}`}
               style={{
-                display: 'grid', gridTemplateColumns: '2.2fr 1.3fr 1.3fr 1fr 0.8fr 40px',
+                display: 'grid', gridTemplateColumns: '2.2fr 1.3fr 1.3fr 1fr 40px',
                 padding: '14px 20px', textDecoration: 'none', borderBottom: '1px solid #f5f7f5',
                 background: hovered === l.id ? '#f8fbf9' : '#fff', transition: 'background 0.1s', alignItems: 'center',
               }}
@@ -242,11 +243,10 @@ function LeadsContent() {
                 {l.telefono ? <><Phone size={11} style={{ color: '#9aaba5' }} /> {l.telefono}</> : <span style={{ color: '#c8d4ce' }}>—</span>}
               </div>
 
-              <div style={{ fontSize: 13, color: '#6b7a76', fontWeight: 500 }}>{l.interes ?? <span style={{ color: '#c8d4ce' }}>—</span>}</div>
+              <div style={{ fontSize: 13, color: '#6b7a76', fontWeight: 500 }}>{limpiarInteres(l.interes) || <span style={{ color: '#c8d4ce' }}>—</span>}</div>
 
               <TagPill tag={l.tag} />
 
-              <div style={{ fontSize: 12, color: '#9aaba5' }}>{new Date(l.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</div>
 
               <ChevronRight size={15} style={{ color: '#c8d4ce' }} />
             </Link>

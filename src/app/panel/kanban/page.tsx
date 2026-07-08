@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase, Lead } from '@/lib/supabase'
+import { limpiarInteres } from '@/lib/interes'
 import { logActividad } from '@/lib/actividad'
 import { TagPill } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
@@ -150,7 +151,7 @@ function KanbanCard({ lead, dragging, onDragStart, onDragEnd, onClick }: {
         <Avatar nombre={lead.nombre} size={32} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 700, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.nombre}</div>
-          {lead.interes && <div style={{ fontSize: 11.5, color: '#9aaba5', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{lead.interes}</div>}
+          {limpiarInteres(lead.interes) && <div style={{ fontSize: 11.5, color: '#9aaba5', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{limpiarInteres(lead.interes)}</div>}
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, Lead } from '@/lib/supabase'
+import { limpiarInteres } from '@/lib/interes'
 import { ArrowLeft, Phone, MessageCircle, Mail, Plus } from 'lucide-react'
 
 const TAGS = [
@@ -51,7 +52,7 @@ export default function AppLeadDetail() {
       {/* Cabecera */}
       <div style={{ background: '#fff', borderRadius: 18, padding: 20, border: '1px solid #eef2f0', marginBottom: 14 }}>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#16201d', margin: '0 0 4px' }}>{lead.nombre}</h1>
-        <p style={{ fontSize: 13.5, color: '#9aaba5', margin: '0 0 16px' }}>{lead.interes ?? 'Seguro de salud'}</p>
+        <p style={{ fontSize: 13.5, color: '#9aaba5', margin: '0 0 16px' }}>{limpiarInteres(lead.interes) || 'Seguro de salud'}</p>
         <div style={{ display: 'flex', gap: 8 }}>
           {wa && <a href={`https://wa.me/${wa}`} target="_blank" rel="noopener noreferrer"
             style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '13px', borderRadius: 12, background: '#25D366', color: '#fff', fontWeight: 700, fontSize: 14.5, textDecoration: 'none' }}><MessageCircle size={18} /> WhatsApp</a>}

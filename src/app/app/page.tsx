@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase, Lead } from '@/lib/supabase'
+import { limpiarInteres } from '@/lib/interes'
 import { Phone, MessageCircle, ChevronRight, Clock } from 'lucide-react'
 
 const esAuto = (l: Lead) => /^(web|formulario)/.test(l.fuente ?? '')
@@ -52,7 +53,7 @@ export default function AppHome() {
           <div style={{ width: 46, height: 46, borderRadius: 14, background: hot ? 'linear-gradient(135deg,#ffb199,#e0603f)' : 'linear-gradient(135deg,#f3d38a,#c99019)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 19, flexShrink: 0 }}>{inicial(l.nombre)}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 16.5, fontWeight: 800, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.nombre}</div>
-            <div style={{ fontSize: 12.5, color: '#9aaba5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.interes ?? 'Seguro de salud'}</div>
+            <div style={{ fontSize: 12.5, color: '#9aaba5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{limpiarInteres(l.interes) || 'Seguro de salud'}</div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, color: acc, background: `${acc}14`, padding: '5px 9px', borderRadius: 999, flexShrink: 0 }}>
             <Clock size={12} /> {hace(l.created_at)}

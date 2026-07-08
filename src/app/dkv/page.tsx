@@ -311,7 +311,7 @@ const ARTICLES = [
 
 const HELP = [
   { icon: CalendarDays, title: 'Visita a un agente', desc: 'Pide cita en una oficina DKV cercana y te asesoramos en persona.', cta: 'Solicitar cita', action: 'form' as const },
-  { icon: PhoneCall, title: 'Llámanos', desc: 'Habla directamente con un asesor especializado en seguros de salud.', cta: '699 669 603', action: 'tel' as const },
+  { icon: PhoneCall, title: 'Llámanos', desc: 'Habla directamente con un asesor especializado en seguros de salud.', cta: '699 66 96 03', action: 'tel' as const },
   { icon: Phone, title: 'Te llamamos gratis', desc: 'Déjanos tu teléfono y un asesor te llama sin coste ni compromiso.', cta: 'Solicitar llamada', action: 'form' as const },
 ]
 
@@ -739,7 +739,7 @@ export default function DKVClone() {
               <span style={{ width: 38, height: 38, borderRadius: '50%', background: C.cream, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Phone size={17} style={{ color: C.teal }} /></span>
               <span style={{ lineHeight: 1.15 }}>
                 <span style={{ display: 'block', fontSize: 11, color: C.taupe }}>Quiero contratar</span>
-                <span style={{ display: 'block', fontSize: 15.5, fontWeight: 800, color: C.text, whiteSpace: 'nowrap' }}>699 669 603</span>
+                <span style={{ display: 'block', fontSize: 15.5, fontWeight: 800, color: C.text, whiteSpace: 'nowrap' }}>699 66 96 03</span>
               </span>
             </a>
           </div>
@@ -798,7 +798,7 @@ export default function DKVClone() {
             {OTHER.map(o => (
               <button key={o.title} onClick={() => { setMenuOpen(false); goSeguro(o.title) }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', textAlign: 'left', padding: '12px 0', borderBottom: `1px solid ${C.border}`, background: 'none', border: 'none', borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: C.border, cursor: 'pointer', fontFamily: 'inherit', color: C.text, fontWeight: 600, fontSize: 14.5 }}>{o.title}<ArrowRight size={15} style={{ color: C.teal }} /></button>
             ))}
-            <a href="tel:699669603" onClick={() => trackContact('phone')} className="dkv-a" style={{ padding: '14px 0 13px', fontWeight: 700, color: C.teal, display: 'flex', alignItems: 'center', gap: 8 }}><Phone size={16} /> 699 669 603</a>
+            <a href="tel:699669603" onClick={() => trackContact('phone')} className="dkv-a" style={{ padding: '14px 0 13px', fontWeight: 700, color: C.teal, display: 'flex', alignItems: 'center', gap: 8 }}><Phone size={16} /> 699 66 96 03</a>
             <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" className="dkv-a" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#25D366', color: '#fff', borderRadius: 999, padding: '13px', fontWeight: 700, textDecoration: 'none', marginTop: 8 }}><MessageCircle size={17} /> Escríbenos por WhatsApp</a>
             <button onClick={() => scrollTo('calcula')} className="btn-red" style={{ ...solid(C.red), justifyContent: 'center', marginTop: 10 }}>Calcula tu seguro</button>
           </div>
@@ -1145,7 +1145,7 @@ export default function DKVClone() {
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={() => scrollTo('calcula')} className="btn-white" style={solid('#fff', C.limeDark)}>Más información</button>
-            <a href="tel:699669603" onClick={() => trackContact('phone')} className="btn-out-w dkv-a" style={{ ...outline('#fff'), borderColor: 'rgba(255,255,255,.75)' }}><Phone size={16} /> 699 669 603</a>
+            <a href="tel:699669603" onClick={() => trackContact('phone')} className="btn-out-w dkv-a" style={{ ...outline('#fff'), borderColor: 'rgba(255,255,255,.75)' }}><Phone size={16} /> 699 66 96 03</a>
           </div>
         </div>
       </section>
