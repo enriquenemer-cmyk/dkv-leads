@@ -540,8 +540,10 @@ export default function DKVClone() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.nombre.trim()) { setError('Indícanos tu nombre para poder llamarte.'); return }
-    if (!form.telefono.trim() && !form.email.trim()) { setError('Déjanos al menos un teléfono o un correo.'); return }
-    if (form.telefono.trim() && !telOk(form.telefono)) { setError('El teléfono no es válido (9 dígitos, España).'); return }
+    if (!form.telefono.trim()) { setError('Necesitamos tu teléfono para poder llamarte.'); return }
+    if (!telOk(form.telefono)) { setError('El teléfono no es válido (9 dígitos, España).'); return }
+    if (!form.cp.trim()) { setError('Indícanos tu código postal.'); return }
+    if (!/^\d{5}$/.test(form.cp.trim())) { setError('El código postal debe tener 5 dígitos.'); return }
     if (form.email.trim() && !emailOk(form.email)) { setError('El correo electrónico no tiene un formato válido.'); return }
     if (!accept) { setError('Debes aceptar la política de privacidad para continuar.'); return }
     setSending(true)
@@ -978,13 +980,13 @@ export default function DKVClone() {
                 </div>
               </Field>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, margin: '14px 0' }}>
-                <Field label="Código postal">
+                <Field label="Código postal *">
                   <div style={{ position: 'relative' }}>
                     <MapPin size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'cp' ? C.teal : '#9aaba5', pointerEvents: 'none' }} />
                     <input className="in" value={form.cp} onChange={e => set('cp', e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder="28001" inputMode="numeric" style={{ ...inputStyle(focus === 'cp'), paddingLeft: 42 }} onFocus={() => setFocus('cp')} onBlur={() => setFocus(null)} />
                   </div>
                 </Field>
-                <Field label="Teléfono">
+                <Field label="Teléfono *">
                   <div style={{ position: 'relative' }}>
                     <Phone size={15} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'tel' ? C.teal : '#9aaba5', pointerEvents: 'none' }} />
                     <input className="in" value={form.telefono} onChange={e => set('telefono', e.target.value.replace(/[^\d+\s]/g, '').slice(0, 15))} placeholder="600 000 000" inputMode="tel" style={{ ...inputStyle(focus === 'tel'), paddingLeft: 40 }} onFocus={() => setFocus('tel')} onBlur={() => setFocus(null)} />
