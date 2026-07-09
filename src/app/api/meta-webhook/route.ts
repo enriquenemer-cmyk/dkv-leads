@@ -125,10 +125,26 @@ async function procesarLead(value: LeadgenValue) {
     .join('\n')
 
   const supabase = supabaseAdmin()
+
+  // --- Deduplicación ---
+  // Meta puede reenviar el mismo lead (reintentos, formularios duplicados…).
+  // Antes de insertar, buscamos un lead con el mismo teléfono O email creado
+  // en los últimos 30 días. Si existe, no insertamos (pero devolvemos 200 igual
+  // para que Meta dé el evento por entregado y no reintente en bucle).
+  const telefono = campos.telefono || null
+  const email = campos.email || null
+  if (await esDuplicado(supabase, telefono, email)) {
+    console.log(
+      '[meta-webhook] duplicate skipped:',
+      telefono || email || '(sin contacto)'
+    )
+    return
+  }
+
   const { error } = await supabase.from('leads').insert({
     nombre: campos.nombre || 'Lead sin nombre',
-    telefono: campos.telefono || null,
-    email: campos.email || null,
+    telefono,
+    email,
     interes: campos.interes || null,
     fuente,
     tag: 'frio',
@@ -137,6 +153,44 @@ async function procesarLead(value: LeadgenValue) {
       : [],
   })
   if (error) throw new Error(`Supabase insert: ${error.message}`)
+}
+
+// --- ¿Ya existe un lead con el mismo teléfono o email en los últimos 30 días? ---
+// Solo comparamos valores NO nulos (nunca deduplicamos por null vacío).
+async function esDuplicado(
+  supabase: ReturnType<typeof supabaseAdmin>,
+  telefono: string | null,
+  email: string | null
+): Promise<boolean> {
+  // Sin ningún dato de contacto no hay forma fiable de deduplicar → insertamos.
+  if (!telefono && !email) return false
+
+  const desde = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+
+  // Construimos el OR solo con los campos presentes (evita casar filas con null).
+  const condiciones: string[] = []
+  if (telefono) condiciones.push(`telefono.eq.${telefono}`)
+  if (email) condiciones.push(`email.eq.${email}`)
+
+  try {
+    const { data, error } = await supabase
+      .from('leads')
+      .select('id')
+      .gte('created_at', desde)
+      .or(condiciones.join(','))
+      .limit(1)
+
+    if (error) {
+      // Si la consulta falla, no bloqueamos el alta: mejor un posible duplicado
+      // que perder un lead. Registramos para tenerlo visible en los logs.
+      console.error('[meta-webhook] error comprobando duplicado:', error.message)
+      return false
+    }
+    return (data?.length ?? 0) > 0
+  } catch (e) {
+    console.error('[meta-webhook] excepción comprobando duplicado:', e)
+    return false
+  }
 }
 
 // --- Mapea los campos del formulario de Meta a nuestras columnas ---

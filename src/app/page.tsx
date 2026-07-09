@@ -121,7 +121,7 @@ export default function Landing() {
             <div className="hero-left">
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px 6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.15)', marginBottom: 28 }}>
                 <Star size={13} fill="rgba(255,210,100,0.95)" stroke="none" />
-                <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: 12.5, fontWeight: 600 }}>Más de 120.000 familias protegidas</span>
+                <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: 12.5, fontWeight: 600 }}>+2 millones de asegurados en España</span>
               </div>
               <h1 style={{ fontSize: 'clamp(38px,5vw,64px)', fontWeight: 900, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.035em', margin: '0 0 24px' }}>
                 Tu salud merece<br /><span style={{ color: '#7ee8c8' }}>la mejor cobertura</span>
@@ -130,7 +130,7 @@ export default function Landing() {
                 Comparamos los mejores planes de DKV para ti. Un asesor personal sin coste, respuesta garantizada en menos de 24 horas.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginBottom: 48 }}>
-                {['Cobertura inmediata desde el primer día', 'Red de +40.000 especialistas en toda España', 'Sin copagos ocultos, sin permanencia mínima'].map(b => (
+                {['Cobertura inmediata desde el primer día', 'Red de +51.000 especialistas en toda España', 'Sin copagos ocultos, sin permanencia mínima'].map(b => (
                   <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(126,232,200,0.18)', border: '1px solid rgba(126,232,200,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <CheckCircle2 size={13} color="#7ee8c8" />
@@ -140,7 +140,7 @@ export default function Landing() {
                 ))}
               </div>
               <div style={{ display: 'flex', gap: 36 }}>
-                {[{ v: '+120k', l: 'Asegurados' }, { v: '4.8★', l: 'Valoración Google' }, { v: '<24h', l: 'Tiempo respuesta' }].map(s => (
+                {[{ v: '+2M', l: 'Asegurados en España' }, { v: '4,8/5', l: 'Valoración Google' }, { v: '<24h', l: 'Tiempo respuesta' }].map(s => (
                   <div key={s.l} style={{ borderLeft: '2px solid rgba(126,232,200,0.3)', paddingLeft: 14 }}>
                     <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-0.02em' }}>{s.v}</div>
                     <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.5)', fontWeight: 500, marginTop: 2 }}>{s.l}</div>
@@ -174,7 +174,7 @@ export default function Landing() {
                 </div>
 
                 {error && (
-                  <div style={{ marginBottom: 14, padding: '11px 14px', borderRadius: 11, background: '#fef0ed', border: '1px solid #fbd4cb', color: '#c23a22', fontSize: 13, fontWeight: 500 }}>{error}</div>
+                  <div id="form-error" role="alert" style={{ marginBottom: 14, padding: '11px 14px', borderRadius: 11, background: '#fef0ed', border: '1px solid #fbd4cb', color: '#c23a22', fontSize: 13, fontWeight: 500 }}>{error}</div>
                 )}
 
                 {/* PASO 1: Seleccionar tipo */}
@@ -227,21 +227,25 @@ export default function Landing() {
                       <div>
                         <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Nombre completo *</label>
                         <input value={form.nombre} onChange={e => set('nombre', e.target.value)} placeholder="María García"
+                          aria-label="Nombre completo" aria-describedby={error ? 'form-error' : undefined}
                           style={inp('nombre')} onFocus={() => setFocused('nombre')} onBlur={() => setFocused(null)} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Teléfono</label>
                         <input value={form.telefono} onChange={e => set('telefono', e.target.value)} placeholder="+34 600 000 000"
+                          aria-label="Teléfono" aria-describedby={error ? 'form-error' : undefined}
                           style={inp('telefono')} onFocus={() => setFocused('telefono')} onBlur={() => setFocused(null)} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Correo electrónico</label>
                         <input value={form.email} onChange={e => set('email', e.target.value)} placeholder="tu@correo.com" type="email"
+                          aria-label="Correo electrónico" aria-describedby={error ? 'form-error' : undefined}
                           style={inp('email')} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#6b7a76', marginBottom: 6, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Oficina más cercana *</label>
                         <select value={form.sucursal} onChange={e => set('sucursal', e.target.value)}
+                          aria-label="Oficina más cercana" aria-describedby={error ? 'form-error' : undefined}
                           onFocus={() => setFocused('sucursal')} onBlur={() => setFocused(null)}
                           style={{ ...inp('sucursal'), cursor: 'pointer', color: form.sucursal ? '#16201d' : '#9aaba5', appearance: 'none', backgroundImage: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%239aaba5\' stroke-width=\'3\'><path d=\'M6 9l6 6 6-6\'/></svg>")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 16px center', paddingRight: 40 }}>
                           <option value="">Selecciona tu oficina…</option>
@@ -299,7 +303,7 @@ export default function Landing() {
       {/* ─── TRUST BAND ─── */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e8ede9' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '18px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 40, flexWrap: 'wrap' }}>
-          {[{ icon: ShieldCheck, text: '50 años de experiencia' }, { icon: Users, text: '+120.000 familias aseguradas' }, { icon: Clock, text: 'Respuesta en <24h' }, { icon: Star, text: 'Valoración 4,8 / 5 en Google' }, { icon: Stethoscope, text: '+40.000 especialistas en España' }].map(({ icon: Icon, text }) => (
+          {[{ icon: ShieldCheck, text: '50 años de experiencia' }, { icon: Users, text: '+2 millones de asegurados en España' }, { icon: Clock, text: 'Respuesta en menos de 24 h' }, { icon: Star, text: '4,8 / 5 en Google' }, { icon: Stethoscope, text: '+51.000 especialistas' }].map(({ icon: Icon, text }) => (
             <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Icon size={14} style={{ color: '#0F7A63', flexShrink: 0 }} />
               <span style={{ fontSize: 13, color: '#48574f', fontWeight: 500, whiteSpace: 'nowrap' }}>{text}</span>

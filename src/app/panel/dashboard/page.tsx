@@ -102,6 +102,7 @@ export default function DashboardPage() {
   const leads7d = ultimos7.reduce((s, d) => s + d.count, 0)
 
   const METRICS = [
+    { label: 'Leads hoy', value: leadsHoy, suffix: '', sub: 'Nuevos hoy', icon: Clock, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
     { label: 'Total leads', value: total, suffix: '', sub: periodo === 'todo' ? 'Todos los captados' : `En este período`, icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
     { label: 'Leads calientes', value: calientes, suffix: '', sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22' },
     { label: 'Clientes', value: clientes, suffix: '', sub: 'Conversión exitosa', icon: Trophy, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
@@ -130,21 +131,32 @@ export default function DashboardPage() {
     <div style={{ padding: '32px 36px', maxWidth: 1120, margin: '0 auto' }}>
       {showModal && <LeadModal onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); fetchLeads() }} />}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <p style={{ fontSize: 13, color: '#9aaba5', fontWeight: 500, margin: '0 0 4px' }}>{greeting}</p>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: 0, letterSpacing: '-0.02em' }}>Dashboard</h1>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => exportCSV(leads)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Download size={14} /> Exportar CSV
-          </button>
-          <button onClick={() => setShowModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0F7A63, #0a5b49)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px -4px rgba(15,122,99,0.45)' }}>
-            <Plus size={14} /> Nuevo lead
-          </button>
+      {/* Header — hero premium */}
+      <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 105%)', borderRadius: 22, padding: '26px 30px', marginBottom: 24, boxShadow: '0 16px 44px -20px rgba(10,47,39,0.55)' }}>
+        <div style={{ position: 'absolute', top: -90, right: -50, width: 300, height: 300, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px)', backgroundSize: '48px 48px', pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <p style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.72)', fontWeight: 500, margin: '0 0 3px' }}>{greeting} 👋</p>
+            <h1 style={{ fontSize: 30, fontWeight: 800, color: '#fff', margin: '0 0 12px', letterSpacing: '-0.02em' }}>Dashboard</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', fontSize: 13.5, color: 'rgba(255,255,255,0.85)' }}>
+              <span><b style={{ color: '#fff', fontWeight: 800 }}>{total}</b> leads</span>
+              <span style={{ opacity: 0.4 }}>•</span>
+              <span><b style={{ color: '#7ee8c8', fontWeight: 800 }}>{leadsHoy}</b> hoy</span>
+              <span style={{ opacity: 0.4 }}>•</span>
+              <span><b style={{ color: '#fff', fontWeight: 800 }}>{conversion}%</b> conversión</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => exportCSV(leads)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 18px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.22)', background: 'rgba(255,255,255,0.12)', color: '#fff', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', backdropFilter: 'blur(8px)' }}>
+              <Download size={14} /> Exportar CSV
+            </button>
+            <button onClick={() => setShowModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 18px', borderRadius: 12, border: 'none', background: '#fff', color: '#0a5b49', fontSize: 13.5, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 20px -6px rgba(0,0,0,0.3)' }}>
+              <Plus size={14} /> Nuevo lead
+            </button>
+          </div>
         </div>
       </div>
 
@@ -177,7 +189,7 @@ export default function DashboardPage() {
       `}</style>
 
       {/* Metric cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }} className="dash-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 20 }} className="dash-grid">
         {METRICS.map(({ label, value, suffix, sub, icon: Icon, bg, ic }, i) => (
           <div key={label} className="dash-card metric-card" style={{ ...card, padding: '22px 22px 20px', animationDelay: `${i * 0.07}s` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>

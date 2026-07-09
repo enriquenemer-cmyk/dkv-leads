@@ -9,6 +9,7 @@ import { LeadModal } from '@/components/LeadModal'
 import { EmptyState } from '@/components/EmptyState'
 import { exportCSV } from '@/lib/export'
 import { limpiarInteres } from '@/lib/interes'
+import { geoDeLead } from '@/lib/provincia'
 import { Search, Plus, Download, ChevronRight, Phone, Mail, Filter, X } from 'lucide-react'
 
 const TAGS_FILTRO = [
@@ -19,14 +20,42 @@ const TAGS_FILTRO = [
   { key: 'cliente', label: '✓ Clientes', color: '#0F7A63', bg: '#e3f1ec' },
 ]
 
+// Rango de fechas del filtro rápido de periodo (usa la hora LOCAL del navegador)
+function rangoPeriodo(p: string): { desde: Date | null; hasta: Date | null } {
+  const now = new Date()
+  const inicioHoy = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  if (p === 'hoy') return { desde: inicioHoy, hasta: null }
+  if (p === 'ayer') {
+    const ayer = new Date(inicioHoy); ayer.setDate(ayer.getDate() - 1)
+    return { desde: ayer, hasta: inicioHoy }
+  }
+  if (p === '7d') { const d = new Date(inicioHoy); d.setDate(d.getDate() - 6); return { desde: d, hasta: null } }
+  if (p === '30d') { const d = new Date(inicioHoy); d.setDate(d.getDate() - 29); return { desde: d, hasta: null } }
+  return { desde: null, hasta: null }
+}
+
+// Hora de entrada legible: "Hoy 14:32" · "Ayer 09:10" · "12 jul 14:32"
+function formatoEntrada(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const inicioHoy = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const hora = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  if (d >= inicioHoy) return `Hoy ${hora}`
+  const inicioAyer = new Date(inicioHoy); inicioAyer.setDate(inicioAyer.getDate() - 1)
+  if (d >= inicioAyer) return `Ayer ${hora}`
+  return `${d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} ${hora}`
+}
+
 function LeadsContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [leads, setLeads] = useState<Lead[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [orden, setOrden] = useState('recientes')
+  const [periodo, setPeriodo] = useState('todos')
   const [filtroTag, setFiltroTag] = useState('todos')
   const [filtroSucursal, setFiltroSucursal] = useState('todos')
+  const [filtroProvincia, setFiltroProvincia] = useState('todos')
   const [filtroFuente, setFiltroFuente] = useState('todos')
   const [filtroRecordatorio, setFiltroRecordatorio] = useState(false)
   const [filtroSinAtender, setFiltroSinAtender] = useState(false)
@@ -44,6 +73,14 @@ function LeadsContent() {
     return () => { supabase.removeChannel(ch) }
   }, [])
 
+  // Recordar la última selección de periodo y orden entre visitas
+  useEffect(() => {
+    const p = localStorage.getItem('dkv-leads-periodo'); if (p) setPeriodo(p)
+    const o = localStorage.getItem('dkv-leads-orden'); if (o) setOrden(o)
+  }, [])
+  useEffect(() => { localStorage.setItem('dkv-leads-periodo', periodo) }, [periodo])
+  useEffect(() => { localStorage.setItem('dkv-leads-orden', orden) }, [orden])
+
   async function fetchLeads() {
     const { data } = await supabase.from('leads').select('*').order('created_at', { ascending: false })
     if (data) setLeads(data as Lead[])
@@ -57,7 +94,16 @@ function LeadsContent() {
 
   const filtered = leads
     .filter(l => filtroTag === 'todos' || l.tag === filtroTag)
+    .filter(l => {
+      if (periodo === 'todos') return true
+      const { desde, hasta } = rangoPeriodo(periodo)
+      const t = new Date(l.created_at)
+      if (desde && t < desde) return false
+      if (hasta && t >= hasta) return false
+      return true
+    })
     .filter(l => filtroSucursal === 'todos' || (leadSucursal(l) ?? '') === filtroSucursal)
+    .filter(l => filtroProvincia === 'todos' || geoDeLead(l).provincia === filtroProvincia)
     .filter(l => filtroFuente === 'todos' || fuenteOrigen(l.fuente) === filtroFuente)
     .filter(l => !filtroRecordatorio || !!l.recordatorio)
     .filter(l => !filtroSinAtender || (l.tag === 'frio' && (!l.notas || l.notas.length === 0)))
@@ -78,11 +124,16 @@ function LeadsContent() {
     .sort((a, b) => {
       if (orden === 'az') return a.nombre.localeCompare(b.nombre)
       if (orden === 'estado') return a.tag.localeCompare(b.tag)
-      return 0
+      if (orden === 'antiguos') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      // 'recientes' (por defecto): por hora de entrada, más nuevos primero
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
   const counts: Record<string, number> = { todos: leads.length }
   leads.forEach(l => { counts[l.tag] = (counts[l.tag] ?? 0) + 1 })
+
+  const inicioHoy = new Date(); inicioHoy.setHours(0, 0, 0, 0)
+  const hoyCount = leads.filter(l => new Date(l.created_at) >= inicioHoy).length
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1120, margin: '0 auto' }}>
@@ -92,7 +143,7 @@ function LeadsContent() {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Leads</h1>
-          <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>{leads.length} lead{leads.length !== 1 ? 's' : ''} en total · {filtered.length} mostrados</p>
+          <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>{leads.length} lead{leads.length !== 1 ? 's' : ''} en total · <b style={{ color: hoyCount > 0 ? '#0F7A63' : '#9aaba5' }}>{hoyCount} hoy</b> · {filtered.length} mostrados</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <button onClick={() => exportCSV(filtered)}
@@ -120,9 +171,23 @@ function LeadsContent() {
           {SUCURSALES.map(s => <option key={s} value={s}>{s}</option>)}
           <option value="">Sin asignar</option>
         </select>
+        <select value={filtroProvincia} onChange={e => setFiltroProvincia(e.target.value)}
+          style={{ padding: '11px 14px', borderRadius: 12, border: `1.5px solid ${filtroProvincia !== 'todos' ? '#0F7A63' : '#e2e8e4'}`, background: filtroProvincia !== 'todos' ? '#e3f1ec' : '#fff', color: filtroProvincia !== 'todos' ? '#0F7A63' : '#16201d', fontWeight: filtroProvincia !== 'todos' ? 700 : 400, fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+          <option value="todos">📍 Toda España</option>
+          {[...new Set(leads.map(l => geoDeLead(l).provincia).filter(Boolean))].sort().map(p => <option key={p} value={p!}>{p}</option>)}
+        </select>
+        <select value={periodo} onChange={e => setPeriodo(e.target.value)}
+          style={{ padding: '11px 14px', borderRadius: 12, border: `1.5px solid ${periodo !== 'todos' ? '#0F7A63' : '#e2e8e4'}`, background: periodo !== 'todos' ? '#e3f1ec' : '#fff', color: periodo !== 'todos' ? '#0F7A63' : '#16201d', fontWeight: periodo !== 'todos' ? 700 : 400, fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
+          <option value="todos">📅 Cualquier fecha</option>
+          <option value="hoy">📅 Hoy{hoyCount > 0 ? ` (${hoyCount})` : ''}</option>
+          <option value="ayer">Ayer</option>
+          <option value="7d">Últimos 7 días</option>
+          <option value="30d">Últimos 30 días</option>
+        </select>
         <select value={orden} onChange={e => setOrden(e.target.value)}
           style={{ padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
           <option value="recientes">Más recientes</option>
+          <option value="antiguos">Más antiguos</option>
           <option value="az">Nombre A–Z</option>
           <option value="estado">Por estado</option>
         </select>
@@ -236,6 +301,8 @@ function LeadsContent() {
                   {l.email && <div style={{ fontSize: 12, color: '#9aaba5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3, marginTop: 1 }}>
                     <Mail size={10} style={{ flexShrink: 0 }} />{l.email}
                   </div>}
+                  {geoDeLead(l).provincia && <div style={{ fontSize: 11.5, color: '#9aaba5', marginTop: 1 }}>📍 {geoDeLead(l).provincia}</div>}
+                  <div style={{ fontSize: 11.5, color: '#9aaba5', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>🕒 {formatoEntrada(l.created_at)}</div>
                 </div>
               </div>
 

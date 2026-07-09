@@ -11,8 +11,62 @@
 body {
   color: #16201d;
   font-family: var(--font-jakarta), system-ui, sans-serif;
+  /* Texto más nítido y suave en toda la plataforma */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 input, select, textarea, button {
   font-family: inherit;
+}
+
+/* ── Scrollbars finos y con estilo de marca ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cdd8d3 transparent;
+}
+*::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #cdd8d3;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #a9b8b1;
+  background-clip: padding-box;
+}
+
+/* ── Selección de texto con el verde de marca ── */
+::selection {
+  background: rgba(15, 122, 99, 0.16);
+  color: #0a2f27;
+}
+
+/* ── Foco accesible y bonito con teclado ── */
+:focus-visible {
+  outline: 2px solid rgba(15, 122, 99, 0.55);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ── Transiciones suaves en enlaces y botones ── */
+a, button {
+  transition: color .15s ease, background-color .15s ease, box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+}
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

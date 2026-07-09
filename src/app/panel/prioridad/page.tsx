@@ -5,6 +5,7 @@ import { supabase, Lead } from '@/lib/supabase'
 import { Avatar } from '@/components/Avatar'
 import { Loader } from '@/components/Loader'
 import { EmptyState } from '@/components/EmptyState'
+import { PageHero } from '@/components/PageHero'
 import { Phone, MessageCircle, ChevronRight, Zap, Timer, TrendingUp } from 'lucide-react'
 
 const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
@@ -91,10 +92,7 @@ export default function PrioridadPage() {
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1000, margin: '0 auto' }}>
-      <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 13, color: '#9aaba5', fontWeight: 500, margin: '0 0 4px' }}>Atiende antes de que se enfríen</p>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: 0, letterSpacing: '-0.02em' }}>Prioridad</h1>
-      </div>
+      <PageHero title="Prioridad" subtitle="Atiende antes de que se enfríen" />
 
       {/* Velocidad de respuesta */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }} className="prio-stats">

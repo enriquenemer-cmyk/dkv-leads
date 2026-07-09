@@ -218,9 +218,9 @@ export default function ChatWidget() {
           {mode === 'lead' ? (
             <div style={{ padding: 14, borderTop: '1px solid #e2e8e4', background: '#fff', display: 'flex', flexDirection: 'column', gap: 9 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: TEAL }}>Déjanos tus datos y te llamamos gratis 👇</div>
-              {leadErr && <div style={{ fontSize: 12, color: RED, fontWeight: 600 }}>{leadErr}</div>}
-              <input value={lead.nombre} onChange={(e) => setLead((l) => ({ ...l, nombre: e.target.value }))} placeholder="Tu nombre" style={inp} />
-              <input value={lead.telefono} onChange={(e) => setLead((l) => ({ ...l, telefono: e.target.value.replace(/[^\d+\s]/g, '').slice(0, 15) }))} placeholder="Tu teléfono" inputMode="tel" style={inp} />
+              {leadErr && <div id="chat-lead-error" role="alert" style={{ fontSize: 12, color: RED, fontWeight: 600 }}>{leadErr}</div>}
+              <input value={lead.nombre} onChange={(e) => setLead((l) => ({ ...l, nombre: e.target.value }))} placeholder="Tu nombre" aria-label="Tu nombre" aria-describedby={leadErr ? 'chat-lead-error' : undefined} style={inp} />
+              <input value={lead.telefono} onChange={(e) => setLead((l) => ({ ...l, telefono: e.target.value.replace(/[^\d+\s]/g, '').slice(0, 15) }))} placeholder="Tu teléfono" aria-label="Tu teléfono" aria-describedby={leadErr ? 'chat-lead-error' : undefined} inputMode="tel" style={inp} />
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => { setMode('chat'); setLeadErr('') }} style={{ ...btnBase, background: '#eef2ef', color: '#6b7a76' }}>Volver</button>
                 <button onClick={enviarLead} disabled={sending} style={{ ...btnBase, flex: 1, background: sending ? '#9aaba5' : RED, color: '#fff', cursor: sending ? 'wait' : 'pointer' }}>{sending ? 'Enviando…' : <><Check size={16} /> Que me llamen</>}</button>
@@ -240,7 +240,7 @@ export default function ChatWidget() {
               </div>
               {/* Entrada */}
               <div style={{ display: 'flex', gap: 8, padding: 12, background: '#fff' }}>
-                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') enviar() }} placeholder="Escribe tu pregunta…" style={{ flex: 1, padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+                <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') enviar() }} placeholder="Escribe tu pregunta…" aria-label="Escribe tu pregunta" style={{ flex: 1, padding: '11px 14px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
                 <button onClick={() => enviar()} disabled={sending || !input.trim()} aria-label="Enviar" style={{ width: 44, height: 44, borderRadius: 12, border: 'none', background: input.trim() ? TEAL : '#cbd8d3', color: '#fff', cursor: input.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Send size={19} /></button>
               </div>
             </>

@@ -138,9 +138,21 @@ async function* geminiStream(messages: Msg[]): AsyncGenerator<string> {
   }
 }
 
+// Mensaje amable de reserva cuando el motor de IA no devuelve texto útil.
+const RESPUESTA_FALLBACK =
+  'Vaya, ahora mismo no puedo responder. Si quieres, déjanos tu teléfono y un asesor te llama enseguida. 🙏'
+
 // Para OpenAI/Anthropic: no hacemos streaming, devolvemos la respuesta entera de golpe.
 async function* unaPieza(messages: Msg[]): AsyncGenerator<string> {
-  yield await preguntarIA(messages)
+  const texto = await preguntarIA(messages)
+  // Guarda mínima: si el proveedor devuelve vacío (respuesta filtrada, cuota,
+  // formato inesperado…), emitimos un mensaje amable en vez de un turno vacío.
+  if (!texto || !texto.trim()) {
+    console.error('[chatbot] respuesta vacía del proveedor', PROVIDER)
+    yield RESPUESTA_FALLBACK
+    return
+  }
+  yield texto
 }
 
 // --- Llama al motor de IA elegido y devuelve el texto de respuesta ---

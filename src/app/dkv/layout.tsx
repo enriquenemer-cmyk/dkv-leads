@@ -70,16 +70,11 @@ const websiteLd = {
 export default function DkvLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* Preconexión a los hosts de imágenes → carga más rápida (mejor LCP y Quality Score) */}
-      <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="" />
-      <link rel="preconnect" href="https://randomuser.me" crossOrigin="" />
-      <link rel="dns-prefetch" href="https://images.unsplash.com" />
-      <link rel="dns-prefetch" href="https://randomuser.me" />
       {/* Precarga de la imagen del hero (elemento LCP) con prioridad alta */}
       <link
         rel="preload"
         as="image"
-        href="https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=1100&q=80"
+        href="/images/hero.jpg"
         fetchPriority="high"
       />
       <JsonLd data={[orgLd, websiteLd]} />

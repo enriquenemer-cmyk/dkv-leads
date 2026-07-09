@@ -24,6 +24,7 @@ export default function KanbanPage() {
   const [dragging, setDragging] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState<Tag | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [soloHoy, setSoloHoy] = useState(false)
 
   useEffect(() => {
     fetchLeads()
@@ -63,7 +64,10 @@ export default function KanbanPage() {
     setDragging(null); setDragOver(null)
   }
 
-  const byTag = (tag: Tag) => leads.filter(l => l.tag === tag)
+  const inicioHoy = new Date(); inicioHoy.setHours(0, 0, 0, 0)
+  const hoyCount = leads.filter(l => new Date(l.created_at) >= inicioHoy).length
+  const visibles = soloHoy ? leads.filter(l => new Date(l.created_at) >= inicioHoy) : leads
+  const byTag = (tag: Tag) => visibles.filter(l => l.tag === tag)
 
   return (
     <div style={{ padding: '28px 28px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -73,12 +77,18 @@ export default function KanbanPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#16201d', margin: '0 0 3px', letterSpacing: '-0.02em' }}>Kanban</h1>
-          <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>Arrastra los leads entre columnas para cambiar su estado · {leads.length} leads</p>
+          <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>Arrastra los leads entre columnas para cambiar su estado · {soloHoy ? `${visibles.length} de hoy` : `${leads.length} leads`}</p>
         </div>
-        <button onClick={() => setShowModal(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0F7A63, #0a5b49)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px -4px rgba(15,122,99,0.45)' }}>
-          <Plus size={14} /> Nuevo lead
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button onClick={() => setSoloHoy(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 12, border: `1.5px solid ${soloHoy ? '#0F7A63' : '#e2e8e4'}`, background: soloHoy ? '#e3f1ec' : '#fff', color: soloHoy ? '#0F7A63' : '#6b7a76', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            📅 {soloHoy ? '✓ Solo hoy' : 'Hoy'}{hoyCount > 0 ? ` (${hoyCount})` : ''}
+          </button>
+          <button onClick={() => setShowModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0F7A63, #0a5b49)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px -4px rgba(15,122,99,0.45)' }}>
+            <Plus size={14} /> Nuevo lead
+          </button>
+        </div>
       </div>
 
       {/* Board */}

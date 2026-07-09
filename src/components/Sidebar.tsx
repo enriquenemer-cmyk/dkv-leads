@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { puedeVer } from '@/lib/secciones'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin
 } from 'lucide-react'
 
 const navItems = [
@@ -16,6 +16,8 @@ const navItems = [
   { href: '/panel/agenda', label: 'Agenda', icon: CalendarCheck },
   { href: '/panel/actividad', label: 'Actividad', icon: Activity },
   { href: '/panel/rendimiento', label: 'Rendimiento', icon: Trophy },
+  { href: '/panel/conversion', label: 'Conversión', icon: TrendingUp },
+  { href: '/panel/geolocalizacion', label: 'Geolocalización', icon: MapPin },
   { href: '/panel/analitica', label: 'Analítica web', icon: Flame },
 ]
 

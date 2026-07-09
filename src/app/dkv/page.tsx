@@ -44,19 +44,19 @@ const C = {
 }
 
 const IMG = {
-  hero: 'https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=1100&q=80',
-  doctor: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=1000&q=80',
-  network: 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=1100&q=80',
-  dental: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=1000&q=80',
-  home: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1000&q=80',
-  life: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80',
-  funeral: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1000&q=80',
-  team: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
-  wellness: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=80',
-  familyKids: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?auto=format&fit=crop&w=1000&q=80',
-  digital: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1000&q=80',
-  business: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1000&q=80',
-  nutrition: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1000&q=80',
+  hero: '/images/hero.jpg',
+  doctor: '/images/doctor.jpg',
+  network: '/images/network.jpg',
+  dental: '/images/dental.jpg',
+  home: '/images/home.jpg',
+  life: '/images/life.jpg',
+  funeral: '/images/funeral.jpg',
+  team: '/images/team.jpg',
+  wellness: '/images/wellness.jpg',
+  familyKids: '/images/family-kids.jpg',
+  digital: '/images/digital.jpg',
+  business: '/images/business.jpg',
+  nutrition: '/images/nutrition.jpg',
 }
 
 const NAV = [
@@ -162,9 +162,9 @@ const OTHER = [
 ]
 
 const TESTIMONIALS = [
-  { name: 'Laura Pérez', city: 'Madrid', since: 'Cliente desde 2021', photo: 'https://randomuser.me/api/portraits/women/44.jpg', text: 'Me llamaron a la mañana siguiente de pedir presupuesto. Sin letra pequeña y con un asesor que se explicó de maravilla. Ahora toda mi familia está con DKV.' },
-  { name: 'Javier Molina', city: 'Valencia', since: 'Cliente desde 2019', photo: 'https://randomuser.me/api/portraits/men/32.jpg', text: 'Necesitaba una resonancia y en la pública me daban cita para dentro de dos meses. Con DKV la tuve en tres días. No vuelvo atrás.' },
-  { name: 'Carmen Ruiz', city: 'Sevilla', since: 'Cliente desde 2022', photo: 'https://randomuser.me/api/portraits/women/68.jpg', text: 'El seguro sin copago es justo lo que buscaba: sé lo que pago cada mes y me quito preocupaciones. La app para pedir cita es comodísima.' },
+  { name: 'Laura Pérez', city: 'Madrid', since: 'Cliente desde 2021', photo: '/images/avatar-mujer-1.jpg', text: 'Me llamaron a la mañana siguiente de pedir presupuesto. Sin letra pequeña y con un asesor que se explicó de maravilla. Ahora toda mi familia está con DKV.' },
+  { name: 'Javier Molina', city: 'Valencia', since: 'Cliente desde 2019', photo: '/images/avatar-hombre-1.jpg', text: 'Necesitaba una resonancia y en la pública me daban cita para dentro de dos meses. Con DKV la tuve en tres días. No vuelvo atrás.' },
+  { name: 'Carmen Ruiz', city: 'Sevilla', since: 'Cliente desde 2022', photo: '/images/avatar-mujer-2.jpg', text: 'El seguro sin copago es justo lo que buscaba: sé lo que pago cada mes y me quito preocupaciones. La app para pedir cita es comodísima.' },
 ]
 
 /* Precio orientativo por seguro (valor sin prefijo) */
@@ -190,7 +190,7 @@ const DETAIL_IMG: Record<string, string> = {
   'Seguros sin copago': IMG.doctor,
   'Seguros con copago': IMG.network,
   'Seguros de cuadro médico': IMG.digital,
-  'Seguros con reembolso': 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1000&q=80',
+  'Seguros con reembolso': '/images/reembolso.jpg',
   'Seguro DKV Salud': IMG.wellness,
   'DKV Famedic': IMG.familyKids,
   'DKV Visado': IMG.team,
@@ -237,7 +237,7 @@ const ARTICLES = [
     ],
   },
   {
-    category: 'Coberturas', img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1000&q=80', date: '18 jun 2026', read: '5 min',
+    category: 'Coberturas', img: '/images/reembolso.jpg', date: '18 jun 2026', read: '5 min',
     title: 'Todo lo que incluye un seguro DKV (es más de lo que crees)',
     excerpt: 'Cuadro médico, videoconsulta, chat 24h, receta electrónica, coach de salud… Un repaso a todo lo que llevas contigo.',
     body: [
@@ -250,7 +250,7 @@ const ARTICLES = [
     ],
   },
   {
-    category: 'Compromiso', img: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1000&q=80', date: '10 jun 2026', read: '4 min',
+    category: 'Compromiso', img: '/images/compromiso.jpg', date: '10 jun 2026', read: '4 min',
     title: 'Lenguaje claro y compromiso social: la otra cara de DKV',
     excerpt: 'Sin letra pequeña, con responsabilidad social y ambiental. Una aseguradora con valores, no solo con pólizas.',
     body: [
@@ -262,7 +262,7 @@ const ARTICLES = [
     ],
   },
   {
-    category: 'Salud', img: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1000&q=80', date: '28 jun 2026', read: '4 min',
+    category: 'Salud', img: '/images/wellness.jpg', date: '28 jun 2026', read: '4 min',
     title: '5 razones para tener un seguro de salud privado',
     excerpt: 'Rapidez, elección de médico y tranquilidad: descubre por qué cada vez más familias dan el paso.',
     body: [
@@ -275,7 +275,7 @@ const ARTICLES = [
     ],
   },
   {
-    category: 'Comparativa', img: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1000&q=80', date: '15 jun 2026', read: '5 min',
+    category: 'Comparativa', img: '/images/nutrition.jpg', date: '15 jun 2026', read: '5 min',
     title: 'Seguro con o sin copago: ¿cuál te conviene?',
     excerpt: 'Te explicamos las diferencias para que elijas la modalidad que mejor encaja con tu forma de cuidarte.',
     body: [
@@ -297,7 +297,7 @@ const ARTICLES = [
     ],
   },
   {
-    category: 'Autónomos', img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1000&q=80', date: '20 may 2026', read: '4 min',
+    category: 'Autónomos', img: '/images/autonomos.jpg', date: '20 may 2026', read: '4 min',
     title: 'Salud para autónomos: la ventaja fiscal que quizá no conocías',
     excerpt: 'Como trabajador por cuenta propia, tu seguro de salud puede desgravar. Te contamos cómo.',
     body: [
@@ -844,6 +844,7 @@ export default function DKVClone() {
             </p>
             <div className="h-rise d3" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 42 }}>
               <button onClick={() => scrollTo('calcula')} className="btn-red" style={{ ...solid(C.red), padding: '17px 36px', fontSize: 16.5, boxShadow: '0 18px 40px -12px rgba(221,54,54,.6)' }}>Calcula tu seguro <ArrowRight size={19} /></button>
+              <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" className="dkv-a" style={{ ...solid('#25D366'), padding: '17px 30px', fontSize: 16, textDecoration: 'none', boxShadow: '0 18px 40px -12px rgba(37,211,102,.55)' }}><MessageCircle size={19} /> Te informamos por WhatsApp</a>
               <button onClick={() => scrollTo('medico')} className="btn-glass" style={{ ...solid('rgba(255,255,255,.14)'), border: '1.5px solid rgba(255,255,255,.4)', backdropFilter: 'blur(10px)', padding: '16px 30px', fontSize: 16 }}>Ver cuadro médico</button>
             </div>
             <div className="h-rise d4" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
@@ -869,7 +870,7 @@ export default function DKVClone() {
           <p style={{ fontSize: 13.5, color: '#fff', lineHeight: 1.5, margin: '0 0 12px', fontWeight: 500 }}>«Me llamaron al día siguiente. Sin letra pequeña y todo clarísimo.»</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://randomuser.me/api/portraits/women/44.jpg" alt="Laura P." loading="lazy" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.3)' }} />
+            <img src="/images/avatar-mujer-1.jpg" alt="Laura P." loading="lazy" style={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,.3)' }} />
             <div style={{ lineHeight: 1.2 }}>
               <div style={{ fontSize: 12.5, fontWeight: 700, color: '#fff' }}>Laura P.</div>
               <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)' }}>Madrid · Cliente DKV</div>
@@ -895,7 +896,7 @@ export default function DKVClone() {
           {[
             { icon: ShieldCheck, t: 'Datos protegidos (RGPD)' },
             { icon: Check, t: 'Sin permanencia' },
-            { icon: Clock, t: 'Respuesta en 24 h' },
+            { icon: Clock, t: 'Respuesta en menos de 24 h' },
             { icon: Award, t: '50 años de experiencia' },
             { icon: Star, t: '4,8 ★ en Google' },
           ].map(({ icon: Ic, t }) => (
@@ -963,13 +964,24 @@ export default function DKVClone() {
               <p style={{ fontSize: 13.5, color: C.taupe, margin: '0 0 14px' }}>Rellena tus datos y te llamamos gratis.</p>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: C.cream, color: C.teal, borderRadius: 999, padding: '6px 13px', fontSize: 11.5, fontWeight: 800, marginBottom: 20, letterSpacing: '0.02em' }}><Clock size={13} /> Solo 30 segundos · Sin compromiso</div>
 
-              {interesSel && (
-                <div style={{ padding: '9px 13px', borderRadius: 10, background: '#e9f1ec', border: '1px solid #cfe0d7', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Check size={14} style={{ color: C.teal }} strokeWidth={3} />
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: C.teal, flex: 1 }}>Te interesa: {interesSel}</span>
-                  <button type="button" onClick={() => setInteresSel('')} aria-label="Quitar" style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.taupe, display: 'flex' }}><X size={14} /></button>
+              <Field label="¿Qué seguro te interesa?">
+                <div style={{ position: 'relative' }}>
+                  <ShieldCheck size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: focus === 'interes' ? C.teal : '#9aaba5', pointerEvents: 'none', zIndex: 1 }} />
+                  <select className="in" value={interesSel} onChange={e => setInteresSel(e.target.value)} style={{ ...inputStyle(focus === 'interes'), paddingLeft: 42, appearance: 'none', WebkitAppearance: 'none', cursor: 'pointer' }} onFocus={() => setFocus('interes')} onBlur={() => setFocus(null)}>
+                    <option value="">Elige tu seguro (orientativo)</option>
+                    {Object.keys(PRICES).map(k => <option key={k} value={k}>{k}</option>)}
+                  </select>
                 </div>
-              )}
+              </Field>
+
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 12, background: '#e9f1ec', border: '1px solid #cfe0d7', margin: '14px 0 4px' }}>
+                <Sparkles size={15} style={{ color: C.lime }} />
+                <span style={{ fontSize: 13.5, fontWeight: 800, color: C.teal }}>Precio orientativo: desde {PRICES[interesSel] || '9€/mes'}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: C.taupe }}>· sin compromiso</span>
+              </div>
+              <p style={{ fontSize: 11, color: C.taupe, margin: '0 0 16px' }}>Precio orientativo y no vinculante. Recibirás tu cálculo personalizado sin compromiso.</p>
+
+              <p style={{ fontSize: 12.5, color: C.taupe, margin: '0 0 16px' }}>¿Prefieres hablar ahora? <a href="https://wa.me/34699669603?text=Hola,%20quiero%20informaci%C3%B3n%20sobre%20un%20seguro%20DKV" onClick={() => trackContact('whatsapp')} target="_blank" rel="noopener noreferrer" style={{ color: '#128C4B', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}><MessageCircle size={13} /> Escríbenos por WhatsApp</a></p>
 
               {error &&<div style={{ marginBottom: 16, padding: '11px 14px', borderRadius: 12, background: '#fef0ed', border: '1px solid #fbd4cb', color: C.redDark, fontSize: 13, fontWeight: 500 }}>{error}</div>}
 

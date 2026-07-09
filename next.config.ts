@@ -12,6 +12,10 @@ const CAMPANAS = [
 ]
 
 const nextConfig: NextConfig = {
+  // Fija la raíz del workspace a este proyecto. Evita el aviso de Next
+  // "inferred your workspace root ... multiple lockfiles" cuando hay varios
+  // package-lock.json/pnpm-lock.yaml en directorios superiores.
+  turbopack: { root: __dirname },
   async redirects() {
     return [
       // El dominio raíz muestra la web DKV

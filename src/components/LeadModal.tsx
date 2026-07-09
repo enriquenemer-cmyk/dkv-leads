@@ -101,7 +101,7 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
 
         <form onSubmit={handleSubmit} className="px-7 py-5 space-y-4">
           {error && (
-            <div className="text-[13px] font-medium px-4 py-3 rounded-xl" style={{ background: '#fbe7e2', color: '#c23a22' }}>
+            <div id="lead-error" role="alert" className="text-[13px] font-medium px-4 py-3 rounded-xl" style={{ background: '#fbe7e2', color: '#c23a22' }}>
               {error}
             </div>
           )}
@@ -128,6 +128,8 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
             <input
               value={form.nombre}
               onChange={(e) => set('nombre', e.target.value)}
+              aria-label="Nombre completo"
+              aria-describedby={error ? 'lead-error' : undefined}
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
               placeholder="María García"
             />
@@ -139,6 +141,8 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
               <input
                 value={form.telefono}
                 onChange={(e) => set('telefono', e.target.value)}
+                aria-label="Teléfono"
+                aria-describedby={error ? 'lead-error' : undefined}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
                 placeholder="+34 600 000 000"
               />
@@ -148,6 +152,8 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
               <input
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
+                aria-label="Correo"
+                aria-describedby={error ? 'lead-error' : undefined}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
                 placeholder="maria@email.com"
               />
@@ -159,6 +165,7 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
             <select
               value={form.interes}
               onChange={(e) => set('interes', e.target.value)}
+              aria-label="Interés"
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
             >
               <option value="">Selecciona un interés</option>
@@ -171,6 +178,7 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
             <select
               value={form.sucursal}
               onChange={(e) => set('sucursal', e.target.value)}
+              aria-label="Sucursal"
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
             >
               <option value="">Sin asignar</option>

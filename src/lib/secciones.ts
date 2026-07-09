@@ -9,6 +9,8 @@ export const SECCIONES = [
   { href: '/panel/agenda', label: 'Agenda' },
   { href: '/panel/actividad', label: 'Actividad' },
   { href: '/panel/rendimiento', label: 'Rendimiento' },
+  { href: '/panel/conversion', label: 'Conversión' },
+  { href: '/panel/geolocalizacion', label: 'Geolocalización' },
   { href: '/panel/analitica', label: 'Analítica web' },
   { href: '/panel/usuarios', label: 'Asesores (gestión)' },
 ] as const

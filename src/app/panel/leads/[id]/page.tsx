@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, Lead, leadSucursal, fuenteOrigen } from '@/lib/supabase'
 import { limpiarInteres } from '@/lib/interes'
+import { geoDeLead } from '@/lib/provincia'
 import { logActividad } from '@/lib/actividad'
 import { TagPill, TAG_STYLES } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
@@ -156,6 +157,11 @@ export default function LeadDetallePage() {
                 <span style={{ fontSize: 13, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <ExternalLink size={11} /> {fuenteOrigen(lead.fuente) === 'formulario' ? 'Formulario público' : 'Alta manual'}
                 </span>
+                {geoDeLead(lead).provincia && (
+                  <span style={{ fontSize: 13, color: '#0F7A63', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    📍 {geoDeLead(lead).provincia}{geoDeLead(lead).cp ? ` · ${geoDeLead(lead).cp}` : ''}
+                  </span>
+                )}
               </div>
             </div>
             <button onClick={() => setEditModal(true)} className="no-print"

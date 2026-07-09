@@ -12,19 +12,19 @@ export const C = {
 }
 
 const IMG = {
-  hero: 'https://images.unsplash.com/photo-1609220136736-443140cffec6?auto=format&fit=crop&w=1400&q=80',
-  doctor: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=1400&q=80',
-  network: 'https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?auto=format&fit=crop&w=1400&q=80',
-  dental: 'https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&w=1400&q=80',
-  home: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1400&q=80',
-  life: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1400&q=80',
-  funeral: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1400&q=80',
-  team: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1400&q=80',
-  wellness: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1400&q=80',
-  familyKids: 'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?auto=format&fit=crop&w=1400&q=80',
-  digital: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1400&q=80',
-  business: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1400&q=80',
-  nutrition: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1400&q=80',
+  hero: '/images/hero.jpg',
+  doctor: '/images/doctor.jpg',
+  network: '/images/network.jpg',
+  dental: '/images/dental.jpg',
+  home: '/images/home.jpg',
+  life: '/images/life.jpg',
+  funeral: '/images/funeral.jpg',
+  team: '/images/team.jpg',
+  wellness: '/images/wellness.jpg',
+  familyKids: '/images/family-kids.jpg',
+  digital: '/images/digital.jpg',
+  business: '/images/business.jpg',
+  nutrition: '/images/nutrition.jpg',
 }
 
 export const slugify = (s: string) =>
@@ -55,7 +55,7 @@ export const SEGUROS: Ficha[] = [
     desc: 'Elige entre más de 51.000 profesionales y 1.000 centros médicos concertados por toda España.',
     coverage: ['Libre elección dentro de la red DKV', 'Especialistas sin volante en muchos casos', 'Clínicas y centros por toda España', 'Segunda opinión médica', 'Videoconsulta con tu médico', 'Sin adelantar dinero'],
     idealFor: 'Quien quiere elegir entre una amplia red de médicos concertados sin complicaciones.' },
-  { group: 'Seguros de salud', title: 'Seguros con reembolso', icon: Umbrella, price: '55€/mes', img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1400&q=80',
+  { group: 'Seguros de salud', title: 'Seguros con reembolso', icon: Umbrella, price: '55€/mes', img: '/images/reembolso.jpg',
     tagline: 'Libertad total para elegir a tu médico',
     desc: 'Elige libremente cualquier médico o clínica, dentro o fuera del cuadro, y te reembolsamos los gastos.',
     coverage: ['Cualquier médico o clínica, también privados', 'Reembolso de hasta el 80-90% de los gastos', 'Compatible con el cuadro médico DKV', 'Cobertura nacional e internacional', 'Habitación individual en hospital', 'Perfecto para segundas opiniones'],
@@ -184,7 +184,7 @@ export const ARTICULOS: Articulo[] = [
       { h: '¿Qué significa para ti?', text: 'Que tu aseguradora tiene una enorme solvencia y estabilidad. En un seguro de salud, esa solidez es la garantía de que las coberturas estarán ahí a largo plazo.' },
       { h: 'Solidez que da tranquilidad', text: 'Casi 2 millones de clientes en España confían en DKV. Detrás de cada póliza hay músculo financiero internacional y casi un siglo de experiencia local.' },
     ] },
-  { category: 'Coberturas', img: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1400&q=80', date: '18 jun 2026', read: '5 min',
+  { category: 'Coberturas', img: '/images/reembolso.jpg', date: '18 jun 2026', read: '5 min',
     title: 'Todo lo que incluye un seguro DKV (es más de lo que crees)',
     excerpt: 'Cuadro médico, videoconsulta, chat 24h, receta electrónica, coach de salud… Un repaso a todo lo que llevas contigo.',
     body: [
@@ -195,7 +195,7 @@ export const ARTICULOS: Articulo[] = [
       { h: 'Modalidades para cada bolsillo', text: 'Desde opciones familiares que cubren hasta 8 personas, hasta modalidades con y sin copago. Pagas por lo que necesitas.' },
       { h: 'Prevención y bienestar', text: 'Líneas de orientación médica, nutricional y deportiva para que cuidarte sea un hábito.' },
     ] },
-  { category: 'Compromiso', img: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1400&q=80', date: '10 jun 2026', read: '4 min',
+  { category: 'Compromiso', img: '/images/compromiso.jpg', date: '10 jun 2026', read: '4 min',
     title: 'Lenguaje claro y compromiso social: la otra cara de DKV',
     excerpt: 'Sin letra pequeña, con responsabilidad social y ambiental. Una aseguradora con valores, no solo con pólizas.',
     body: [
@@ -234,7 +234,7 @@ export const ARTICULOS: Articulo[] = [
       { h: 'Gastos bajo control', text: 'Una sola prueba privada puede costar cientos de euros. Con un seguro, tu gasto es predecible.' },
       { h: 'La prevención es la clave', text: 'Revisiones periódicas y detección temprana evitan problemas mayores.' },
     ] },
-  { category: 'Autónomos', img: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1400&q=80', date: '20 may 2026', read: '4 min',
+  { category: 'Autónomos', img: '/images/autonomos.jpg', date: '20 may 2026', read: '4 min',
     title: 'Salud para autónomos: la ventaja fiscal que quizá no conocías',
     excerpt: 'Como trabajador por cuenta propia, tu seguro de salud puede desgravar. Te contamos cómo.',
     body: [
