@@ -7,9 +7,9 @@ export const TITULAR = {
   nombre: 'Kdental Excellent, S.L.',     // nombre fiscal de la empresa (CIF B86801594)
   nif: 'B-86801594',                     // CIF de la empresa
   domicilio: 'C/ Príncipe de Vergara 80, 28006 Madrid',
-  email: 'info@dkv-ergo.es',             // revisa que esta cuenta exista o cámbiala
+  email: 'info@ergopymes.com',           // revisa que esta cuenta exista o cámbiala
   telefono: '+34 699 66 96 03',
-  dominio: 'dkv-ergo.es',
+  dominio: 'ergopymes.com',
   actividad: 'mediación y asesoramiento en la contratación de seguros de salud',
 }
 

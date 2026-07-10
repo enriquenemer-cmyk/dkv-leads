@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { SEGUROS, ARTICULOS, slugify } from './dkv/fichas'
 
-const BASE = 'https://dkv-ergo.es'
+const BASE = 'https://ergopymes.com'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()

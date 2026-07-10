@@ -3,7 +3,7 @@ import JsonLd from '@/components/JsonLd'
 import ChatWidget from '@/components/ChatWidget'
 import { TITULAR } from './legal-data'
 
-const BASE = 'https://dkv-ergo.es'
+const BASE = 'https://ergopymes.com'
 
 export const metadata: Metadata = {
   title: 'Seguro de Salud DKV | Calcula tu precio con hasta -35% de descuento',

@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { ARTICULOS, ARTICULO_BY_SLUG, slugify, C } from '../../fichas'
 import JsonLd from '@/components/JsonLd'
 
-const BASE = 'https://dkv-ergo.es'
+const BASE = 'https://ergopymes.com'
 
 export function generateStaticParams() {
   return ARTICULOS.map(a => ({ slug: slugify(a.title) }))

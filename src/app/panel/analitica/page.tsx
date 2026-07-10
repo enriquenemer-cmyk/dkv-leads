@@ -217,7 +217,7 @@ export default function AnaliticaPage() {
 
       {loading ? <Loader label="Cargando analítica…" />
         : eventos.length === 0
-          ? <EmptyState icon={Flame} title="Aún no hay datos" description="En cuanto los visitantes acepten las cookies y naveguen por dkv-ergo.es, aquí verás las visitas, el origen, los clics y el embudo. Suele tardar unos minutos en aparecer la primera sesión." />
+          ? <EmptyState icon={Flame} title="Aún no hay datos" description="En cuanto los visitantes acepten las cookies y naveguen por ergopymes.com, aquí verás las visitas, el origen, los clics y el embudo. Suele tardar unos minutos en aparecer la primera sesión." />
           : (
             <>
               {/* KPIs */}

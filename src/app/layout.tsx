@@ -19,7 +19,7 @@ const font = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://dkv-ergo.es'),
+  metadataBase: new URL('https://ergopymes.com'),
   title: 'DKV Seguros – Asesoría de salud sin compromiso',
   description: 'Solicita asesoría gratuita en seguros de salud DKV. Asesor personal, respuesta en menos de 24h. Sin listas de espera, sin permanencia mínima.',
   keywords: ['seguro de salud', 'DKV', 'seguro médico', 'asesor salud', 'seguro familiar'],

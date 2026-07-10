@@ -14,7 +14,7 @@ import { PRODUCTOS, PRODUCTO_SLUGS, TARJETA, type ProductoSlug } from './wallet-
 const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID || ''
 const SA_EMAIL = process.env.GOOGLE_WALLET_SA_EMAIL || ''
 const SA_KEY = (process.env.GOOGLE_WALLET_SA_KEY || '').replace(/\\n/g, '\n')
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dkv-leads.vercel.app'
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ergopymes.com'
 const TEAL = '#0F4A3F'
 
 const CLASE_ID = `${ISSUER_ID}.${TARJETA.clase}`

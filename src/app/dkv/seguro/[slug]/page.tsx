@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Check, ThumbsUp, ShieldCheck, Phone } from 'luci
 import { SEGUROS, SEGURO_BY_SLUG, slugify, C } from '../../fichas'
 import JsonLd from '@/components/JsonLd'
 
-const BASE = 'https://dkv-ergo.es'
+const BASE = 'https://ergopymes.com'
 
 export function generateStaticParams() {
   return SEGUROS.map(f => ({ slug: slugify(f.title) }))

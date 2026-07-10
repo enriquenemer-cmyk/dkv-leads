@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/panel/', '/api/'],
     },
-    sitemap: 'https://dkv-ergo.es/sitemap.xml',
-    host: 'https://dkv-ergo.es',
+    sitemap: 'https://ergopymes.com/sitemap.xml',
+    host: 'https://ergopymes.com',
   }
 }

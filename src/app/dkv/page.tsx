@@ -496,7 +496,7 @@ export default function DKVClone() {
       // Atribución enriquecida: procedencia y dispositivo (útil para segmentar leads de pago)
       let refHost = ''
       try { refHost = document.referrer ? new URL(document.referrer).hostname : '' } catch { refHost = '' }
-      if (refHost && !refHost.includes('dkv-ergo')) parts.push(`ref=${refHost}`)
+      if (refHost && !refHost.includes('ergopymes')) parts.push(`ref=${refHost}`)
       parts.push(`disp=${window.innerWidth < 768 ? 'movil' : 'escritorio'}`)
       const stored = sessionStorage.getItem('dkv-attrib')
       if (!stored) sessionStorage.setItem('dkv-attrib', parts.join(' '))

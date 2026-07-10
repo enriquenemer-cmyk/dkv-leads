@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   const from = process.env.NOTIFY_FROM || 'DKV Leads <onboarding@resend.dev>'
   const asesorEmail = process.env.NOTIFY_EMAIL || 'enriquenemer@gmail.com'
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dkv-leads.vercel.app'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://ergopymes.com'
   const waEmpresa = (process.env.NEXT_PUBLIC_WHATSAPP || '34699669603').replace(/\D/g, '')
 
   const body = await req.json().catch(() => ({}))
