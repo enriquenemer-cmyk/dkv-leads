@@ -12,8 +12,10 @@ const card: React.CSSProperties = {
   boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)',
 }
 
-// Colores de las porciones de la ruleta (se alternan).
-const SLICE_COLORS = ['#0F7A63', '#12b48d', '#a8741a', '#c23a22', '#2b6fb0', '#6b4ab0', '#0a2f27', '#158b6f']
+// Colores de las porciones de la ruleta (dos verdes que se alternan → segmentos con ritmo).
+const SLICE_COLORS = ['#12a082', '#0a453a']
+// Paleta festiva para el confeti del ganador.
+const CONFETTI_COLORS = ['#f5c451', '#12b48d', '#ffffff', '#0F7A63', '#e0452a', '#fff7da']
 
 // Etiquetas legibles para las etiquetas (tags) de lead.
 const TAGS: { key: Lead['tag']; label: string; color: string }[] = [
@@ -416,12 +418,21 @@ type RuletaProps = {
 // Lienzo vertical Full-HD (formato Reels / TikTok).
 const VW = 1080, VH = 1920
 const WCX = 540, WCY = 1015, WR = 442     // centro y radio de la rueda
-const HUB = 82                            // radio del cubo central
+const HUB = 88                            // radio del cubo central
 const SANS = "'Plus Jakarta Sans', system-ui, sans-serif"
 
 type Confeti = { x: number; delay: number; vel: number; col: string; size: number; rot: number; spin: number }
 
 function rad(deg: number) { return ((deg - 90) * Math.PI) / 180 }
+
+/** Aclara (amt>0) u oscurece (amt<0) un color hex → para el relieve de las porciones. */
+function shade(hex: string, amt: number): string {
+  const num = parseInt(hex.slice(1), 16)
+  const r = Math.max(0, Math.min(255, (num >> 16) + amt))
+  const g = Math.max(0, Math.min(255, ((num >> 8) & 255) + amt))
+  const b = Math.max(0, Math.min(255, (num & 255) + amt))
+  return `rgb(${r},${g},${b})`
+}
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
@@ -528,30 +539,46 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
 
     // Fondo vertical de marca.
     const bg = ctx.createLinearGradient(0, 0, 0, VH)
-    bg.addColorStop(0, '#0c3a30'); bg.addColorStop(0.55, '#0a2f27'); bg.addColorStop(1, '#071e18')
+    bg.addColorStop(0, '#0d4034'); bg.addColorStop(0.55, '#0a2f27'); bg.addColorStop(1, '#05130f')
     ctx.fillStyle = bg; ctx.fillRect(0, 0, VW, VH)
     // Resplandor tras la rueda.
-    const glow = ctx.createRadialGradient(WCX, WCY, 60, WCX, WCY, WR + 260)
-    glow.addColorStop(0, 'rgba(18,180,141,0.20)'); glow.addColorStop(1, 'rgba(18,180,141,0)')
+    const glow = ctx.createRadialGradient(WCX, WCY, 60, WCX, WCY, WR + 320)
+    glow.addColorStop(0, 'rgba(24,200,155,0.22)'); glow.addColorStop(1, 'rgba(18,180,141,0)')
     ctx.fillStyle = glow; ctx.fillRect(0, 0, VW, VH)
+    // Destellos suaves de fondo.
+    const spk = [[160, 240, 3], [900, 300, 2], [220, 1520, 2.5], [880, 1580, 3], [520, 150, 2], [120, 900, 2], [960, 980, 2.5]]
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    spk.forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill() })
+    // Viñeta para concentrar la mirada en la rueda.
+    const vig = ctx.createRadialGradient(WCX, VH / 2, 300, WCX, VH / 2, 1100)
+    vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.5)')
+    ctx.fillStyle = vig; ctx.fillRect(0, 0, VW, VH)
 
     // Cabecera: logo + título.
     const img = logoRef.current
     if (img && img.complete && img.naturalWidth) {
-      const bw = 250, bh = 92, bx = (VW - bw) / 2, by = 70
+      const bw = 250, bh = 92, bx = (VW - bw) / 2, by = 66
       ctx.fillStyle = '#fff'; roundRect(ctx, bx, by, bw, bh, 20); ctx.fill()
       const pad = 20, iw = bw - pad * 2, ih = bh - pad * 2
       const ratio = Math.min(iw / img.naturalWidth, ih / img.naturalHeight)
       const dw = img.naturalWidth * ratio, dh = img.naturalHeight * ratio
       ctx.drawImage(img, bx + (bw - dw) / 2, by + (bh - dh) / 2, dw, dh)
     }
+    // Título "SORTEO" con degradado dorado y sombra.
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
-    ctx.fillStyle = '#fff'; ctx.font = `900 108px ${SANS}`
-    ctx.fillText('SORTEO', VW / 2, 330)
+    const tg = ctx.createLinearGradient(0, 250, 0, 360)
+    tg.addColorStop(0, '#fff6da'); tg.addColorStop(1, '#f0c24a')
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 6
+    ctx.fillStyle = tg; ctx.font = `900 112px ${SANS}`; ctx.fillText('SORTEO', VW / 2, 352); ctx.restore()
+    // Filigrana dorada bajo el título.
+    ctx.strokeStyle = 'rgba(245,196,81,0.9)'; ctx.lineWidth = 4
+    ctx.beginPath(); ctx.moveTo(VW / 2 - 190, 392); ctx.lineTo(VW / 2 - 30, 392); ctx.stroke()
+    ctx.beginPath(); ctx.moveTo(VW / 2 + 30, 392); ctx.lineTo(VW / 2 + 190, 392); ctx.stroke()
+    ctx.save(); ctx.translate(VW / 2, 392); ctx.rotate(Math.PI / 4); ctx.fillStyle = '#f5c451'; ctx.fillRect(-9, -9, 18, 18); ctx.restore()
     if (reveal <= 0) {
       ctx.fillStyle = 'rgba(255,255,255,0.72)'; ctx.font = `600 38px ${SANS}`
       const nn = partsRef.current.length
-      ctx.fillText(`Entre ${nn} participante${nn === 1 ? '' : 's'}`, VW / 2, 392)
+      ctx.fillText(`Entre ${nn} participante${nn === 1 ? '' : 's'}`, VW / 2, 452)
     }
 
     const parts = partsRef.current
@@ -560,26 +587,31 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
 
     // Sombra proyectada bajo la rueda (le da volumen).
     ctx.save()
-    ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 70; ctx.shadowOffsetY = 26
-    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 34, 0, Math.PI * 2); ctx.fillStyle = '#04140f'; ctx.fill()
+    ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 80; ctx.shadowOffsetY = 30
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 40, 0, Math.PI * 2); ctx.fillStyle = '#04140f'; ctx.fill()
     ctx.restore()
 
-    // Bisel dorado con degradado (aro exterior).
-    const bezel = ctx.createLinearGradient(WCX, WCY - WR - 34, WCX, WCY + WR + 34)
-    bezel.addColorStop(0, '#fff0bf'); bezel.addColorStop(0.45, '#f5c451'); bezel.addColorStop(1, '#a9760f')
-    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 34, 0, Math.PI * 2); ctx.fillStyle = bezel; ctx.fill()
+    // Bisel dorado metálico (varios tonos → reflejo pulido).
+    const bezel = ctx.createLinearGradient(WCX, WCY - WR - 40, WCX, WCY + WR + 40)
+    bezel.addColorStop(0, '#fff2c4'); bezel.addColorStop(0.35, '#f3c24a'); bezel.addColorStop(0.5, '#c9962a'); bezel.addColorStop(0.65, '#f3c24a'); bezel.addColorStop(1, '#8a5f0d')
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 40, 0, Math.PI * 2); ctx.fillStyle = bezel; ctx.fill()
+    // Filo de brillo del bisel.
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 40, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.stroke()
     // Aro interior oscuro que enmarca las porciones.
-    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 9, 0, Math.PI * 2); ctx.fillStyle = '#0a2f27'; ctx.fill()
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 10, 0, Math.PI * 2); ctx.fillStyle = '#082019'; ctx.fill()
+    // Aro dorado fino pegado a las porciones.
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 4, 0, Math.PI * 2); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(245,196,81,0.85)'; ctx.stroke()
 
     // Bombillas alrededor del bisel (parpadean al girar, estilo ruleta de premios).
-    const NB = 24, bulbR = WR + 21
+    const NB = 24, bulbR = WR + 25
     for (let i = 0; i < NB; i++) {
       const ang = (i / NB) * Math.PI * 2
       const bx = WCX + bulbR * Math.cos(ang), by = WCY + bulbR * Math.sin(ang)
       const on = (Math.floor(rotDeg / 11) + i) % 2 === 0
-      ctx.beginPath(); ctx.arc(bx, by, 8.5, 0, Math.PI * 2)
-      if (on) { ctx.shadowColor = 'rgba(255,240,180,0.95)'; ctx.shadowBlur = 18 }
-      ctx.fillStyle = on ? '#fff7da' : '#c28f24'; ctx.fill(); ctx.shadowBlur = 0
+      ctx.beginPath(); ctx.arc(bx, by, 9, 0, Math.PI * 2)
+      if (on) { ctx.shadowColor = 'rgba(255,240,180,1)'; ctx.shadowBlur = 22 }
+      ctx.fillStyle = on ? '#fff8de' : '#b98a22'; ctx.fill(); ctx.shadowBlur = 0
+      ctx.beginPath(); ctx.arc(bx - 2.5, by - 2.5, 2.5, 0, Math.PI * 2); ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fill()
     }
 
     // Porciones (rotadas).
@@ -590,37 +622,53 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
       ctx.beginPath()
       if (parts.length <= 1) { ctx.arc(0, 0, WR, 0, Math.PI * 2) }
       else { ctx.moveTo(0, 0); ctx.arc(0, 0, WR, a0, a1); ctx.closePath() }
-      ctx.fillStyle = colores[i % colores.length]; ctx.fill()
-      if (n <= 40 && parts.length > 1) { ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.stroke() }
+      const base = colores[i % colores.length]
+      if (parts.length > 1) {
+        const g = ctx.createRadialGradient(0, 0, WR * 0.15, 0, 0, WR)
+        g.addColorStop(0, shade(base, 28)); g.addColorStop(0.7, base); g.addColorStop(1, shade(base, -26))
+        ctx.fillStyle = g
+      } else { ctx.fillStyle = base }
+      ctx.fill()
+      if (n <= 40 && parts.length > 1) { ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(245,196,81,0.55)'; ctx.stroke() }
     }
     if (parts.length > 1 && parts.length <= 20) {
       ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
       ctx.font = `800 ${seg < 24 ? 30 : 40}px ${SANS}`
       for (let i = 0; i < parts.length; i++) {
         const c = (i + 0.5) * seg
-        const x = WR * 0.6 * Math.cos(rad(c)), y = WR * 0.6 * Math.sin(rad(c))
+        const x = WR * 0.62 * Math.cos(rad(c)), y = WR * 0.62 * Math.sin(rad(c))
         const primer = (parts[i].nombre || '').trim().split(/\s+/)[0] || '—'
         const txt = primer.length > 11 ? primer.slice(0, 10) + '…' : primer
-        ctx.save(); ctx.translate(x, y); ctx.rotate((c * Math.PI) / 180); ctx.fillText(txt, 0, 0); ctx.restore()
+        ctx.save(); ctx.translate(x, y); ctx.rotate((c * Math.PI) / 180)
+        ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2
+        ctx.fillText(txt, 0, 0); ctx.restore()
       }
     }
     ctx.restore()
 
-    // Domo de brillo fijo sobre las porciones (luz arriba, sombra abajo → relieve).
-    const dome = ctx.createRadialGradient(WCX, WCY - WR * 0.42, WR * 0.1, WCX, WCY, WR)
-    dome.addColorStop(0, 'rgba(255,255,255,0.30)')
-    dome.addColorStop(0.4, 'rgba(255,255,255,0.06)')
-    dome.addColorStop(0.72, 'rgba(0,0,0,0)')
-    dome.addColorStop(1, 'rgba(0,0,0,0.30)')
+    // Domo de brillo fijo: sombra al borde inferior + reflejo de cristal arriba.
+    const dome = ctx.createRadialGradient(WCX, WCY - WR * 0.3, WR * 0.2, WCX, WCY, WR)
+    dome.addColorStop(0, 'rgba(255,255,255,0.10)')
+    dome.addColorStop(0.55, 'rgba(255,255,255,0)')
+    dome.addColorStop(0.8, 'rgba(0,0,0,0)')
+    dome.addColorStop(1, 'rgba(0,0,0,0.28)')
     ctx.beginPath(); ctx.arc(WCX, WCY, WR, 0, Math.PI * 2); ctx.fillStyle = dome; ctx.fill()
+    // Banda brillante fina pegada al borde superior (reflejo de cristal).
+    ctx.save(); ctx.beginPath(); ctx.arc(WCX, WCY, WR, 0, Math.PI * 2); ctx.clip()
+    const spec = ctx.createLinearGradient(0, WCY - WR, 0, WCY - WR * 0.45)
+    spec.addColorStop(0, 'rgba(255,255,255,0.40)'); spec.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = spec; ctx.beginPath(); ctx.ellipse(WCX, WCY - WR * 0.62, WR * 0.72, WR * 0.28, 0, 0, Math.PI * 2); ctx.fill()
+    ctx.restore()
 
-    // Cubo central con degradado (aspecto de botón brillante).
-    const hubGrad = ctx.createRadialGradient(WCX - 22, WCY - 24, 8, WCX, WCY, HUB)
+    // Cubo central metálico dorado con núcleo brillante.
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8
+    const ring = ctx.createLinearGradient(WCX, WCY - HUB, WCX, WCY + HUB)
+    ring.addColorStop(0, '#fff2c4'); ring.addColorStop(0.5, '#e0b840'); ring.addColorStop(1, '#8a5f0d')
+    ctx.beginPath(); ctx.arc(WCX, WCY, HUB, 0, Math.PI * 2); ctx.fillStyle = ring; ctx.fill(); ctx.restore()
+    const hubGrad = ctx.createRadialGradient(WCX - 20, WCY - 22, 8, WCX, WCY, HUB - 14)
     hubGrad.addColorStop(0, '#ffffff'); hubGrad.addColorStop(1, '#dbe5e0')
-    ctx.beginPath(); ctx.arc(WCX, WCY, HUB, 0, Math.PI * 2); ctx.fillStyle = hubGrad; ctx.fill()
-    ctx.lineWidth = 9; ctx.strokeStyle = '#f5c451'; ctx.stroke()
-    ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(WCX, WCY, HUB - 8, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(10,47,39,0.16)'; ctx.stroke()
-    ctx.font = '66px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.beginPath(); ctx.arc(WCX, WCY, HUB - 14, 0, Math.PI * 2); ctx.fillStyle = hubGrad; ctx.fill()
+    ctx.font = '64px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
     ctx.fillText('🎁', WCX, WCY + 3)
 
     // Puntero superior rojo con pomo dorado.
@@ -714,7 +762,7 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
       x: Math.random() * VW,
       delay: Math.random() * 0.12,
       vel: 0.55 + Math.random() * 0.6,
-      col: colores[Math.floor(Math.random() * colores.length)],
+      col: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
       size: 16 + Math.random() * 22,
       rot: Math.random() * Math.PI,
       spin: (Math.random() * 8 - 4),
