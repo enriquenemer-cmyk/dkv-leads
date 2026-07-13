@@ -340,29 +340,33 @@ export default function SorteoPage() {
           {(grabando || clip || clipMsg) && (
             <div style={card}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800, fontSize: 14.5, color: '#16201d', marginBottom: 12 }}>
-                <Film size={16} color="#6b4ab0" /> Clip del sorteo
+                <Film size={16} color="#6b4ab0" /> Vídeo del sorteo
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6b4ab0', background: '#f0eafa', padding: '2px 8px', borderRadius: 999 }}>Vertical 9:16</span>
+                {clip && <span style={{ fontSize: 11, fontWeight: 700, color: '#0F7A63', background: '#eafaf4', padding: '2px 8px', borderRadius: 999, textTransform: 'uppercase' }}>{clip.ext}</span>}
               </div>
 
               {grabando && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13.5, color: '#6b7a76' }}>
                   <span className="spin" style={{ display: 'inline-flex' }}><RotateCw size={15} /></span>
-                  Preparando el vídeo para compartir…
+                  Preparando el vídeo para guardar…
                 </div>
               )}
 
               {clip && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <video src={clip.url} controls playsInline style={{ width: '100%', maxWidth: 220, borderRadius: 14, background: '#0a2f27', alignSelf: 'center', aspectRatio: '9 / 16' }} />
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <button onClick={compartir} style={{ flex: 1, minWidth: 140, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'linear-gradient(135deg, #6b4ab0, #4a2f8a)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 18px', fontSize: 14.5, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer' }}>
-                      <Share2 size={16} /> Compartir clip
-                    </button>
-                    <button onClick={descargar} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#16201d', border: '1.5px solid #e2e8e4', borderRadius: 12, padding: '11px 18px', fontSize: 14.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>
-                      <Download size={16} /> Descargar
-                    </button>
-                  </div>
-                  <p style={{ fontSize: 12, color: '#9aaba5', margin: 0 }}>Compartir abre Instagram, TikTok, WhatsApp… (en móvil). En ordenador se descarga el archivo.</p>
+                  {/* Guardar es la acción principal: botón grande y verde. */}
+                  <button onClick={descargar} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9, background: 'linear-gradient(135deg, #0F7A63, #0a2f27)', color: '#fff', border: 'none', borderRadius: 14, padding: '15px 18px', fontSize: 16, fontWeight: 800, fontFamily: 'inherit', cursor: 'pointer', boxShadow: '0 12px 30px -12px rgba(15,122,99,0.7)' }}>
+                    <Download size={19} /> Guardar vídeo
+                  </button>
+                  <button onClick={compartir} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#16201d', border: '1.5px solid #e2e8e4', borderRadius: 12, padding: '11px 18px', fontSize: 14.5, fontWeight: 700, fontFamily: 'inherit', cursor: 'pointer' }}>
+                    <Share2 size={16} /> Compartir directamente
+                  </button>
+                  <p style={{ fontSize: 12, color: '#9aaba5', margin: 0, lineHeight: 1.5 }}>
+                    <b>Guardar vídeo</b> descarga el archivo a tu dispositivo para subirlo luego a Instagram, TikTok o WhatsApp.
+                    {' '}<b>Compartir directamente</b> abre las apps al instante (solo en móvil).
+                    {clip.ext === 'webm' && ' Nota: en ordenador el vídeo es .webm; para Instagram guárdalo mejor desde el móvil, donde sale en .mp4.'}
+                  </p>
                 </div>
               )}
 
