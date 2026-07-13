@@ -558,9 +558,29 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     const n = Math.max(parts.length, 1)
     const seg = 360 / n
 
-    // Aro exterior.
-    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 16, 0, Math.PI * 2); ctx.fillStyle = '#062019'; ctx.fill()
-    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 9, 0, Math.PI * 2); ctx.fillStyle = '#f5c451'; ctx.fill()
+    // Sombra proyectada bajo la rueda (le da volumen).
+    ctx.save()
+    ctx.shadowColor = 'rgba(0,0,0,0.45)'; ctx.shadowBlur = 70; ctx.shadowOffsetY = 26
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 34, 0, Math.PI * 2); ctx.fillStyle = '#04140f'; ctx.fill()
+    ctx.restore()
+
+    // Bisel dorado con degradado (aro exterior).
+    const bezel = ctx.createLinearGradient(WCX, WCY - WR - 34, WCX, WCY + WR + 34)
+    bezel.addColorStop(0, '#fff0bf'); bezel.addColorStop(0.45, '#f5c451'); bezel.addColorStop(1, '#a9760f')
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 34, 0, Math.PI * 2); ctx.fillStyle = bezel; ctx.fill()
+    // Aro interior oscuro que enmarca las porciones.
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR + 9, 0, Math.PI * 2); ctx.fillStyle = '#0a2f27'; ctx.fill()
+
+    // Bombillas alrededor del bisel (parpadean al girar, estilo ruleta de premios).
+    const NB = 24, bulbR = WR + 21
+    for (let i = 0; i < NB; i++) {
+      const ang = (i / NB) * Math.PI * 2
+      const bx = WCX + bulbR * Math.cos(ang), by = WCY + bulbR * Math.sin(ang)
+      const on = (Math.floor(rotDeg / 11) + i) % 2 === 0
+      ctx.beginPath(); ctx.arc(bx, by, 8.5, 0, Math.PI * 2)
+      if (on) { ctx.shadowColor = 'rgba(255,240,180,0.95)'; ctx.shadowBlur = 18 }
+      ctx.fillStyle = on ? '#fff7da' : '#c28f24'; ctx.fill(); ctx.shadowBlur = 0
+    }
 
     // Porciones (rotadas).
     ctx.save()
@@ -586,17 +606,38 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     }
     ctx.restore()
 
-    // Cubo central.
-    ctx.beginPath(); ctx.arc(WCX, WCY, HUB, 0, Math.PI * 2)
-    ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 7; ctx.strokeStyle = '#0a2f27'; ctx.stroke()
-    ctx.font = '64px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-    ctx.fillText('🎁', WCX, WCY + 2)
+    // Domo de brillo fijo sobre las porciones (luz arriba, sombra abajo → relieve).
+    const dome = ctx.createRadialGradient(WCX, WCY - WR * 0.42, WR * 0.1, WCX, WCY, WR)
+    dome.addColorStop(0, 'rgba(255,255,255,0.30)')
+    dome.addColorStop(0.4, 'rgba(255,255,255,0.06)')
+    dome.addColorStop(0.72, 'rgba(0,0,0,0)')
+    dome.addColorStop(1, 'rgba(0,0,0,0.30)')
+    ctx.beginPath(); ctx.arc(WCX, WCY, WR, 0, Math.PI * 2); ctx.fillStyle = dome; ctx.fill()
 
-    // Puntero.
+    // Cubo central con degradado (aspecto de botón brillante).
+    const hubGrad = ctx.createRadialGradient(WCX - 22, WCY - 24, 8, WCX, WCY, HUB)
+    hubGrad.addColorStop(0, '#ffffff'); hubGrad.addColorStop(1, '#dbe5e0')
+    ctx.beginPath(); ctx.arc(WCX, WCY, HUB, 0, Math.PI * 2); ctx.fillStyle = hubGrad; ctx.fill()
+    ctx.lineWidth = 9; ctx.strokeStyle = '#f5c451'; ctx.stroke()
+    ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(WCX, WCY, HUB - 8, 0, Math.PI * 2); ctx.strokeStyle = 'rgba(10,47,39,0.16)'; ctx.stroke()
+    ctx.font = '66px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText('🎁', WCX, WCY + 3)
+
+    // Puntero superior rojo con pomo dorado.
+    ctx.save()
+    ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8
     ctx.beginPath()
-    ctx.moveTo(WCX - 34, WCY - WR - 26); ctx.lineTo(WCX + 34, WCY - WR - 26); ctx.lineTo(WCX, WCY - WR + 42)
-    ctx.closePath(); ctx.fillStyle = '#16201d'; ctx.fill()
-    ctx.lineWidth = 6; ctx.strokeStyle = '#f5c451'; ctx.stroke()
+    ctx.moveTo(WCX - 40, WCY - WR - 30); ctx.lineTo(WCX + 40, WCY - WR - 30); ctx.lineTo(WCX, WCY - WR + 52)
+    ctx.closePath()
+    const pg = ctx.createLinearGradient(0, WCY - WR - 30, 0, WCY - WR + 52)
+    pg.addColorStop(0, '#e0452a'); pg.addColorStop(1, '#8a1f0f')
+    ctx.fillStyle = pg; ctx.fill()
+    ctx.restore()
+    // Pomo del puntero.
+    const kg = ctx.createRadialGradient(WCX - 9, WCY - WR - 38, 4, WCX, WCY - WR - 30, 27)
+    kg.addColorStop(0, '#ffffff'); kg.addColorStop(1, '#e0b840')
+    ctx.beginPath(); ctx.arc(WCX, WCY - WR - 30, 27, 0, Math.PI * 2); ctx.fillStyle = kg; ctx.fill()
+    ctx.lineWidth = 3; ctx.strokeStyle = '#b8860b'; ctx.stroke()
 
     // Marca de agua.
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
