@@ -4,6 +4,7 @@ import { supabase, Lead, fuenteOrigen, leadSucursal, SUCURSALES } from '@/lib/su
 import { PageHero } from '@/components/PageHero'
 import { Loader } from '@/components/Loader'
 import { FuenteBadge } from '@/components/FuenteBadge'
+import { logActividad } from '@/lib/actividad'
 import { Gift, Users, Phone, Mail, Trophy, Sparkles, RotateCw, History, X, Download, Share2, Film } from 'lucide-react'
 
 // ── Estilos compartidos ──────────────────────────────────────────────
@@ -76,6 +77,7 @@ export default function SorteoPage() {
   const [girando, setGirando] = useState(false)
   const [ganador, setGanador] = useState<Lead | null>(null)
   const [historial, setHistorial] = useState<Lead[]>([])
+  const [ganadorElegido, setGanadorElegido] = useState('') // '' = al azar; si no, id forzado
 
   // Clip de vídeo compartible
   const [grabando, setGrabando] = useState(false)
@@ -140,6 +142,11 @@ export default function SorteoPage() {
 
   const n = participantes.length
 
+  // Si el ganador elegido a mano deja de cumplir los filtros, deshacemos la elección.
+  useEffect(() => {
+    if (ganadorElegido && !participantes.some((p) => p.id === ganadorElegido)) setGanadorElegido('')
+  }, [participantes, ganadorElegido])
+
   function limpiarClip() {
     if (clipRef.current) URL.revokeObjectURL(clipRef.current.url)
     clipRef.current = null
@@ -154,12 +161,17 @@ export default function SorteoPage() {
     limpiarClip()
     setGirando(true)
     setGrabando(true)
-    ruletaRef.current?.spin()
+    ruletaRef.current?.spin(ganadorElegido || undefined)
   }
 
   function onWinner(w: Lead) {
     setGanador(w)
     setHistorial((h) => (h.some((x) => x.id === w.id) ? h : [w, ...h]))
+    logActividad(
+      'sorteo_realizado',
+      `Sorteo realizado · Ganador: ${w.nombre} (entre ${n} participante${n === 1 ? '' : 's'})`,
+      { lead_id: w.id, lead_nombre: w.nombre }
+    )
   }
 
   function onClip(blob: Blob | null) {
@@ -289,6 +301,33 @@ export default function SorteoPage() {
             <RuletaCanvas ref={ruletaRef} participantes={participantes} colores={SLICE_COLORS}
               onWinner={onWinner} onClip={onClip} onDone={onDone} />
 
+            {n > 0 && (
+              <div style={{ width: '100%', maxWidth: 340 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#6b7a76', marginBottom: 6, textAlign: 'center' }}>
+                  Ganador
+                </label>
+                <select
+                  value={ganadorElegido}
+                  onChange={(e) => setGanadorElegido(e.target.value)}
+                  disabled={girando}
+                  style={{
+                    width: '100%', padding: '11px 12px', borderRadius: 12,
+                    border: `1.5px solid ${ganadorElegido ? '#0F7A63' : '#e2e8e4'}`,
+                    background: ganadorElegido ? '#eafaf4' : '#fff', color: '#16201d',
+                    fontSize: 14, fontFamily: 'inherit', cursor: girando ? 'not-allowed' : 'pointer', outline: 'none',
+                  }}
+                >
+                  <option value="">🎲 Al azar (aleatorio)</option>
+                  {participantes.map((p) => (
+                    <option key={p.id} value={p.id}>{p.nombre}</option>
+                  ))}
+                </select>
+                <p style={{ fontSize: 11.5, color: ganadorElegido ? '#0F7A63' : '#9aaba5', margin: '6px 0 0', textAlign: 'center', fontWeight: ganadorElegido ? 600 : 500 }}>
+                  {ganadorElegido ? '✓ La ruleta parará en esta persona.' : 'Déjalo “al azar” o elige tú al ganador.'}
+                </p>
+              </div>
+            )}
+
             <button
               onClick={girar}
               disabled={girando || n === 0}
@@ -303,7 +342,7 @@ export default function SorteoPage() {
               }}
             >
               <RotateCw size={18} className={girando ? 'spin' : ''} />
-              {girando ? 'Girando…' : n === 0 ? 'Sin participantes' : '¡Girar la ruleta!'}
+              {girando ? 'Girando…' : n === 0 ? 'Sin participantes' : ganadorElegido ? '¡Girar (ganador elegido)!' : '¡Girar la ruleta!'}
             </button>
             <p style={{ fontSize: 12, color: '#9aaba5', margin: 0, textAlign: 'center' }}>
               {n === 0
@@ -406,7 +445,7 @@ export default function SorteoPage() {
 }
 
 // ── Ruleta vertical 9:16 en canvas (grabable como vídeo con sonido) ───
-type RuletaHandle = { spin: () => void }
+type RuletaHandle = { spin: (forcedId?: string) => void }
 type RuletaProps = {
   participantes: Lead[]
   colores: string[]
@@ -461,10 +500,47 @@ function makeNoise(ctx: AudioContext, loop: boolean): AudioBufferSourceNode {
 
 /** Redoble de tambor (crescendo) + fanfarria de ganador, en directo y en el clip. */
 function reproducirSonido(ctx: AudioContext, dest: MediaStreamAudioDestinationNode | null, spinMs: number) {
-  const master = ctx.createGain(); master.gain.value = 0.9
-  master.connect(ctx.destination); if (dest) master.connect(dest)
+  const master = ctx.createGain(); master.gain.value = 0.85
+  // Compresor para que al sumar suspense + redoble + fanfarria no sature.
+  const comp = ctx.createDynamicsCompressor()
+  comp.threshold.value = -14; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.25
+  master.connect(comp); comp.connect(ctx.destination); if (dest) comp.connect(dest)
   const now = ctx.currentTime
   const fin = now + spinMs / 1000
+
+  // ── Música de suspense (durante todo el giro) ──────────────────────
+  // 1) Zumbido de tensión: dos sierras graves que suben de tono, con tremolo
+  //    y un filtro que se va abriendo → sensación creciente de tensión.
+  const drone = ctx.createGain()
+  drone.gain.setValueAtTime(0.0001, now)
+  drone.gain.exponentialRampToValueAtTime(0.11, now + 0.9)
+  drone.gain.exponentialRampToValueAtTime(0.17, fin)
+  drone.gain.exponentialRampToValueAtTime(0.0001, fin + 0.3)
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 7
+  lp.frequency.setValueAtTime(320, now); lp.frequency.exponentialRampToValueAtTime(1500, fin)
+  drone.connect(lp); lp.connect(master)
+  const trem = ctx.createOscillator(); trem.type = 'sine'
+  trem.frequency.setValueAtTime(5, now); trem.frequency.linearRampToValueAtTime(12, fin)
+  const tremG = ctx.createGain(); tremG.gain.value = 0.07
+  trem.connect(tremG); tremG.connect(drone.gain); trem.start(now); trem.stop(fin + 0.3)
+  for (const det of [-4, 4]) {
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.detune.value = det
+    o.frequency.setValueAtTime(55, now); o.frequency.exponentialRampToValueAtTime(174, fin) // A1 → ~F3
+    o.connect(drone); o.start(now); o.stop(fin + 0.3)
+  }
+  // 2) Latidos graves que aceleran a medida que se acerca el resultado.
+  let t = now + 0.25, intervalo = 0.7
+  while (t < fin - 0.04) {
+    const o = ctx.createOscillator(); o.type = 'sine'
+    o.frequency.setValueAtTime(94, t); o.frequency.exponentialRampToValueAtTime(58, t + 0.18)
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.0001, t)
+    g.gain.exponentialRampToValueAtTime(0.32, t + 0.02)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24)
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.28)
+    intervalo *= 0.87
+    t += Math.max(0.13, intervalo)
+  }
 
   // Redoble: ruido filtrado con tremolo y crescendo.
   const noise = makeNoise(ctx, true)
@@ -479,23 +555,47 @@ function reproducirSonido(ctx: AudioContext, dest: MediaStreamAudioDestinationNo
   noise.connect(bp); bp.connect(roll); roll.connect(master)
   noise.start(now); lfo.start(now); noise.stop(fin + 0.05); lfo.stop(fin + 0.05)
 
-  // Fanfarria final (acorde ascendente).
-  const acorde = [523.25, 659.25, 783.99, 1046.5]
-  acorde.forEach((f, i) => {
-    const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f
-    const g = ctx.createGain()
-    const st = fin + i * 0.07
-    g.gain.setValueAtTime(0.0001, st)
-    g.gain.exponentialRampToValueAtTime(0.28, st + 0.03)
-    g.gain.exponentialRampToValueAtTime(0.0001, st + 1.3)
-    o.connect(g); g.connect(master); o.start(st); o.stop(st + 1.4)
-  })
-  // Platillo (crash) al revelar.
+  // ── Festejo final: fanfarria triunfal MÁS FUERTE al salir el ganador ──
+  // Bus dedicado, con ganancia alta, para que la celebración destaque sobre todo.
+  const fest = ctx.createGain(); fest.gain.value = 1.35
+  fest.connect(master)
+
+  // Golpe de fanfarria (saw + triángulo = brillante y potente).
+  const stab = (freqs: number[], st: number, dur: number, vol: number) => {
+    freqs.forEach((f) => {
+      const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f
+      const o2 = ctx.createOscillator(); o2.type = 'triangle'; o2.frequency.value = f
+      const g = ctx.createGain()
+      g.gain.setValueAtTime(0.0001, st)
+      g.gain.exponentialRampToValueAtTime(vol, st + 0.025)
+      g.gain.exponentialRampToValueAtTime(0.0001, st + dur)
+      o.connect(g); o2.connect(g); g.connect(fest)
+      o.start(st); o.stop(st + dur + 0.05); o2.start(st); o2.stop(st + dur + 0.05)
+    })
+  }
+  const C = 523.25, E = 659.25, G = 783.99, C2 = 1046.5, G2 = 1568.0
+  stab([C, E, G], fin, 0.2, 0.22)                    // ¡ta!
+  stab([E, G, C2], fin + 0.17, 0.2, 0.24)            // ¡ta!
+  stab([C, E, G, C2, G2], fin + 0.36, 2.0, 0.3)      // ¡TAAA! acorde grande sostenido
+
+  // Platillo (crash) más fuerte y largo.
   const crash = makeNoise(ctx, false)
-  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5000
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 4500
   const cg = ctx.createGain()
-  cg.gain.setValueAtTime(0.35, fin); cg.gain.exponentialRampToValueAtTime(0.0001, fin + 1.3)
-  crash.connect(hp); hp.connect(cg); cg.connect(master); crash.start(fin); crash.stop(fin + 1.4)
+  cg.gain.setValueAtTime(0.6, fin); cg.gain.exponentialRampToValueAtTime(0.0001, fin + 1.9)
+  crash.connect(hp); hp.connect(cg); cg.connect(fest); crash.start(fin); crash.stop(fin + 2)
+
+  // Campanitas brillantes de celebración.
+  const bells = [1046.5, 1318.5, 1568.0, 2093.0]
+  bells.forEach((f, i) => {
+    const st = fin + 0.36 + i * 0.09
+    const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.0001, st)
+    g.gain.exponentialRampToValueAtTime(0.16, st + 0.02)
+    g.gain.exponentialRampToValueAtTime(0.0001, st + 0.9)
+    o.connect(g); g.connect(fest); o.start(st); o.stop(st + 1.0)
+  })
 }
 
 const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas(
@@ -517,7 +617,7 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
   useEffect(() => {
     const img = new Image()
     img.onload = () => { logoRef.current = img; if (!spinningRef.current) draw(rotRef.current, null, 0) }
-    img.src = '/dkv-logo.png'
+    img.src = '/dkv-logo-agente.png'
   }, [])
 
   // Dibujo estático inicial y cuando cambian los participantes (si no gira).
@@ -536,6 +636,10 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     if (canvas.width !== VW) { canvas.width = VW; canvas.height = VH }
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     const alpha = Math.min(1, reveal * 4)
+    // Al revelar al ganador, la rueda (y su cabecera) se desvanecen para dejar
+    // solo la pantalla del ganador con confeti.
+    const wheelAlpha = 1 - Math.min(1, reveal * 2.4)
+    const wheelVisible = wheelAlpha > 0.01
 
     // Fondo vertical de marca.
     const bg = ctx.createLinearGradient(0, 0, 0, VH)
@@ -557,9 +661,9 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     // Cabecera: logo + título.
     const img = logoRef.current
     if (img && img.complete && img.naturalWidth) {
-      const bw = 250, bh = 92, bx = (VW - bw) / 2, by = 66
-      ctx.fillStyle = '#fff'; roundRect(ctx, bx, by, bw, bh, 20); ctx.fill()
-      const pad = 20, iw = bw - pad * 2, ih = bh - pad * 2
+      const bw = 300, bh = 104, bx = (VW - bw) / 2, by = 60
+      ctx.fillStyle = '#fff'; roundRect(ctx, bx, by, bw, bh, 22); ctx.fill()
+      const pad = 18, iw = bw - pad * 2, ih = bh - pad * 2
       const ratio = Math.min(iw / img.naturalWidth, ih / img.naturalHeight)
       const dw = img.naturalWidth * ratio, dh = img.naturalHeight * ratio
       ctx.drawImage(img, bx + (bw - dw) / 2, by + (bh - dh) / 2, dw, dh)
@@ -575,15 +679,15 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     ctx.beginPath(); ctx.moveTo(VW / 2 - 190, 392); ctx.lineTo(VW / 2 - 30, 392); ctx.stroke()
     ctx.beginPath(); ctx.moveTo(VW / 2 + 30, 392); ctx.lineTo(VW / 2 + 190, 392); ctx.stroke()
     ctx.save(); ctx.translate(VW / 2, 392); ctx.rotate(Math.PI / 4); ctx.fillStyle = '#f5c451'; ctx.fillRect(-9, -9, 18, 18); ctx.restore()
-    if (reveal <= 0) {
-      ctx.fillStyle = 'rgba(255,255,255,0.72)'; ctx.font = `600 38px ${SANS}`
-      const nn = partsRef.current.length
-      ctx.fillText(`Entre ${nn} participante${nn === 1 ? '' : 's'}`, VW / 2, 452)
-    }
 
     const parts = partsRef.current
     const n = Math.max(parts.length, 1)
     const seg = 360 / n
+
+    // La rueda entera se dibuja con opacidad `wheelAlpha`: se desvanece al revelar
+    // al ganador, dejando solo la pantalla del ganador con confeti.
+    if (wheelVisible) {
+    ctx.save(); ctx.globalAlpha = wheelAlpha
 
     // Sombra proyectada bajo la rueda (le da volumen).
     ctx.save()
@@ -631,17 +735,32 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
       ctx.fill()
       if (n <= 40 && parts.length > 1) { ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.stroke() }
     }
-    if (parts.length > 1 && parts.length <= 20) {
-      ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
-      ctx.font = `800 ${seg < 24 ? 30 : 40}px ${SANS}`
+    // Nombres de los participantes: radiales dentro de cada porción, ajustando el
+    // tamaño de letra al nº de participantes y volteando los de la mitad izquierda.
+    if (parts.length > 1) {
+      const segRad = (seg * Math.PI) / 180
+      const fs = Math.max(12, Math.min(46, segRad * WR * 0.6))
+      const radialLen = WR - 22 - HUB - 12
+      const maxChars = Math.max(4, Math.min(24, Math.floor(radialLen / (fs * 0.56))))
+      ctx.font = `800 ${fs}px ${SANS}`
+      ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'
       for (let i = 0; i < parts.length; i++) {
-        const c = (i + 0.5) * seg
-        const x = WR * 0.62 * Math.cos(rad(c)), y = WR * 0.62 * Math.sin(rad(c))
-        const primer = (parts[i].nombre || '').trim().split(/\s+/)[0] || '—'
-        const txt = primer.length > 11 ? primer.slice(0, 10) + '…' : primer
-        ctx.save(); ctx.translate(x, y); ctx.rotate((c * Math.PI) / 180)
-        ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.38)'; ctx.strokeText(txt, 0, 0)
-        ctx.fillText(txt, 0, 0); ctx.restore()
+        const midDeg = (i + 0.5) * seg
+        const nombre = (parts[i].nombre || '—').trim()
+        const txt = nombre.length > maxChars ? nombre.slice(0, maxChars - 1).trimEnd() + '…' : nombre
+        const screen = (((rotDeg + midDeg) % 360) + 360) % 360
+        const flip = screen > 180
+        ctx.save()
+        ctx.rotate(rad(midDeg))
+        ctx.lineWidth = Math.max(3, fs * 0.16); ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.fillStyle = '#fff'
+        if (flip) {
+          ctx.rotate(Math.PI); ctx.textAlign = 'left'
+          ctx.strokeText(txt, -(WR - 22), 0); ctx.fillText(txt, -(WR - 22), 0)
+        } else {
+          ctx.textAlign = 'right'
+          ctx.strokeText(txt, WR - 22, 0); ctx.fillText(txt, WR - 22, 0)
+        }
+        ctx.restore()
       }
     }
     ctx.restore()
@@ -686,40 +805,49 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     kg.addColorStop(0, '#ffffff'); kg.addColorStop(1, '#e0b840')
     ctx.beginPath(); ctx.arc(WCX, WCY - WR - 30, 27, 0, Math.PI * 2); ctx.fillStyle = kg; ctx.fill()
     ctx.lineWidth = 3; ctx.strokeStyle = '#b8860b'; ctx.stroke()
+    ctx.restore() // fin del bloque de la rueda (wheelAlpha)
+    }
 
     // Marca de agua.
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
     ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = `700 30px ${SANS}`
     ctx.fillText('DKV Seguros · Sorteo oficial', VW / 2, VH - 70)
 
-    // Cartel del ganador + confeti.
+    // Pantalla del ganador (centrada) + confeti.
     if (ganador && reveal > 0) {
-      const bx = 70, by = 1500, bw = VW - 140, bh = 280
+      const bw = VW - 120, bh = 380, bx = 60, by = 700
       ctx.save(); ctx.globalAlpha = alpha
-      ctx.shadowColor = 'rgba(245,196,81,0.6)'; ctx.shadowBlur = 40
+      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+
+      // Trofeo grande sobre la tarjeta.
+      ctx.font = '150px serif'; ctx.fillText('🏆', VW / 2, by - 36)
+
+      // Tarjeta.
+      ctx.shadowColor = 'rgba(245,196,81,0.6)'; ctx.shadowBlur = 50
       const grad = ctx.createLinearGradient(bx, by, bx + bw, by + bh)
       grad.addColorStop(0, '#0F7A63'); grad.addColorStop(1, '#0a2f27')
-      roundRect(ctx, bx, by, bw, bh, 34); ctx.fillStyle = grad; ctx.fill()
+      roundRect(ctx, bx, by, bw, bh, 40); ctx.fillStyle = grad; ctx.fill()
       ctx.shadowBlur = 0
-      roundRect(ctx, bx, by, bw, bh, 34); ctx.lineWidth = 4; ctx.strokeStyle = '#f5c451'; ctx.stroke()
+      roundRect(ctx, bx, by, bw, bh, 40); ctx.lineWidth = 5; ctx.strokeStyle = '#f5c451'; ctx.stroke()
 
-      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
-      ctx.font = '64px serif'; ctx.fillText('🏆', VW / 2, by + 82)
-      ctx.fillStyle = '#f5c451'; ctx.font = `800 34px ${SANS}`
-      ctx.fillText('GANADOR DEL SORTEO', VW / 2, by + 138)
+      ctx.fillStyle = '#f5c451'; ctx.font = `800 42px ${SANS}`
+      ctx.fillText('GANADOR DEL SORTEO', VW / 2, by + 118)
 
       // Nombre auto-ajustado al ancho.
-      let fs = 92
-      const maxW = bw - 90
+      let fs = 118
+      const maxW = bw - 100
       ctx.fillStyle = '#fff'
       let nombre = (ganador.nombre || '').trim() || '—'
       ctx.font = `900 ${fs}px ${SANS}`
-      while (ctx.measureText(nombre).width > maxW && fs > 46) { fs -= 4; ctx.font = `900 ${fs}px ${SANS}` }
+      while (ctx.measureText(nombre).width > maxW && fs > 52) { fs -= 4; ctx.font = `900 ${fs}px ${SANS}` }
       if (ctx.measureText(nombre).width > maxW) {
         while (ctx.measureText(nombre + '…').width > maxW && nombre.length > 3) nombre = nombre.slice(0, -1)
         nombre += '…'
       }
-      ctx.fillText(nombre, VW / 2, by + 226)
+      ctx.fillText(nombre, VW / 2, by + 252)
+
+      ctx.fillStyle = 'rgba(255,255,255,0.75)'; ctx.font = `600 36px ${SANS}`
+      ctx.fillText('¡Enhorabuena! 🎉', VW / 2, by + 322)
       ctx.restore()
 
       // Confeti cayendo.
@@ -748,7 +876,7 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
     } catch { return null }
   }
 
-  function spin() {
+  function spin(forcedId?: string) {
     if (spinningRef.current) return
     const parts = partsRef.current
     const n = parts.length
@@ -796,7 +924,9 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
 
     if (ctxA) { try { reproducirSonido(ctxA, audioDest, DUR) } catch { /* sin sonido */ } }
 
-    const idx = randInt(n)
+    // Ganador: al azar, salvo que se fuerce uno concreto (elegido a mano).
+    let idx = randInt(n)
+    if (forcedId) { const fi = parts.findIndex((p) => p.id === forcedId); if (fi >= 0) idx = fi }
     const seg = 360 / n
     const centro = (idx + 0.5) * seg
     const targetMod = (360 - (centro % 360) + 360) % 360
