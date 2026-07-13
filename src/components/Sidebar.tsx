@@ -5,13 +5,15 @@ import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { puedeVer } from '@/lib/secciones'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift
 } from 'lucide-react'
+import { IgIcon } from '@/components/IgIcon'
 
 const navItems = [
   { href: '/panel/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/panel/prioridad', label: 'Prioridad', icon: Zap },
   { href: '/panel/leads', label: 'Leads', icon: Users },
+  { href: '/panel/instagram', label: 'Instagram', icon: IgIcon },
   { href: '/panel/kanban', label: 'Kanban', icon: Layers },
   { href: '/panel/agenda', label: 'Agenda', icon: CalendarCheck },
   { href: '/panel/actividad', label: 'Actividad', icon: Activity },
@@ -19,6 +21,9 @@ const navItems = [
   { href: '/panel/conversion', label: 'Conversión', icon: TrendingUp },
   { href: '/panel/geolocalizacion', label: 'Geolocalización', icon: MapPin },
   { href: '/panel/analitica', label: 'Analítica web', icon: Flame },
+  { href: '/panel/marketing', label: 'Email Marketing', icon: Mail },
+  { href: '/panel/campanias', label: 'Resultados correos', icon: MailOpen },
+  { href: '/panel/sorteo', label: 'Sorteos', icon: Gift },
 ]
 
 const configItems = [
@@ -35,12 +40,14 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
   const router = useRouter()
   const [pendientes, setPendientes] = useState(0)
   const [permisos, setPermisos] = useState<string[] | null>(null) // null = acceso total (admin / sin restricción)
+  const [perfil, setPerfil] = useState<{ nombre: string; rol: string } | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       const uid = data.user?.id
       if (!uid) return
-      const { data: row } = await supabase.from('asesores').select('rol, permisos').eq('id', uid).single()
+      const { data: row } = await supabase.from('asesores').select('rol, permisos, nombre').eq('id', uid).single()
+      if (row) setPerfil({ nombre: (row.nombre as string) || '', rol: (row.rol as string) || 'asesor' })
       if (row && row.rol !== 'admin' && Array.isArray(row.permisos)) setPermisos(row.permisos as string[])
       else setPermisos(null)
     })
@@ -66,6 +73,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
   }
 
   const initial = userEmail?.[0]?.toUpperCase() ?? 'A'
+  const nombreAsesor = (userEmail?.split('@')[0] || 'Asesor').replace(/[._-]+/g, ' ')
 
   const navLink = (href: string, label: string, Icon: React.ElementType, badge?: number) => {
     const active = pathname.startsWith(href)
@@ -96,18 +104,11 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
     }}>
       {/* Logo */}
       <div style={{ padding: '28px 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <rect x="7.5" y="1" width="3" height="16" rx="1.5" fill="white"/>
-              <rect x="1" y="7.5" width="16" height="3" rx="1.5" fill="white"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontWeight: 900, fontSize: 17, color: '#fff', lineHeight: 1, letterSpacing: '-0.01em' }}>DKV</div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500, marginTop: 2, letterSpacing: '0.04em' }}>PANEL DE ASESORES</div>
-          </div>
+        <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 12, padding: '9px 13px', boxShadow: '0 5px 16px -4px rgba(0,0,0,0.4)' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/dkv-logo.png" alt="DKV Seguros" style={{ height: 23, width: 'auto', display: 'block' }} />
         </div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.42)', fontWeight: 600, marginTop: 12, letterSpacing: '0.1em' }}>PANEL DE ASESORES</div>
       </div>
 
       {/* Cmd+K search button */}
@@ -153,18 +154,16 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
       </nav>
 
       {/* User */}
-      <div style={{ padding: '16px 12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'rgba(255,255,255,0.05)' }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: '#fff', flexShrink: 0 }}>{initial}</div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userEmail}</div>
-            <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', marginTop: 1 }}>Asesor DKV</div>
-          </div>
-          <button onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión"
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', padding: 2, display: 'flex' }}>
-            <LogOut size={14} />
-          </button>
+      <div style={{ padding: '12px 14px 16px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14.5, color: '#fff', flexShrink: 0, boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.16)' }}>{initial}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13.5, color: '#eef3f0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{perfil?.nombre?.trim() || nombreAsesor}</div>
+          <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', fontWeight: 500, marginTop: 1 }}>{perfil?.rol === 'admin' ? 'Administrador' : 'Asesor DKV'}</div>
         </div>
+        <button onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.38)', width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <LogOut size={16} />
+        </button>
       </div>
     </aside>
   )

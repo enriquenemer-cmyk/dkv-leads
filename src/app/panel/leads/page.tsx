@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { exportCSV } from '@/lib/export'
 import { limpiarInteres } from '@/lib/interes'
 import { geoDeLead } from '@/lib/provincia'
+import { FuenteBadge } from '@/components/FuenteBadge'
 import { Search, Plus, Download, ChevronRight, Phone, Mail, Filter, X } from 'lucide-react'
 
 const TAGS_FILTRO = [
@@ -206,8 +207,12 @@ function LeadsContent() {
             <select value={filtroFuente} onChange={e => setFiltroFuente(e.target.value)}
               style={{ padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e2e8e4', background: '#f8fbf9', color: '#16201d', fontSize: 13.5, outline: 'none', fontFamily: 'inherit', cursor: 'pointer' }}>
               <option value="todos">Todos</option>
-              <option value="formulario">Formulario (landing)</option>
-              <option value="manual">Alta manual</option>
+              <option value="instagram">📷 Instagram</option>
+              <option value="formulario">🌐 Formulario web (antiguo)</option>
+              <option value="web-dkv">🌐 Formulario web (DKV)</option>
+              <option value="meta">📘 Facebook</option>
+              <option value="chatbot">💬 Chatbot</option>
+              <option value="manual">✏️ Alta manual</option>
             </select>
           </div>
           <div>
@@ -302,7 +307,10 @@ function LeadsContent() {
                     <Mail size={10} style={{ flexShrink: 0 }} />{l.email}
                   </div>}
                   {geoDeLead(l).provincia && <div style={{ fontSize: 11.5, color: '#9aaba5', marginTop: 1 }}>📍 {geoDeLead(l).provincia}</div>}
-                  <div style={{ fontSize: 11.5, color: '#9aaba5', marginTop: 1, display: 'flex', alignItems: 'center', gap: 3 }}>🕒 {formatoEntrada(l.created_at)}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
+                    <FuenteBadge fuente={l.fuente} />
+                    <span style={{ fontSize: 11.5, color: '#9aaba5', display: 'flex', alignItems: 'center', gap: 3 }}>🕒 {formatoEntrada(l.created_at)}</span>
+                  </div>
                 </div>
               </div>
 

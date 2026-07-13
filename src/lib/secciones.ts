@@ -5,6 +5,7 @@ export const SECCIONES = [
   { href: '/panel/dashboard', label: 'Dashboard' },
   { href: '/panel/prioridad', label: 'Prioridad' },
   { href: '/panel/leads', label: 'Leads' },
+  { href: '/panel/instagram', label: 'Leads de Instagram' },
   { href: '/panel/kanban', label: 'Kanban' },
   { href: '/panel/agenda', label: 'Agenda' },
   { href: '/panel/actividad', label: 'Actividad' },
@@ -12,6 +13,9 @@ export const SECCIONES = [
   { href: '/panel/conversion', label: 'Conversión' },
   { href: '/panel/geolocalizacion', label: 'Geolocalización' },
   { href: '/panel/analitica', label: 'Analítica web' },
+  { href: '/panel/marketing', label: 'Email Marketing' },
+  { href: '/panel/campanias', label: 'Resultados de correos' },
+  { href: '/panel/sorteo', label: 'Sorteos' },
   { href: '/panel/usuarios', label: 'Asesores (gestión)' },
 ] as const
 

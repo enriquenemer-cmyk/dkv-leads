@@ -4,6 +4,7 @@ import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check, ShieldCheck, Lo
 import { supabase } from '@/lib/supabase'
 import { Loader } from '@/components/Loader'
 import { EmptyState } from '@/components/EmptyState'
+import { PageHero } from '@/components/PageHero'
 import { SECCIONES } from '@/lib/secciones'
 
 type User = { id: string; email: string; nombre: string; created_at: string; last_sign_in_at: string | null; rol?: string }
@@ -63,22 +64,18 @@ export default function UsuariosPage() {
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Asesores</h1>
-          <p style={{ fontSize: 14, color: '#9aaba5', margin: 0 }}>Gestiona los usuarios con acceso al panel</p>
-        </div>
-        {soyAdmin ? (
+      <PageHero title="Asesores" subtitle="Gestiona los usuarios con acceso al panel" right={
+        soyAdmin ? (
           <button onClick={() => { setShowModal(true); setError('') }}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 13, background: '#0F7A63', color: '#fff', border: 'none', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '11px 20px', borderRadius: 13, background: '#fff', color: '#0a5b49', border: 'none', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 8px 20px -6px rgba(0,0,0,0.3)' }}>
             <UserPlus size={15} /> Nuevo asesor
           </button>
         ) : (
-          <div title="Solo un administrador puede crear asesores" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 13, background: '#f0f4f1', color: '#9aaba5', fontSize: 13, fontWeight: 600 }}>
+          <div title="Solo un administrador puede crear asesores" style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 13, background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 600, border: '1px solid rgba(255,255,255,0.2)' }}>
             <Lock size={14} /> Solo administradores
           </div>
-        )}
-      </div>
+        )
+      } />
 
       {success && (
         <div style={{ marginBottom: 20, padding: '13px 16px', borderRadius: 13, background: '#e3f1ec', border: '1px solid #b6ddd0', color: '#0F7A63', fontSize: 13.5, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>

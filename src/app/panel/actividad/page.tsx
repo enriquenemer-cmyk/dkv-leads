@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { Activity, UserPlus, Tag, MessageSquare, Bell, BellOff, Edit3, LogIn, ExternalLink } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { Loader } from '@/components/Loader'
+import { PageHero } from '@/components/PageHero'
 
 type Actividad = {
   id: string
@@ -82,10 +83,7 @@ export default function ActividadPage() {
   return (
     <div style={{ padding: '32px 36px', maxWidth: 860, margin: '0 auto' }}>
       {/* Header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Actividad</h1>
-        <p style={{ fontSize: 14, color: '#9aaba5', margin: 0 }}>Historial completo de acciones en la plataforma en tiempo real</p>
-      </div>
+      <PageHero title="Actividad" subtitle="Historial completo de acciones en la plataforma en tiempo real" />
 
       {/* Filtros */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 20, flexWrap: 'wrap' }}>

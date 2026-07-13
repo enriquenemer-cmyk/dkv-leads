@@ -11,9 +11,31 @@ type Props = {
   onClose: () => void
   onSaved: () => void
   lead?: Lead | null
+  /** Origen del lead al crearlo manualmente (por defecto 'manual'). Ej: 'instagram'. */
+  fuenteInicial?: string
+  /** Título del modal al crear (por defecto 'Nuevo lead manual'). */
+  titulo?: string
 }
 
-export function LeadModal({ onClose, onSaved, lead }: Props) {
+// Convierte una fecha ISO en el valor de un input datetime-local (hora local).
+function isoALocal(iso?: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+const ORIGENES = [
+  { v: 'formulario', l: 'Formulario web' },
+  { v: 'web-dkv', l: 'Formulario web (DKV)' },
+  { v: 'instagram', l: 'Instagram' },
+  { v: 'meta', l: 'Facebook' },
+  { v: 'chatbot', l: 'Chatbot' },
+  { v: 'manual', l: 'Alta manual' },
+]
+
+export function LeadModal({ onClose, onSaved, lead, fuenteInicial, titulo }: Props) {
   const editing = !!lead
   const [form, setForm] = useState({
     nombre: lead?.nombre ?? '',
@@ -22,6 +44,8 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
     interes: lead?.interes ?? '',
     sucursal: (lead ? leadSucursal(lead) : '') ?? '',
     tag: lead?.tag ?? 'frio',
+    origen: lead ? (fuenteOrigen(lead.fuente) || 'manual') : (fuenteInicial || 'manual'),
+    fechaHora: isoALocal(lead?.created_at),
   })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -69,14 +93,20 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
         if (otro) { setSaving(false); setDup(otro as { id: string; nombre: string }); return }
       }
     }
-    const origen = editing && lead ? (fuenteOrigen(lead.fuente) || 'manual') : 'manual'
-    const data = {
+    // El origen es editable (por defecto conserva el actual / el de creación).
+    const origen = form.origen || (editing && lead ? (fuenteOrigen(lead.fuente) || 'manual') : (fuenteInicial || 'manual'))
+    const data: Record<string, unknown> = {
       nombre: form.nombre.trim(),
       telefono: form.telefono.trim() || null,
       email: form.email.trim() || null,
-      interes: form.interes || null,
+      interes: form.interes.trim() || null,
       tag: form.tag,
       fuente: encodeFuente(origen, form.sucursal),
+    }
+    // Al editar, permitimos cambiar la fecha y hora de registro.
+    if (editing && form.fechaHora) {
+      const d = new Date(form.fechaHora)
+      if (!isNaN(d.getTime())) data.created_at = d.toISOString()
     }
     if (editing && lead) {
       const { error: dbErr } = await supabase.from('leads').update(data).eq('id', lead.id)
@@ -85,7 +115,8 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
     } else {
       const { data: newLead, error: dbErr } = await supabase.from('leads').insert(data).select('id').single()
       if (dbErr) { setSaving(false); setError('No se pudo crear el lead. Revisa tu conexión e inténtalo de nuevo.'); return }
-      await logActividad('lead_nuevo', `Nuevo lead manual: ${form.nombre.trim()}`, { lead_id: newLead?.id, lead_nombre: form.nombre.trim() })
+      const etiquetaOrigen = origen === 'instagram' ? 'de Instagram' : 'manual'
+      await logActividad('lead_nuevo', `Nuevo lead ${etiquetaOrigen}: ${form.nombre.trim()}`, { lead_id: newLead?.id, lead_nombre: form.nombre.trim() })
     }
     setSaving(false)
     onSaved()
@@ -95,7 +126,7 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(10,47,39,0.45)' }}>
       <div className="bg-white rounded-[20px] w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between px-7 pt-6 pb-4 border-b border-[#e6eae8]">
-          <h2 className="font-bold text-[#16201d] text-lg">{editing ? 'Editar lead' : 'Nuevo lead manual'}</h2>
+          <h2 className="font-bold text-[#16201d] text-lg">{editing ? 'Editar lead' : (titulo || 'Nuevo lead manual')}</h2>
           <button onClick={onClose} className="text-[#6b7a76] hover:text-[#16201d] transition-colors"><X size={20} /></button>
         </div>
 
@@ -161,16 +192,18 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
           </div>
 
           <div>
-            <label className="block text-[12.5px] font-semibold text-[#6b7a76] mb-1.5">Interés</label>
-            <select
+            <label className="block text-[12.5px] font-semibold text-[#6b7a76] mb-1.5">Interés / información</label>
+            <input
               value={form.interes}
               onChange={(e) => set('interes', e.target.value)}
               aria-label="Interés"
+              list="intereses-sugeridos"
               className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
-            >
-              <option value="">Selecciona un interés</option>
-              {INTERESES.map((i) => <option key={i} value={i}>{i}</option>)}
-            </select>
+              placeholder="Ej: Seguro de salud · CP 28001…"
+            />
+            <datalist id="intereses-sugeridos">
+              {INTERESES.map((i) => <option key={i} value={i} />)}
+            </datalist>
           </div>
 
           <div>
@@ -185,6 +218,32 @@ export function LeadModal({ onClose, onSaved, lead }: Props) {
               {SUCURSALES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
+
+          {editing && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[12.5px] font-semibold text-[#6b7a76] mb-1.5">Origen</label>
+                <select
+                  value={form.origen}
+                  onChange={(e) => set('origen', e.target.value)}
+                  aria-label="Origen del lead"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
+                >
+                  {ORIGENES.map((o) => <option key={o.v} value={o.v}>{o.l}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[12.5px] font-semibold text-[#6b7a76] mb-1.5">Fecha y hora de registro</label>
+                <input
+                  type="datetime-local"
+                  value={form.fechaHora}
+                  onChange={(e) => set('fechaHora', e.target.value)}
+                  aria-label="Fecha y hora de registro"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#d9e0dd] bg-[#fbfcfb] text-[14px] text-[#16201d] focus:outline-none focus:ring-2 focus:ring-[#0F7A63]/30 focus:border-[#0F7A63]"
+                />
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-[12.5px] font-semibold text-[#6b7a76] mb-1.5">Estado</label>
