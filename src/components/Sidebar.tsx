@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { puedeVer } from '@/lib/secciones'
 import {
   LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift
@@ -68,6 +69,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
   }, [])
 
   async function handleLogout() {
+    await logActividad('sesion_cierre', `Cerró sesión en el panel`)
     await supabase.auth.signOut()
     router.push('/panel/login')
   }

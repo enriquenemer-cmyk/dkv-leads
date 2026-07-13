@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { ArrowLeft } from 'lucide-react'
 
 const TAGS = [
@@ -28,12 +29,13 @@ export default function AppNuevoLead() {
     if (f.telefono.trim() && !telOk(f.telefono)) { setError('Teléfono no válido (9 dígitos).'); return }
     if (f.email.trim() && !emailOk(f.email)) { setError('Correo no válido.'); return }
     setSaving(true)
-    const { error: dbErr } = await supabase.from('leads').insert({
+    const { data: nuevo, error: dbErr } = await supabase.from('leads').insert({
       nombre: f.nombre.trim(), telefono: f.telefono.trim() || null, email: f.email.trim() || null,
       interes: f.interes.trim() || null, tag: f.tag, fuente: 'manual',
-    })
+    }).select('id').single()
     setSaving(false)
     if (dbErr) { setError('No se pudo guardar. Revisa tu conexión.'); return }
+    await logActividad('lead_nuevo', `Nuevo lead manual: ${f.nombre.trim()} (móvil)`, { lead_id: nuevo?.id, lead_nombre: f.nombre.trim() })
     router.push('/app/leads')
   }
 

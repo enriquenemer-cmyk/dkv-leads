@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { Flame, Users, LogOut, Eye, EyeOff } from 'lucide-react'
 
 const GREEN = '#0F7A63'
@@ -46,9 +47,11 @@ export function MobileShell({ children }: { children: React.ReactNode }) {
     const { error: err } = await supabase.auth.signInWithPassword({ email: correo.trim(), password: pass })
     setLoading(false)
     if (err) { setError('Credenciales incorrectas.'); return }
+    await logActividad('sesion_inicio', `Inició sesión en la app móvil`)
   }
 
   async function logout() {
+    await logActividad('sesion_cierre', `Cerró sesión en la app móvil`)
     await supabase.auth.signOut()
     router.replace('/app')
   }

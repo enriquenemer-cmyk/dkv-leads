@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase, Lead } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { limpiarInteres } from '@/lib/interes'
 import { ArrowLeft, Phone, MessageCircle, Mail, Plus } from 'lucide-react'
 
@@ -29,6 +30,7 @@ export default function AppLeadDetail() {
     if (!lead) return
     setLead({ ...lead, tag: tag as Lead['tag'] })
     await supabase.from('leads').update({ tag }).eq('id', lead.id)
+    await logActividad('lead_tag', `Etiqueta cambiada a "${tag}" en ${lead.nombre} (móvil)`, { lead_id: lead.id, lead_nombre: lead.nombre })
   }
 
   async function addNota() {
@@ -37,7 +39,10 @@ export default function AppLeadDetail() {
     const notas = [...(lead.notas ?? []), { text: nota.trim(), when: new Date().toISOString() }]
     const { error } = await supabase.from('leads').update({ notas }).eq('id', lead.id)
     setSaving(false)
-    if (!error) { setNota(''); setLead({ ...lead, notas }) }
+    if (!error) {
+      await logActividad('nota_agregada', `Nota añadida a ${lead.nombre} (móvil): "${nota.trim().slice(0, 60)}"`, { lead_id: lead.id, lead_nombre: lead.nombre })
+      setNota(''); setLead({ ...lead, notas })
+    }
   }
 
   if (!lead) return <div style={{ padding: 40, textAlign: 'center', color: '#9aaba5' }}>Cargando…</div>

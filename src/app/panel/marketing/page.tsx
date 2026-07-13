@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase, Lead, fuenteOrigen } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { Avatar } from '@/components/Avatar'
 import { Mail, Send, Users, Eye, Loader2, CheckCircle2, AlertTriangle, Image as ImageIcon, X, Search, MousePointerClick } from 'lucide-react'
 
@@ -149,7 +150,10 @@ export default function MarketingPage() {
       const json = await res.json()
       if (!res.ok) { setResultado({ ok: false, texto: json.error || 'No se pudo enviar.' }); setEnviando(false); return }
       if (test) setResultado({ ok: true, texto: `Correo de prueba enviado a ${json.para}. Revisa tu bandeja.` })
-      else setResultado({ ok: true, texto: `Campaña enviada: ${json.enviados} enviados${json.fallidos ? `, ${json.fallidos} fallidos` : ''} de ${json.total}.` })
+      else {
+        setResultado({ ok: true, texto: `Campaña enviada: ${json.enviados} enviados${json.fallidos ? `, ${json.fallidos} fallidos` : ''} de ${json.total}.` })
+        await logActividad('campania_enviada', `Campaña enviada "${asunto || titulo || 'sin asunto'}": ${json.enviados} destinatarios`)
+      }
     } catch {
       setResultado({ ok: false, texto: 'Error de conexión. Inténtalo de nuevo.' })
     }

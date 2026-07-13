@@ -3,14 +3,19 @@ import { supabase } from './supabase'
 export type TipoActividad =
   | 'lead_nuevo'
   | 'lead_editado'
+  | 'lead_borrado'
   | 'lead_tag'
   | 'nota_agregada'
   | 'recordatorio_set'
   | 'recordatorio_borrado'
   | 'usuario_creado'
   | 'sesion_inicio'
+  | 'sesion_cierre'
+  | 'export_csv'
   | 'wallet_enviada'
   | 'wallet_actualizada'
+  | 'sorteo_realizado'
+  | 'campania_enviada'
 
 export async function logActividad(
   tipo: TipoActividad,

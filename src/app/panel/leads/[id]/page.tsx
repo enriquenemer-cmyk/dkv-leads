@@ -95,6 +95,7 @@ export default function LeadDetallePage() {
     if (!confirm(`¿Eliminar a ${lead.nombre}? Esta acción no se puede deshacer.`)) return
     const { error } = await supabase.from('leads').delete().eq('id', id)
     if (error) { alert('No se pudo eliminar el lead. Inténtalo de nuevo.'); return }
+    await logActividad('lead_borrado', `Lead eliminado: ${lead.nombre}`, { lead_nombre: lead.nombre })
     router.push('/panel/leads')
   }
 

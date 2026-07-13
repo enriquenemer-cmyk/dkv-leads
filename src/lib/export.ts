@@ -1,4 +1,5 @@
 import { type Lead, leadSucursal, fuenteOrigen } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 
 /** Exporta una lista de leads a un archivo CSV (compatible con Excel, con BOM). */
 export function exportCSV(leads: Lead[], filename = 'leads-dkv.csv') {
@@ -15,4 +16,5 @@ export function exportCSV(leads: Lead[], filename = 'leads-dkv.csv') {
   a.download = filename
   a.click()
   URL.revokeObjectURL(a.href)
+  logActividad('export_csv', `Exportó ${leads.length} leads a CSV`)
 }

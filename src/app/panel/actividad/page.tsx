@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Activity, UserPlus, Tag, MessageSquare, Bell, BellOff, Edit3, LogIn, ExternalLink } from 'lucide-react'
+import { Activity, UserPlus, Tag, MessageSquare, Bell, BellOff, Edit3, LogIn, LogOut, ExternalLink, Gift, Trash2, Download, Wallet, Send } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { Loader } from '@/components/Loader'
 import { PageHero } from '@/components/PageHero'
@@ -20,22 +20,34 @@ type Actividad = {
 const TIPO_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string; label: string }> = {
   lead_nuevo:          { icon: UserPlus,      color: '#0F7A63', bg: '#e3f1ec', label: 'Nuevo lead' },
   lead_editado:        { icon: Edit3,         color: '#2b6fb0', bg: '#e6f0fa', label: 'Lead editado' },
+  lead_borrado:        { icon: Trash2,        color: '#c23a22', bg: '#fef0ed', label: 'Lead borrado' },
   lead_tag:            { icon: Tag,           color: '#a8741a', bg: '#f8efd9', label: 'Etiqueta' },
   nota_agregada:       { icon: MessageSquare, color: '#6b4ab0', bg: '#f0eafa', label: 'Nota' },
   recordatorio_set:    { icon: Bell,          color: '#a8741a', bg: '#f8efd9', label: 'Recordatorio' },
   recordatorio_borrado:{ icon: BellOff,       color: '#9aaba5', bg: '#f0f4f1', label: 'Rec. borrado' },
   usuario_creado:      { icon: UserPlus,      color: '#0F7A63', bg: '#e3f1ec', label: 'Usuario creado' },
   sesion_inicio:       { icon: LogIn,         color: '#48574f', bg: '#f0f4f1', label: 'Inicio sesión' },
+  sesion_cierre:       { icon: LogOut,        color: '#9aaba5', bg: '#f0f4f1', label: 'Cierre sesión' },
+  export_csv:          { icon: Download,      color: '#2b6fb0', bg: '#e6f0fa', label: 'Exportación' },
+  wallet_enviada:      { icon: Wallet,        color: '#a8741a', bg: '#f8efd9', label: 'Wallet' },
+  wallet_actualizada:  { icon: Wallet,        color: '#a8741a', bg: '#f8efd9', label: 'Wallet' },
+  sorteo_realizado:    { icon: Gift,          color: '#a8741a', bg: '#f8efd9', label: 'Sorteo' },
+  campania_enviada:    { icon: Send,          color: '#2b6fb0', bg: '#e6f0fa', label: 'Campaña email' },
 }
 
-const FILTROS = ['Todos', 'Leads', 'Etiquetas', 'Notas', 'Recordatorios', 'Usuarios']
+const FILTROS = ['Todos', 'Leads', 'Etiquetas', 'Notas', 'Recordatorios', 'Wallet', 'Sorteos', 'Campañas', 'Exportaciones', 'Usuarios', 'Sesiones']
 const FILTRO_TIPOS: Record<string, string[]> = {
   'Todos': [],
-  'Leads': ['lead_nuevo', 'lead_editado'],
+  'Leads': ['lead_nuevo', 'lead_editado', 'lead_borrado'],
   'Etiquetas': ['lead_tag'],
   'Notas': ['nota_agregada'],
   'Recordatorios': ['recordatorio_set', 'recordatorio_borrado'],
-  'Usuarios': ['usuario_creado', 'sesion_inicio'],
+  'Wallet': ['wallet_enviada', 'wallet_actualizada'],
+  'Sorteos': ['sorteo_realizado'],
+  'Campañas': ['campania_enviada'],
+  'Exportaciones': ['export_csv'],
+  'Usuarios': ['usuario_creado'],
+  'Sesiones': ['sesion_inicio', 'sesion_cierre'],
 }
 
 function timeAgo(dateStr: string) {

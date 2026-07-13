@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { UserPlus, Mail, Calendar, Clock, X, Eye, EyeOff, Check, ShieldCheck, Lock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { Loader } from '@/components/Loader'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHero } from '@/components/PageHero'
@@ -55,6 +56,7 @@ export default function UsuariosPage() {
     const json = await res.json()
     setSaving(false)
     if (json.error) { setError(json.error); return }
+    await logActividad('usuario_creado', `Alta de asesor: ${form.nombre || form.email}`)
     setSuccess(`Usuario ${form.email} creado correctamente.`)
     setForm({ email: '', password: '', nombre: '' })
     setShowModal(false)

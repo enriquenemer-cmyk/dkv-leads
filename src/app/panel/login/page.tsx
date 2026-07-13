@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { logActividad } from '@/lib/actividad'
 import { Eye, EyeOff, ArrowLeft, Check, Star } from 'lucide-react'
 
 const CROSS = (
@@ -23,6 +24,7 @@ export default function LoginPage() {
     const { error: authErr } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (authErr) { setError('Credenciales incorrectas. Verifica tu correo y contraseña.'); return }
+    await logActividad('sesion_inicio', `Inició sesión en el panel`)
     window.location.href = '/panel/dashboard'
   }
 
