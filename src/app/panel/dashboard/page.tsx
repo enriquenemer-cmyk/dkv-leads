@@ -8,7 +8,7 @@ import { Avatar } from '@/components/Avatar'
 import { LeadModal } from '@/components/LeadModal'
 import { exportCSV } from '@/lib/export'
 import { CountUp, Donut } from '@/components/charts'
-import { Users, Flame, Trophy, TrendingUp, Bell, Plus, Download, ArrowUpRight, Clock, PieChart } from 'lucide-react'
+import { Users, Flame, Trophy, TrendingUp, Bell, Plus, Download, ArrowUpRight, Clock, PieChart, ChevronDown } from 'lucide-react'
 
 const card = { background: '#fff', borderRadius: 18, border: '1px solid #edf1ef', padding: '24px', boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)' }
 
@@ -33,6 +33,8 @@ export default function DashboardPage() {
   const [allLeads, setAllLeads] = useState<Lead[]>([])
   const [showModal, setShowModal] = useState(false)
   const [periodo, setPeriodo] = useState<Periodo>('todo')
+  const [detalle, setDetalle] = useState<{ label: string; sub: string; list: Lead[] } | null>(null)
+  const [interesExpandido, setInteresExpandido] = useState(false)
 
   useEffect(() => {
     fetchLeads()
@@ -101,12 +103,14 @@ export default function DashboardPage() {
   const leadsHoy = ultimos7[6]?.count ?? 0
   const leads7d = ultimos7.reduce((s, d) => s + d.count, 0)
 
+  const leadsDeHoy = allLeads.filter(l => (l.created_at || '').slice(0, 10) === hoy)
+
   const METRICS = [
-    { label: 'Leads hoy', value: leadsHoy, suffix: '', sub: 'Nuevos hoy', icon: Clock, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
-    { label: 'Total leads', value: total, suffix: '', sub: periodo === 'todo' ? 'Todos los captados' : `En este período`, icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0' },
-    { label: 'Leads calientes', value: calientes, suffix: '', sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22' },
-    { label: 'Clientes', value: clientes, suffix: '', sub: 'Conversión exitosa', icon: Trophy, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63' },
-    { label: 'Tasa de conversión', value: conversion, suffix: '%', sub: 'Total → Cliente', icon: TrendingUp, bg: '#f8efd9', ic: '#a8741a', dot: '#a8741a' },
+    { label: 'Leads hoy', value: leadsHoy, suffix: '', sub: 'Nuevos hoy', icon: Clock, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63', list: leadsDeHoy, detalle: 'Leads captados hoy' },
+    { label: 'Total leads', value: total, suffix: '', sub: periodo === 'todo' ? 'Todos los captados' : `En este período`, icon: Users, bg: '#eaf3ff', ic: '#2b6fb0', dot: '#2b6fb0', list: leads, detalle: periodo === 'todo' ? 'Todos los leads captados' : 'Leads captados en este período' },
+    { label: 'Leads calientes', value: calientes, suffix: '', sub: 'Prioridad alta', icon: Flame, bg: '#fef0ed', ic: '#c23a22', dot: '#c23a22', list: leads.filter(l => l.tag === 'caliente'), detalle: 'Leads con prioridad alta' },
+    { label: 'Clientes', value: clientes, suffix: '', sub: 'Conversión exitosa', icon: Trophy, bg: '#e3f1ec', ic: '#0F7A63', dot: '#0F7A63', list: leads.filter(l => l.tag === 'cliente'), detalle: 'Leads convertidos en cliente' },
+    { label: 'Tasa de conversión', value: conversion, suffix: '%', sub: 'Total → Cliente', icon: TrendingUp, bg: '#f8efd9', ic: '#a8741a', dot: '#a8741a', list: leads.filter(l => l.tag === 'cliente'), detalle: `${clientes} de ${total} leads convertidos en cliente` },
   ]
 
   // Distribución por estado (para la gráfica de dona)
@@ -130,6 +134,46 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1120, margin: '0 auto' }}>
       {showModal && <LeadModal onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); fetchLeads() }} />}
+
+      {detalle && (
+        <div onClick={() => setDetalle(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(10,32,29,0.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 100, animation: 'dashUp 0.2s ease' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 520, maxHeight: '80vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 60px -20px rgba(10,32,29,0.5)' }}>
+            <div style={{ padding: '22px 24px', borderBottom: '1px solid #edf1ef', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, color: '#16201d', margin: '0 0 3px' }}>{detalle.label}</h2>
+                <p style={{ fontSize: 13, color: '#9aaba5', margin: 0 }}>{detalle.sub} · <b style={{ color: '#0F7A63' }}>{detalle.list.length}</b></p>
+              </div>
+              <button onClick={() => setDetalle(null)}
+                style={{ width: 34, height: 34, borderRadius: 10, border: 'none', background: '#f0f4f1', color: '#6b7a76', fontSize: 18, cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit', lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ overflowY: 'auto', padding: '10px 14px 16px' }}>
+              {detalle.list.length === 0
+                ? <p style={{ color: '#9aaba5', fontSize: 14, textAlign: 'center', padding: '32px 0', margin: 0 }}>Sin leads en este apartado.</p>
+                : <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {detalle.list.map(l => (
+                      <Link key={l.id} href={`/panel/leads/${l.id}`} onClick={() => setDetalle(null)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px', borderRadius: 12, textDecoration: 'none', transition: 'background 0.12s' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#f8fbf9')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        <Avatar nombre={l.nombre} size={38} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16201d', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.nombre}</div>
+                          <div style={{ fontSize: 12, color: '#9aaba5', marginTop: 1 }}>{limpiarInteres(l.interes) || '—'}</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                          <TagPill tag={l.tag} />
+                          <span style={{ fontSize: 11, color: '#c8d4ce' }}>{new Date(l.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+              }
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Header — hero premium */}
       <div style={{ position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #0a2f27 0%, #0F7A63 105%)', borderRadius: 22, padding: '26px 30px', marginBottom: 24, boxShadow: '0 16px 44px -20px rgba(10,47,39,0.55)' }}>
@@ -190,8 +234,9 @@ export default function DashboardPage() {
 
       {/* Metric cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: 20 }} className="dash-grid">
-        {METRICS.map(({ label, value, suffix, sub, icon: Icon, bg, ic }, i) => (
-          <div key={label} className="dash-card metric-card" style={{ ...card, padding: '22px 22px 20px', animationDelay: `${i * 0.07}s` }}>
+        {METRICS.map(({ label, value, suffix, sub, icon: Icon, bg, ic, list, detalle: det }, i) => (
+          <div key={label} className="dash-card metric-card" onClick={() => setDetalle({ label, sub: det, list })}
+            style={{ ...card, padding: '22px 22px 20px', animationDelay: `${i * 0.07}s`, cursor: 'pointer' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
               <div style={{ width: 40, height: 40, borderRadius: 12, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Icon size={18} style={{ color: ic }} />
@@ -270,18 +315,32 @@ export default function DashboardPage() {
           <h2 style={{ fontSize: 15, fontWeight: 700, color: '#16201d', margin: '0 0 20px' }}>Interés por producto</h2>
           {Object.keys(intereses).length === 0
             ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 100, color: '#9aaba5', fontSize: 14 }}>Sin datos en este período</div>
-            : <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {Object.entries(intereses).sort((a,b) => b[1]-a[1]).map(([interes, count]) => (
-                  <div key={interes}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, color: '#6b7a76', marginBottom: 6 }}>
-                      <span>{interes}</span><span style={{ color: '#16201d' }}>{count}</span>
-                    </div>
-                    <div style={{ height: 8, borderRadius: 99, background: '#f0f4f1' }}>
-                      <div style={{ height: 8, borderRadius: 99, background: '#0F7A63', width: `${Math.round((count/maxI)*100)}%` }} />
-                    </div>
+            : (() => {
+                const ordenados = Object.entries(intereses).sort((a,b) => b[1]-a[1])
+                const visibles = interesExpandido ? ordenados : ordenados.slice(0, 5)
+                const ocultos = ordenados.length - 5
+                return <>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {visibles.map(([interes, count]) => (
+                      <div key={interes}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, fontWeight: 600, color: '#6b7a76', marginBottom: 6 }}>
+                          <span>{interes}</span><span style={{ color: '#16201d' }}>{count}</span>
+                        </div>
+                        <div style={{ height: 8, borderRadius: 99, background: '#f0f4f1' }}>
+                          <div style={{ height: 8, borderRadius: 99, background: '#0F7A63', width: `${Math.round((count/maxI)*100)}%` }} />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                  {ocultos > 0 && (
+                    <button onClick={() => setInteresExpandido(v => !v)}
+                      style={{ marginTop: 16, width: '100%', padding: '9px 12px', borderRadius: 10, border: '1px solid #e4eae7', background: '#f7faf8', color: '#0F7A63', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                      {interesExpandido ? 'Ver menos' : `Ver ${ocultos} más`}
+                      <ChevronDown size={14} style={{ transform: interesExpandido ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                    </button>
+                  )}
+                </>
+              })()
           }
         </div>
       </div>
