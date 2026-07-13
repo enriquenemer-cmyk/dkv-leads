@@ -12,8 +12,8 @@ const card: React.CSSProperties = {
   boxShadow: '0 1px 2px rgba(16,32,29,0.04), 0 10px 30px -20px rgba(16,32,29,0.18)',
 }
 
-// Colores de las porciones de la ruleta (dos verdes que se alternan → segmentos con ritmo).
-const SLICE_COLORS = ['#12a082', '#0a453a']
+// Colores de las porciones: verde esmeralda DKV y dorado, alternos (colores de marca).
+const SLICE_COLORS = ['#0f7a63', '#c1901f']
 // Paleta festiva para el confeti del ganador.
 const CONFETTI_COLORS = ['#f5c451', '#12b48d', '#ffffff', '#0F7A63', '#e0452a', '#fff7da']
 
@@ -629,7 +629,7 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
         ctx.fillStyle = g
       } else { ctx.fillStyle = base }
       ctx.fill()
-      if (n <= 40 && parts.length > 1) { ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(245,196,81,0.55)'; ctx.stroke() }
+      if (n <= 40 && parts.length > 1) { ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.stroke() }
     }
     if (parts.length > 1 && parts.length <= 20) {
       ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
@@ -640,7 +640,7 @@ const RuletaCanvas = forwardRef<RuletaHandle, RuletaProps>(function RuletaCanvas
         const primer = (parts[i].nombre || '').trim().split(/\s+/)[0] || '—'
         const txt = primer.length > 11 ? primer.slice(0, 10) + '…' : primer
         ctx.save(); ctx.translate(x, y); ctx.rotate((c * Math.PI) / 180)
-        ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2
+        ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(0,0,0,0.38)'; ctx.strokeText(txt, 0, 0)
         ctx.fillText(txt, 0, 0); ctx.restore()
       }
     }
