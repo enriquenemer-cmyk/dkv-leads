@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
 import { puedeVer } from '@/lib/secciones'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift, CheckCircle2
 } from 'lucide-react'
 import { IgIcon } from '@/components/IgIcon'
 
@@ -106,11 +106,14 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
     }}>
       {/* Logo */}
       <div style={{ padding: '28px 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 12, padding: '9px 13px', boxShadow: '0 5px 16px -4px rgba(0,0,0,0.4)' }}>
+        <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 12, padding: '10px 14px', boxShadow: '0 5px 16px -4px rgba(0,0,0,0.4)' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/dkv-logo.png" alt="DKV Seguros" style={{ height: 23, width: 'auto', display: 'block' }} />
+          <img src="/dkv-logo-wordmark.png" alt="DKV Seguros" style={{ height: 26, width: 'auto', display: 'block' }} />
         </div>
-        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.42)', fontWeight: 600, marginTop: 12, letterSpacing: '0.1em' }}>PANEL DE ASESORES</div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 13, background: 'rgba(140,198,63,0.12)', border: '1px solid rgba(140,198,63,0.35)', borderRadius: 999, padding: '4px 11px' }}>
+          <CheckCircle2 size={13} color="#8cc63f" />
+          <span style={{ fontSize: 10.5, color: '#a9d96a', fontWeight: 700, letterSpacing: '0.02em' }}>Agente exclusivo DKV</span>
+        </div>
       </div>
 
       {/* Cmd+K search button */}
