@@ -70,3 +70,30 @@ a, button {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Formularios: acabado premium en toda la plataforma ── */
+input, select, textarea {
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+/* Foco con brillo verde de marca (además del outline accesible) */
+input:focus, select:focus, textarea:focus {
+  border-color: #0F7A63 !important;
+  box-shadow: 0 0 0 3.5px rgba(15, 122, 99, 0.13);
+}
+/* Placeholder más suave */
+::placeholder { color: #a7b4ae; opacity: 1; }
+
+/* Desplegables (select): quitamos la flecha nativa y ponemos una limpia */
+select:not([multiple]) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7a76' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px !important;
+}
+
+/* Botones: un toque de vida al pulsar */
+button:not(:disabled):active { transform: translateY(0.5px); }
+

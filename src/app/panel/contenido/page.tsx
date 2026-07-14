@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PageHero } from '@/components/PageHero'
 import { supabase } from '@/lib/supabase'
-import { Download, Image as ImageIcon, Bookmark, Trash2, Plus, Upload, Loader2, AlertTriangle } from 'lucide-react'
+import { Download, Image as ImageIcon, Bookmark, Trash2, Plus, Upload, Loader2, AlertTriangle, CalendarClock, CheckCircle2, Send } from 'lucide-react'
 
 // ============================ Config ============================
 type PlatKey = 'ig-feed' | 'ig-story' | 'facebook' | 'tiktok' | 'linkedin'
@@ -28,11 +28,37 @@ interface Cfg {
   verified: boolean; fit: Fit; bg: string; platform: PlatKey; ratio: string
 }
 
+type Estado = 'borrador' | 'programado' | 'publicado'
+
 interface SavedRow {
   id: string; created_at: string; autor: string | null; platform: PlatKey; ratio: string
   username: string; ubicacion: string; likes: string; caption: string; verified: boolean
   fit: Fit; bg: string; img_url: string; img_path: string | null; thumb: string
+  pub_url: string | null; pub_path: string | null; post_url: string | null
+  estado: Estado; programado_para: string | null; publicado_en: string | null
 }
+
+// Redes con publicación automática vía Meta (Instagram + Facebook). TikTok/LinkedIn son manuales.
+const AUTO_PUB = new Set<PlatKey>(['ig-feed', 'ig-story', 'facebook'])
+
+const ESTADOS: { key: Estado; label: string; color: string; bg: string }[] = [
+  { key: 'borrador', label: 'Borrador', color: '#6b7a76', bg: '#eef2f0' },
+  { key: 'programado', label: 'Programado', color: '#9a6a12', bg: '#fdf3dc' },
+  { key: 'publicado', label: 'Publicado', color: '#0a5b49', bg: '#e2f0ea' },
+]
+const estadoMeta = (e: Estado) => ESTADOS.find((x) => x.key === e) || ESTADOS[0]
+function fmtFecha(iso: string | null): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return d.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+}
+// datetime-local <-> ISO
+const isoToLocalInput = (iso: string | null): string => {
+  if (!iso) return ''
+  const d = new Date(iso); const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
+const localInputToIso = (v: string): string | null => (v ? new Date(v).toISOString() : null)
 
 const FS = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif'
 const stampOf = (platform: string, ratio: string) => `${platform}-${ratio.replace(':', 'x')}`
@@ -235,6 +261,11 @@ export default function ContenidoPage() {
   const [fit, setFit] = useState<Fit>('cover')
   const [bg, setBg] = useState('#ffffff')
 
+  const [pubMode, setPubMode] = useState<'borrador' | 'programado'>('borrador')
+  const [fecha, setFecha] = useState('')
+  const [filtro, setFiltro] = useState<'todos' | Estado>('todos')
+  const [publicando, setPublicando] = useState<string | null>(null)
+
   const [saved, setSaved] = useState<SavedRow[]>([])
   const [saving, setSaving] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
@@ -251,7 +282,6 @@ export default function ContenidoPage() {
   const [w, h] = plat.ratios[ratio]
   const has = active >= 0
   const src = has ? images[active].src : ''
-  const email = username // display convenience
 
   const cfg = useCallback((): Cfg => ({ img: images[active].img, username, ubicacion, likes, caption, verified, fit, bg, platform, ratio }), [images, active, username, ubicacion, likes, caption, verified, fit, bg, platform, ratio])
 
@@ -303,6 +333,7 @@ export default function ContenidoPage() {
   // ---- Save to collection ----
   async function saveCurrent() {
     if (!has || saving) return
+    if (pubMode === 'programado' && !fecha) { showToast('Elige la fecha y hora para programar.'); return }
     setSaving(true)
     try {
       const blob = await (await fetch(images[active].src)).blob()
@@ -310,16 +341,25 @@ export default function ContenidoPage() {
       const up = await supabase.storage.from('contenido-social').upload(path, blob, { contentType: blob.type || 'image/jpeg', upsert: false })
       if (up.error) throw up.error
       const { data: pub } = supabase.storage.from('contenido-social').getPublicUrl(path)
+
+      // Foto lista (recortada al tamaño exacto de la red) — es la que se PUBLICA en Instagram/Facebook.
+      const pubBlob: Blob = await new Promise((res) => cleanCanvas(cfg()).toBlob((b) => res(b as Blob), 'image/jpeg', 0.92))
+      const pubPath = `pub-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.jpg`
+      const pubUp = await supabase.storage.from('contenido-social').upload(pubPath, pubBlob, { contentType: 'image/jpeg', upsert: false })
+      const pubUrl = pubUp.error ? pub.publicUrl : supabase.storage.from('contenido-social').getPublicUrl(pubPath).data.publicUrl
+
       const [pw, ph] = plat.ratios[ratio]
       const tw = 240, th = Math.round((tw * ph) / pw)
       const thumb = coverCanvas(images[active].img, tw, th, fit, bg).toDataURL('image/jpeg', 0.72)
       const { data: userData } = await supabase.auth.getUser()
+      const estado: Estado = pubMode === 'programado' ? 'programado' : 'borrador'
+      const programado_para = pubMode === 'programado' ? localInputToIso(fecha) : null
       const ins = await supabase.from('contenido_simulaciones').insert({
         autor: userData.user?.email ?? null, platform, ratio, username, ubicacion, likes, caption, verified, fit, bg,
-        img_url: pub.publicUrl, img_path: path, thumb,
+        img_url: pub.publicUrl, img_path: path, pub_url: pubUrl, pub_path: pubPath, thumb, estado, programado_para,
       })
       if (ins.error) throw ins.error
-      showToast('Guardado en la colección del equipo ✓')
+      showToast(estado === 'programado' ? `Programado para ${fmtFecha(programado_para)} ✓` : 'Guardado como borrador ✓')
       fetchSaved()
     } catch (e) {
       console.error(e); setNeedsSetup(true); showToast('No se pudo guardar. Revisa la configuración de Supabase.')
@@ -340,8 +380,44 @@ export default function ContenidoPage() {
 
   async function delSaved(rec: SavedRow) {
     setSaved((prev) => prev.filter((r) => r.id !== rec.id))
-    if (rec.img_path) await supabase.storage.from('contenido-social').remove([rec.img_path])
+    const paths = [rec.img_path, rec.pub_path].filter(Boolean) as string[]
+    if (paths.length) await supabase.storage.from('contenido-social').remove(paths)
     await supabase.from('contenido_simulaciones').delete().eq('id', rec.id)
+  }
+
+  async function publishNow(rec: SavedRow) {
+    if (publicando) return
+    setPublicando(rec.id)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token ?? ''}` },
+        body: JSON.stringify({ id: rec.id }),
+      })
+      const j = await res.json().catch(() => ({}))
+      if (!res.ok) { showToast(j.error || 'No se pudo publicar'); return }
+      showToast('¡Publicado en la red! ✓')
+      fetchSaved()
+    } catch {
+      showToast('Error de conexión al publicar')
+    } finally { setPublicando(null) }
+  }
+
+  async function updateRec(rec: SavedRow, patch: Partial<SavedRow>) {
+    setSaved((prev) => prev.map((r) => (r.id === rec.id ? { ...r, ...patch } : r)))
+    await supabase.from('contenido_simulaciones').update(patch).eq('id', rec.id)
+  }
+  function cambiarEstado(rec: SavedRow, estado: Estado) {
+    const patch: Partial<SavedRow> = { estado }
+    if (estado === 'publicado') patch.publicado_en = new Date().toISOString()
+    if (estado === 'programado' && !rec.programado_para) patch.programado_para = new Date(Date.now() + 3600_000).toISOString()
+    updateRec(rec, patch)
+    showToast(estado === 'publicado' ? 'Marcado como publicado ✓' : estado === 'programado' ? 'Movido a programados' : 'Movido a borradores')
+  }
+  function reprogramar(rec: SavedRow, localValue: string) {
+    const iso = localInputToIso(localValue)
+    updateRec(rec, { programado_para: iso, estado: iso ? 'programado' : rec.estado })
   }
 
   function loadSaved(rec: SavedRow) {
@@ -374,12 +450,25 @@ export default function ContenidoPage() {
           <div className="fsim-hero-actions">
             <button className="fsim-btn ghost" onClick={dlMock} disabled={!has}><ImageIcon size={15} /> Simulación</button>
             <button className="fsim-btn ghost" onClick={dlClean} disabled={!has}><Download size={15} /> Foto lista</button>
-            <button className="fsim-btn solid" onClick={saveCurrent} disabled={!has || saving}>
-              {saving ? <Loader2 size={15} className="fsim-spin" /> : <Bookmark size={15} />} {saving ? 'Guardando…' : 'Guardar'}
-            </button>
           </div>
         }
       />
+
+      {/* ---- Barra de publicación (estilo Meta Business) ---- */}
+      <div className="fsim-pubbar">
+        <div className="fsim-pubseg">
+          <button className={pubMode === 'borrador' ? 'active' : ''} onClick={() => setPubMode('borrador')}>Guardar borrador</button>
+          <button className={pubMode === 'programado' ? 'active' : ''} onClick={() => setPubMode('programado')}>Programar</button>
+        </div>
+        {pubMode === 'programado' && (
+          <input type="datetime-local" className="fsim-dt" value={fecha} onChange={(e) => setFecha(e.target.value)} />
+        )}
+        <div className="fsim-pub-hint">{pubMode === 'programado' ? 'Se añade al planificador con fecha de publicación.' : 'Se guarda como borrador para revisarlo con el equipo.'}</div>
+        <button className="fsim-btn solid dark" onClick={saveCurrent} disabled={!has || saving}>
+          {saving ? <Loader2 size={15} className="fsim-spin" /> : pubMode === 'programado' ? <CalendarClock size={15} /> : <Bookmark size={15} />}
+          {saving ? 'Guardando…' : pubMode === 'programado' ? 'Programar publicación' : 'Guardar borrador'}
+        </button>
+      </div>
 
       {needsSetup && (
         <div className="fsim-setup">
@@ -389,6 +478,8 @@ export default function ContenidoPage() {
           </div>
         </div>
       )}
+
+      <MetaConexion />
 
       <div className="fsim-body">
         {/* ---------------- Controls ---------------- */}
@@ -476,31 +567,72 @@ export default function ContenidoPage() {
         </div>
       </div>
 
-      {/* ---------------- Collection ---------------- */}
+      {/* ---------------- Planificador de contenido ---------------- */}
       {saved.length > 0 && (
         <div className="fsim-saved">
           <div className="fsim-saved-head">
-            <div className="fsim-saved-title">Contenido del equipo <span>{saved.length}</span></div>
+            <div className="fsim-saved-title">Planificador de contenido <span>{saved.length}</span></div>
             <button className="fsim-btn ghost sm" onClick={downloadAll}><Download size={14} /> Descargar todas</button>
           </div>
-          <div className="fsim-saved-list">
-            {saved.map((rec) => {
-              const p = PLATFORMS[rec.platform]
-              return (
-                <div key={rec.id} className="fsim-card">
-                  <div className="fsim-sc-thumb" title="Abrir para editar" onClick={() => loadSaved(rec)}>
-                    <img src={rec.thumb || rec.img_url} alt="" />
-                    <span className="fsim-sc-badge">{p.short}</span>
-                    <span className="fsim-sc-open">Editar</span>
-                  </div>
-                  <div className="fsim-sc-actions">
-                    <button className="fsim-scb" onClick={() => downloadRec(rec, 'foto')} title="Descargar foto lista"><Download size={12} /> Foto</button>
-                    <button className="fsim-scb" onClick={() => downloadRec(rec, 'sim')} title="Descargar simulación"><ImageIcon size={12} /> Sim</button>
-                    <button className="fsim-scb del" onClick={() => delSaved(rec)} title="Eliminar"><Trash2 size={12} /></button>
-                  </div>
-                </div>
-              )
+          <div className="fsim-filtros">
+            {(['todos', 'programado', 'borrador', 'publicado'] as const).map((f) => {
+              const n = f === 'todos' ? saved.length : saved.filter((r) => r.estado === f).length
+              const plurales: Record<'todos' | Estado, string> = { todos: 'Todos', programado: 'Programados', borrador: 'Borradores', publicado: 'Publicados' }
+              return <button key={f} className={'fsim-filtro' + (filtro === f ? ' active' : '')} onClick={() => setFiltro(f)}>{plurales[f]} <span>{n}</span></button>
             })}
+          </div>
+          <div className="fsim-planner">
+            {saved
+              .filter((r) => filtro === 'todos' || r.estado === filtro)
+              .slice()
+              .sort((a, b) => {
+                const order: Record<Estado, number> = { programado: 0, borrador: 1, publicado: 2 }
+                if (order[a.estado] !== order[b.estado]) return order[a.estado] - order[b.estado]
+                if (a.estado === 'programado') return (a.programado_para || '').localeCompare(b.programado_para || '')
+                return (b.created_at || '').localeCompare(a.created_at || '')
+              })
+              .map((rec) => {
+                const p = PLATFORMS[rec.platform]
+                const em = estadoMeta(rec.estado)
+                return (
+                  <div key={rec.id} className="fsim-pcard">
+                    <div className="fsim-sc-thumb" title="Abrir para editar" onClick={() => loadSaved(rec)}>
+                      <img src={rec.thumb || rec.img_url} alt="" />
+                      <span className="fsim-sc-badge">{p.short}</span>
+                      <span className="fsim-estado" style={{ color: em.color, background: em.bg }}>{em.label}</span>
+                      <span className="fsim-sc-open">Editar</span>
+                    </div>
+                    <div className="fsim-pcard-body">
+                      {rec.estado === 'programado' && rec.programado_para && (
+                        <div className="fsim-pfecha"><CalendarClock size={13} /> {fmtFecha(rec.programado_para)}</div>
+                      )}
+                      {rec.estado === 'publicado' && <div className="fsim-pfecha ok"><CheckCircle2 size={13} /> Publicado</div>}
+                      {rec.caption && <div className="fsim-pcaption">{rec.caption}</div>}
+                      {rec.autor && <div className="fsim-pautor">por {rec.autor.split('@')[0]}</div>}
+                      <div className="fsim-prow">
+                        <select className="fsim-select" value={rec.estado} onChange={(e) => cambiarEstado(rec, e.target.value as Estado)}>
+                          <option value="borrador">Borrador</option>
+                          <option value="programado">Programado</option>
+                          <option value="publicado">Publicado</option>
+                        </select>
+                        {rec.estado === 'programado' && (
+                          <input type="datetime-local" className="fsim-dt sm" value={isoToLocalInput(rec.programado_para)} onChange={(e) => reprogramar(rec, e.target.value)} />
+                        )}
+                      </div>
+                      {AUTO_PUB.has(rec.platform) && rec.estado !== 'publicado' && (
+                        <button className="fsim-pubnow" onClick={() => publishNow(rec)} disabled={publicando === rec.id}>
+                          {publicando === rec.id ? <Loader2 size={13} className="fsim-spin" /> : <Send size={13} />} Publicar ahora
+                        </button>
+                      )}
+                      <div className="fsim-sc-actions">
+                        <button className="fsim-scb" onClick={() => downloadRec(rec, 'foto')} title="Descargar foto lista"><Download size={12} /> Foto</button>
+                        <button className="fsim-scb" onClick={() => downloadRec(rec, 'sim')} title="Descargar simulación"><ImageIcon size={12} /> Sim</button>
+                        <button className="fsim-scb del" onClick={() => delSaved(rec)} title="Eliminar"><Trash2 size={12} /></button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
           </div>
         </div>
       )}
@@ -751,6 +883,45 @@ function FsimStyles() {
 
     .fsim-toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; font-size:13px; font-weight:500; padding:11px 18px; border-radius:24px; z-index:60; box-shadow:0 10px 30px rgba(0,0,0,.25); display:flex; align-items:center; gap:9px }
     .fsim-toast-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent) }
+
+    /* Barra de publicación */
+    .fsim-pubbar{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px; margin-bottom:20px; box-shadow:0 1px 2px rgba(22,32,29,.03) }
+    .fsim-pubseg{ display:flex; background:var(--fill); border-radius:11px; padding:4px; gap:4px }
+    .fsim-pubseg button{ border:none; background:transparent; color:var(--muted); padding:8px 14px; border-radius:8px; font-size:12.5px; font-weight:600; cursor:pointer; font-family:${FS} }
+    .fsim-pubseg button.active{ background:#fff; color:var(--accent-deep); box-shadow:0 1px 3px rgba(22,32,29,.12) }
+    .fsim-dt{ background:var(--fill); border:1.5px solid transparent; border-radius:10px; padding:9px 12px; font-size:13px; color:var(--ink); font-family:${FS} }
+    .fsim-dt:focus{ outline:none; background:#fff; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft) }
+    .fsim-dt.sm{ padding:6px 9px; font-size:12px; width:100% }
+    .fsim-pub-hint{ flex:1; min-width:160px; font-size:12.5px; color:var(--faint) }
+    .fsim-btn.solid.dark{ background:var(--accent); color:#fff; border-color:var(--accent); backdrop-filter:none }
+    .fsim-btn.solid.dark:hover{ background:var(--accent-hi); border-color:var(--accent-hi) }
+
+    /* Filtros del planificador */
+    .fsim-filtros{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px }
+    .fsim-filtro{ display:inline-flex; align-items:center; gap:7px; padding:7px 13px; border-radius:20px; border:1.5px solid var(--line2); background:#fff; color:var(--muted); font-size:12.5px; font-weight:600; cursor:pointer; font-family:${FS} }
+    .fsim-filtro:hover{ border-color:#c0ccc6 }
+    .fsim-filtro.active{ background:var(--accent); color:#fff; border-color:var(--accent) }
+    .fsim-filtro span{ display:inline-grid; place-items:center; min-width:18px; height:18px; padding:0 5px; border-radius:20px; background:rgba(0,0,0,.08); font-size:10.5px; font-weight:800 }
+    .fsim-filtro.active span{ background:rgba(255,255,255,.25) }
+
+    /* Planificador (rejilla de tarjetas) */
+    .fsim-planner{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px }
+    .fsim-pcard{ border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff; box-shadow:0 1px 2px rgba(22,32,29,.03) }
+    .fsim-pcard .fsim-sc-thumb{ width:100%; height:150px; border-radius:0; box-shadow:none }
+    .fsim-pcard .fsim-sc-thumb:hover{ transform:none }
+    .fsim-estado{ position:absolute; top:8px; right:8px; font-size:10px; font-weight:700; padding:3px 9px; border-radius:20px }
+    .fsim-pcard-body{ padding:11px 12px 12px }
+    .fsim-pfecha{ display:flex; align-items:center; gap:5px; font-size:12px; font-weight:700; color:#9a6a12; margin-bottom:6px }
+    .fsim-pfecha.ok{ color:var(--accent-deep) }
+    .fsim-pcaption{ font-size:12px; color:var(--ink); line-height:1.4; max-height:34px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical }
+    .fsim-pautor{ font-size:11px; color:var(--faint); margin-top:4px }
+    .fsim-prow{ display:flex; gap:6px; margin:10px 0 8px; align-items:center }
+    .fsim-select{ flex:none; background:var(--fill); border:1.5px solid transparent; border-radius:9px; padding:7px 9px; font-size:12px; font-weight:600; color:var(--ink); cursor:pointer; font-family:${FS} }
+    .fsim-select:focus{ outline:none; border-color:var(--accent) }
+    .fsim-prow .fsim-dt.sm{ flex:1 }
+    .fsim-pubnow{ width:100%; display:inline-flex; align-items:center; justify-content:center; gap:7px; margin-bottom:8px; border:none; cursor:pointer; padding:9px; border-radius:9px; font-size:12.5px; font-weight:700; font-family:${FS}; color:#fff; background:linear-gradient(135deg,#0F7A63,#0a5b49); box-shadow:0 4px 12px -3px rgba(15,122,99,.5) }
+    .fsim-pubnow:hover{ filter:brightness(1.06) }
+    .fsim-pubnow:disabled{ opacity:.6; cursor:not-allowed }
     `}</style>
   )
 }

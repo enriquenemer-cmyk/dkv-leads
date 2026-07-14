@@ -47,12 +47,33 @@ create table if not exists public.contenido_simulaciones (
   verified    boolean not null default false,
   fit         text not null default 'cover',
   bg          text not null default '#ffffff',
-  img_url     text not null,
+  img_url     text not null,                            -- imagen original subida (para reeditar)
   img_path    text,
-  thumb       text
+  pub_url     text,                                     -- foto recortada al tamaño de la red (la que se PUBLICA)
+  pub_path    text,
+  thumb       text,
+  estado          text not null default 'borrador',   -- 'borrador' | 'programado' | 'publicado'
+  programado_para timestamptz,                          -- fecha/hora de publicación planificada
+  publicado_en    timestamptz,                          -- cuándo se publicó
+  post_url        text                                  -- enlace a la publicación real (tras publicar)
 );
 
+-- Si la tabla ya existía de una ejecución anterior, añade las columnas nuevas.
+alter table public.contenido_simulaciones add column if not exists pub_url         text;
+alter table public.contenido_simulaciones add column if not exists pub_path        text;
+alter table public.contenido_simulaciones add column if not exists estado          text not null default 'borrador';
+alter table public.contenido_simulaciones add column if not exists programado_para timestamptz;
+alter table public.contenido_simulaciones add column if not exists publicado_en    timestamptz;
+alter table public.contenido_simulaciones add column if not exists post_url        text;
+
 alter table public.contenido_simulaciones enable row level security;
+
+-- Los asesores con sesión pueden ACTUALIZAR (cambiar estado, reprogramar).
+drop policy if exists "contenido update asesores" on public.contenido_simulaciones;
+create policy "contenido update asesores"
+  on public.contenido_simulaciones for update
+  to authenticated
+  using (true) with check (true);
 
 -- Los asesores con sesión ven TODA la colección (contenido compartido).
 drop policy if exists "contenido lectura asesores" on public.contenido_simulaciones;

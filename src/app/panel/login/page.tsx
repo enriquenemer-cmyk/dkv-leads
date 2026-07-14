@@ -6,10 +6,6 @@ import { supabase } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
 import { Eye, EyeOff, ArrowLeft, Check, Star } from 'lucide-react'
 
-const CROSS = (
-  <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><rect x="7.5" y="1" width="3" height="16" rx="1.5" fill="white" /><rect x="1" y="7.5" width="16" height="3" rx="1.5" fill="white" /></svg>
-)
-
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -56,11 +52,14 @@ export default function LoginPage() {
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,0.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.035) 1px,transparent 1px)', backgroundSize: '54px 54px' }} />
 
         {/* logo */}
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 44, height: 44, borderRadius: 13, background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 6px 18px -4px rgba(0,0,0,0.35)' }}>{CROSS}</div>
-          <div>
-            <div style={{ fontWeight: 900, fontSize: 20, color: '#fff', lineHeight: 1, letterSpacing: '-0.01em' }}>DKV</div>
-            <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 600, letterSpacing: '0.06em', marginTop: 3 }}>PANEL DE ASESORES</div>
+        <div style={{ position: 'relative', display: 'inline-flex', flexDirection: 'column', gap: 11, alignItems: 'flex-start' }}>
+          <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 12, padding: '9px 13px', boxShadow: '0 6px 18px -4px rgba(0,0,0,0.35)' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/dkv-logo-wordmark.png" alt="DKV Seguros" style={{ height: 27, width: 'auto', display: 'block' }} />
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(140,198,63,0.14)', border: '1px solid rgba(140,198,63,0.4)', borderRadius: 999, padding: '4px 12px' }}>
+            <Check size={12} color="#8cc63f" strokeWidth={3} />
+            <span style={{ fontSize: 10.5, color: '#b6e07a', fontWeight: 700, letterSpacing: '0.02em' }}>Agente exclusivo DKV</span>
           </div>
         </div>
 
@@ -90,8 +89,10 @@ export default function LoginPage() {
         <div style={{ width: '100%', maxWidth: 380 }}>
           {/* logo móvil */}
           <div className="login-logo-mobile" style={{ alignItems: 'center', gap: 10, marginBottom: 28 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: '#0F7A63', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{CROSS}</div>
-            <span style={{ fontWeight: 900, fontSize: 19, color: '#16201d' }}>DKV</span>
+            <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 11, padding: '8px 12px', border: '1px solid #eef2f0', boxShadow: '0 2px 8px -3px rgba(16,32,29,0.25)' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/dkv-logo-wordmark.png" alt="DKV Seguros" style={{ height: 24, width: 'auto', display: 'block' }} />
+            </div>
           </div>
 
           <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Bienvenido de nuevo</h1>

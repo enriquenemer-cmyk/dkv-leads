@@ -9,6 +9,10 @@ type Estilo = { label: string; color: string; bg: string; emoji?: string; ig?: b
 
 const MAP: Record<string, Estilo> = {
   instagram:   { label: 'Instagram',     color: '#fff',    bg: IG_GRADIENT, ig: true },
+  'ig-ads':    { label: 'Instagram Ads', color: '#fff',    bg: IG_GRADIENT, ig: true },
+  'fb-ads':    { label: 'Facebook Ads',  color: '#2b6fb0', bg: '#eaf3ff', emoji: '📣' },
+  'google-ads':{ label: 'Google Ads',    color: '#b06000', bg: '#fff3e0', emoji: '🔍' },
+  'tiktok-ads':{ label: 'TikTok Ads',    color: '#0b0b0b', bg: '#e9edef', emoji: '🎵' },
   formulario:  { label: 'Formulario web', color: '#0F7A63', bg: '#e3f1ec', emoji: '🌐' },
   'web-dkv':   { label: 'Formulario web', color: '#0F7A63', bg: '#e3f1ec', emoji: '🌐' },
   web:         { label: 'Formulario web', color: '#0F7A63', bg: '#e3f1ec', emoji: '🌐' },

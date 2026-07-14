@@ -484,6 +484,9 @@ export default function DKVClone() {
 
   // ── SEM: captura del origen del lead (UTM, gclid, fbclid) + keyword para message-match ──
   const attribRef = useRef('')
+  // Fuente de campaña: ?f=ig-ads en la URL del anuncio separa esos leads en el panel.
+  // Sin parámetro válido se mantiene 'web-dkv' (tráfico web normal).
+  const fuenteRef = useRef('web-dkv')
   const formStarted = useRef(false)
   const onFormFocus = () => { if (!formStarted.current) { formStarted.current = true; trackFormStart() } }
   const [kw, setKw] = useState('')
@@ -501,6 +504,19 @@ export default function DKVClone() {
       const stored = sessionStorage.getItem('dkv-attrib')
       if (!stored) sessionStorage.setItem('dkv-attrib', parts.join(' '))
       attribRef.current = stored || parts.join(' ')
+
+      // Fuente de campaña: ?f=ig-ads (o utm_source si es pago). Se valida para no ensuciar la
+      // columna y se guarda en sesión, así se conserva aunque la persona navegue antes de enviar.
+      const rawF = (sp.get('f') || sp.get('fuente') || '').toLowerCase().trim()
+      const paidIg = sp.get('utm_source') === 'instagram' && /cpc|paid|ads/.test(sp.get('utm_medium') || '')
+      const cand = rawF || (paidIg ? 'ig-ads' : '')
+      const storedF = sessionStorage.getItem('dkv-fuente')
+      const validF = /^[a-z0-9-]{2,24}$/.test(cand) ? cand : ''
+      const fuente = storedF || validF
+      if (fuente) {
+        if (!storedF) sessionStorage.setItem('dkv-fuente', fuente)
+        fuenteRef.current = fuente
+      }
 
       // Message-match: adapta hero y keyword al anuncio (por ?kw=, utm_term o URL de campaña limpia)
       const pathKw = /^\/seguro-/.test(window.location.pathname)
@@ -557,7 +573,7 @@ export default function DKVClone() {
       telefono: form.telefono.trim() || null,
       email: form.email.trim() || null,
       interes: detalle,
-      fuente: 'web-dkv',
+      fuente: fuenteRef.current,
       tag: 'frio',
     })
     setSending(false)

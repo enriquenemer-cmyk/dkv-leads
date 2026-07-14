@@ -112,19 +112,11 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
   const navLink = (href: string, label: string, Icon: React.ElementType, badge?: number) => {
     const active = pathname.startsWith(href)
     return (
-      <Link key={href} href={href}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10,
-          background: active ? 'rgba(255,255,255,0.11)' : 'transparent',
-          color: active ? '#fff' : 'rgba(255,255,255,0.55)',
-          textDecoration: 'none', fontSize: 14, fontWeight: active ? 600 : 500,
-          transition: 'all 0.15s',
-          borderLeft: active ? '2px solid #0F7A63' : '2px solid transparent',
-        }}>
-        <Icon size={16} />
+      <Link key={href} href={href} className={`nav-link${active ? ' active' : ''}`}>
+        <span className="nav-ico"><Icon size={16} /></span>
         <span style={{ flex: 1 }}>{label}</span>
         {!!badge && badge > 0 && (
-          <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#c23a22', borderRadius: 999, minWidth: 19, height: 19, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{badge}</span>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#c23a22', borderRadius: 999, minWidth: 19, height: 19, padding: '0 5px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 6px -1px rgba(194,58,34,0.6)' }}>{badge}</span>
         )}
       </Link>
     )
@@ -132,10 +124,28 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
   return (
     <aside style={{
-      width: 240, minHeight: '100vh', background: '#0a2f27',
+      width: 240, minHeight: '100vh',
+      background: 'linear-gradient(180deg, #0c3a2f 0%, #0a2f27 45%, #071a15 100%)',
       display: 'flex', flexDirection: 'column', flexShrink: 0,
       borderRight: '1px solid rgba(255,255,255,0.06)'
     }}>
+      <style>{`
+        .nav-link { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:11px;
+          color:rgba(255,255,255,0.56); text-decoration:none; font-size:14px; font-weight:500;
+          transition:background .16s ease, color .16s ease; border-left:2px solid transparent; }
+        .nav-link .nav-ico { display:flex; opacity:.85; transition:opacity .16s ease, transform .16s ease; }
+        .nav-link:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.9); }
+        .nav-link:hover .nav-ico { opacity:1; transform:translateX(1px); }
+        .nav-link.active { background:linear-gradient(90deg, rgba(140,198,63,0.18), rgba(140,198,63,0.02));
+          color:#fff; font-weight:600; border-left:2px solid #8cc63f; }
+        .nav-link.active .nav-ico { opacity:1; color:#a9d96a; }
+        .side-search:hover { background:rgba(255,255,255,0.11) !important; color:rgba(255,255,255,0.7) !important; }
+        .side-action { transition:background .16s ease, transform .16s ease, box-shadow .16s ease; }
+        .side-action:hover { transform:translateY(-1px); }
+        .side-new:hover { background:rgba(15,122,99,0.42) !important; box-shadow:0 8px 20px -8px rgba(15,122,99,0.7); }
+        .side-ghost:hover { background:rgba(255,255,255,0.06) !important; color:rgba(255,255,255,0.75) !important; }
+        .side-logout:hover { background:rgba(255,255,255,0.09) !important; color:#fff !important; }
+      `}</style>
       {/* Logo */}
       <div style={{ padding: '28px 20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ display: 'inline-flex', background: '#fff', borderRadius: 12, padding: '10px 14px', boxShadow: '0 5px 16px -4px rgba(0,0,0,0.4)' }}>
@@ -150,8 +160,8 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
 
       {/* Cmd+K search button */}
       <div style={{ padding: '12px 12px 0' }}>
-        <button aria-label="Buscar leads (atajo Cmd+K)" onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }); window.dispatchEvent(e) }}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)', cursor: 'pointer', fontFamily: 'inherit', color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
+        <button className="side-search" aria-label="Buscar leads (atajo Cmd+K)" onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }); window.dispatchEvent(e) }}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)', cursor: 'pointer', fontFamily: 'inherit', color: 'rgba(255,255,255,0.45)', fontSize: 13, transition: 'all .16s ease' }}>
           <Search size={13} />
           <span style={{ flex: 1, textAlign: 'left' }}>Buscar…</span>
           <kbd style={{ fontSize: 10, background: 'rgba(255,255,255,0.1)', padding: '2px 6px', borderRadius: 5, color: 'rgba(255,255,255,0.4)' }}>⌘K</kbd>
@@ -166,9 +176,9 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px 6px', margin: 0 }}>Acciones</p>
 
-        <Link href="/panel/leads?modal=nuevo"
+        <Link href="/panel/leads?modal=nuevo" className="side-action side-new"
           style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 11,
             background: 'rgba(15,122,99,0.3)', color: '#7ee8c8',
             textDecoration: 'none', fontSize: 14, fontWeight: 600, border: '1px solid rgba(15,122,99,0.4)',
           }}>
@@ -176,9 +186,9 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           Nuevo lead manual
         </Link>
 
-        <Link href="/" target="_blank"
+        <Link href="/" target="_blank" className="side-action side-ghost"
           style={{
-            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 11,
             color: 'rgba(255,255,255,0.45)', textDecoration: 'none', fontSize: 14, fontWeight: 500,
           }}>
           <ExternalLink size={16} />
@@ -197,8 +207,8 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
           <div style={{ fontSize: 13.5, color: '#eef3f0', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'capitalize' }}>{perfil?.nombre?.trim() || nombreAsesor}</div>
           <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.4)', fontWeight: 500, marginTop: 1 }}>{perfil?.rol === 'admin' ? 'Administrador' : 'Asesor DKV'}</div>
         </div>
-        <button onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.38)', width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <button className="side-logout" onClick={handleLogout} title="Cerrar sesión" aria-label="Cerrar sesión"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.38)', width: 30, height: 30, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .16s ease' }}>
           <LogOut size={16} />
         </button>
       </div>
