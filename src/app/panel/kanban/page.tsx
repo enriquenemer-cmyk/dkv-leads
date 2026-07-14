@@ -8,6 +8,7 @@ import { TagPill } from '@/components/TagPill'
 import { Avatar } from '@/components/Avatar'
 import { Phone, Mail, MessageCircle, Plus } from 'lucide-react'
 import { LeadModal } from '@/components/LeadModal'
+import { PageHero } from '@/components/PageHero'
 
 const COLS = [
   { key: 'frio',     label: '❄️ Frío',     color: '#2b6fb0', bg: '#eaf3ff', border: '#bcd5f5' },
@@ -73,23 +74,23 @@ export default function KanbanPage() {
     <div style={{ padding: '28px 28px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {showModal && <LeadModal onClose={() => setShowModal(false)} onSaved={() => { setShowModal(false); fetchLeads() }} />}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#16201d', margin: '0 0 3px', letterSpacing: '-0.02em' }}>Kanban</h1>
-          <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>Arrastra los leads entre columnas para cambiar su estado · {soloHoy ? `${visibles.length} de hoy` : `${leads.length} leads`}</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <button onClick={() => setSoloHoy(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 12, border: `1.5px solid ${soloHoy ? '#0F7A63' : '#e2e8e4'}`, background: soloHoy ? '#e3f1ec' : '#fff', color: soloHoy ? '#0F7A63' : '#6b7a76', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-            📅 {soloHoy ? '✓ Solo hoy' : 'Hoy'}{hoyCount > 0 ? ` (${hoyCount})` : ''}
-          </button>
-          <button onClick={() => setShowModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0F7A63, #0a5b49)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px -4px rgba(15,122,99,0.45)' }}>
-            <Plus size={14} /> Nuevo lead
-          </button>
-        </div>
-      </div>
+      {/* Header premium */}
+      <PageHero
+        title="Kanban"
+        subtitle={`Arrastra los leads entre columnas para cambiar su estado · ${soloHoy ? `${visibles.length} de hoy` : `${leads.length} leads`}`}
+        right={
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <button onClick={() => setSoloHoy(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 12, border: `1.5px solid rgba(255,255,255,0.35)`, background: soloHoy ? '#fff' : 'rgba(255,255,255,0.14)', color: soloHoy ? '#0a2f27' : '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              📅 {soloHoy ? '✓ Solo hoy' : 'Hoy'}{hoyCount > 0 ? ` (${hoyCount})` : ''}
+            </button>
+            <button onClick={() => setShowModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: '#fff', color: '#0a2f27', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 16px -6px rgba(0,0,0,0.4)' }}>
+              <Plus size={14} /> Nuevo lead
+            </button>
+          </div>
+        }
+      />
 
       {/* Board */}
       <style>{`

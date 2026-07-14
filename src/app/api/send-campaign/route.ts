@@ -12,14 +12,6 @@ const URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const RESEND_BATCH = 'https://api.resend.com/emails/batch'
 
-// Cliente con clave de servicio para guardar el rastreo (salta RLS). Si no está
-// configurada la clave, devolvemos null y simplemente no se guarda el seguimiento.
-function supabaseAdmin() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!key) return null
-  return createClient(URL, key, { auth: { persistSession: false } })
-}
-
 // Datos del negocio para el pie del correo (identificación del remitente = obligatorio).
 const NEGOCIO = 'DKV Seguros · Agente exclusivo'
 const CONTACTO = '699 66 96 03'
@@ -196,7 +188,6 @@ export async function POST(req: NextRequest) {
   let enviados = 0
   let fallidos = 0
   const lotes = trocear(lista, 100) // Resend permite hasta 100 por lote.
-  const admin = supabaseAdmin()
   const campaniaId = String(Date.now()) // agrupa todos los correos de este envío
 
   for (let i = 0; i < lotes.length; i++) {
@@ -221,9 +212,10 @@ export async function POST(req: NextRequest) {
       })
       if (res.ok) {
         enviados += payload.length
-        // Guardamos el rastreo: una fila por correo, con el id de Resend para poder
+        // Guardamos el rastreo con la sesión del asesor (RLS: política de INSERT
+        // para authenticated). Una fila por correo, con el id de Resend para poder
         // casar luego los eventos de apertura/clic que llegan por el webhook.
-        if (admin) {
+        {
           const json = await res.json().catch(() => null)
           const ids: Array<{ id?: string }> = json?.data ?? []
           const filas = lotes[i].map((d, j) => ({
@@ -234,9 +226,8 @@ export async function POST(req: NextRequest) {
             email: d.email.trim(),
             nombre: d.nombre ?? null,
           }))
-          await admin.from('email_envios').insert(filas).then(({ error }) => {
-            if (error) console.error('[send-campaign] no se pudo guardar rastreo:', error.message)
-          })
+          const { error: insErr } = await authClient.from('email_envios').insert(filas)
+          if (insErr) console.error('[send-campaign] no se pudo guardar rastreo:', insErr.message)
         }
       } else { fallidos += payload.length; console.error('[send-campaign] lote falló:', await res.text()) }
     } catch (e) {
@@ -247,5 +238,5 @@ export async function POST(req: NextRequest) {
     if (i < lotes.length - 1) await new Promise((r) => setTimeout(r, 600))
   }
 
-  return NextResponse.json({ ok: true, total: lista.length, enviados, fallidos, campaniaId, seguimiento: !!admin })
+  return NextResponse.json({ ok: true, total: lista.length, enviados, fallidos, campaniaId, seguimiento: true })
 }

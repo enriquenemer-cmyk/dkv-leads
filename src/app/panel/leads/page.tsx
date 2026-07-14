@@ -11,6 +11,7 @@ import { exportCSV } from '@/lib/export'
 import { limpiarInteres } from '@/lib/interes'
 import { geoDeLead } from '@/lib/provincia'
 import { FuenteBadge } from '@/components/FuenteBadge'
+import { PageHero } from '@/components/PageHero'
 import { Search, Plus, Download, ChevronRight, Phone, Mail, Filter, X } from 'lucide-react'
 
 const TAGS_FILTRO = [
@@ -140,23 +141,23 @@ function LeadsContent() {
     <div style={{ padding: '32px 36px', maxWidth: 1120, margin: '0 auto' }}>
       {showModal && <LeadModal onClose={() => { setShowModal(false); router.replace('/panel/leads') }} onSaved={() => { setShowModal(false); router.replace('/panel/leads'); fetchLeads() }} />}
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Leads</h1>
-          <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>{leads.length} lead{leads.length !== 1 ? 's' : ''} en total · <b style={{ color: hoyCount > 0 ? '#0F7A63' : '#9aaba5' }}>{hoyCount} hoy</b> · {filtered.length} mostrados</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => exportCSV(filtered)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1.5px solid #e2e8e4', background: '#fff', color: '#16201d', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            <Download size={14} /> Exportar
-          </button>
-          <button onClick={() => setShowModal(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #0F7A63, #0a5b49)', color: '#fff', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 14px -4px rgba(15,122,99,0.45)' }}>
-            <Plus size={14} /> Nuevo lead
-          </button>
-        </div>
-      </div>
+      {/* Header premium */}
+      <PageHero
+        title="Leads"
+        subtitle={`${leads.length} lead${leads.length !== 1 ? 's' : ''} en total · ${hoyCount} hoy · ${filtered.length} mostrados`}
+        right={
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={() => exportCSV(filtered)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: '1.5px solid rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.14)', color: '#fff', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              <Download size={14} /> Exportar
+            </button>
+            <button onClick={() => setShowModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '10px 18px', borderRadius: 12, border: 'none', background: '#fff', color: '#0a2f27', fontSize: 13.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 6px 16px -6px rgba(0,0,0,0.4)' }}>
+              <Plus size={14} /> Nuevo lead
+            </button>
+          </div>
+        }
+      />
 
       {/* Filters bar */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center', flexWrap: 'wrap' }}>

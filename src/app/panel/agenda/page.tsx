@@ -6,6 +6,7 @@ import { logActividad } from '@/lib/actividad'
 import { Avatar } from '@/components/Avatar'
 import { EmptyState } from '@/components/EmptyState'
 import { Loader } from '@/components/Loader'
+import { PageHero } from '@/components/PageHero'
 import { CalendarCheck, AlertTriangle, Clock, Phone, MessageCircle, ChevronRight, Check } from 'lucide-react'
 
 type Item = { lead: Lead; fecha: string; texto: string }
@@ -67,13 +68,7 @@ export default function AgendaPage() {
         .ag-item { animation: agUp 0.4s ease both; transition: box-shadow 0.18s ease, transform 0.18s ease }
         .ag-item:hover { box-shadow: 0 10px 24px -14px rgba(10,47,39,0.22); transform: translateX(2px) }
       `}</style>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Agenda</h1>
-        <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>
-          {vencidos.length > 0 && <span style={{ color: '#c23a22', fontWeight: 700 }}>{vencidos.length} vencido{vencidos.length !== 1 ? 's' : ''} · </span>}
-          {deHoy.length} para hoy · {proximos.length} próximo{proximos.length !== 1 ? 's' : ''}
-        </p>
-      </div>
+      <PageHero title="Agenda" subtitle={`${vencidos.length > 0 ? `${vencidos.length} vencido${vencidos.length !== 1 ? 's' : ''} · ` : ''}${deHoy.length} para hoy · ${proximos.length} próximo${proximos.length !== 1 ? 's' : ''}`} />
 
       {loading ? <Loader label="Cargando agenda…" />
         : items.length === 0

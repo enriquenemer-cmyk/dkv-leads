@@ -109,7 +109,14 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         <Sidebar userEmail={email} />
       </div>
 
-      <div className="panel-main flex-1 overflow-auto" style={{ background: '#f1f4f2', minWidth: 0 }}>
+      <div className="panel-main flex-1 overflow-auto" style={{
+        minWidth: 0,
+        backgroundColor: '#eef3f0',
+        backgroundImage: `radial-gradient(1100px 560px at 100% -8%, rgba(15,122,99,0.09), transparent 60%),
+          radial-gradient(920px 520px at -8% 108%, rgba(140,198,63,0.10), transparent 58%),
+          linear-gradient(180deg, #eff4f1 0%, #f4f7f5 100%)`,
+        backgroundAttachment: 'fixed',
+      }}>
         {children}
       </div>
     </div>

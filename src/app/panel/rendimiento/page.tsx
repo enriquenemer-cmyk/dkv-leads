@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { Loader } from '@/components/Loader'
 import { Avatar } from '@/components/Avatar'
 import { CountUp } from '@/components/charts'
+import { PageHero } from '@/components/PageHero'
 import { Trophy, UserPlus, MessageSquare, Bell, Award } from 'lucide-react'
 
 type Act = { tipo: string; usuario_email: string | null; descripcion: string; created_at: string }
@@ -64,10 +65,7 @@ export default function RendimientoPage() {
         .rend-card { animation: rendUp 0.45s ease both; transition: box-shadow 0.18s ease }
         .rend-card:hover { box-shadow: 0 12px 28px -14px rgba(10,47,39,0.22) }
       `}</style>
-      <div style={{ marginBottom: 26 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Rendimiento del equipo</h1>
-        <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>Actividad de cada asesor: leads creados, seguimientos y cierres.</p>
-      </div>
+      <PageHero title="Rendimiento del equipo" subtitle="Actividad de cada asesor: leads creados, seguimientos y cierres." />
 
       {loading ? <Loader label="Calculando rendimiento…" />
         : ranking.length === 0

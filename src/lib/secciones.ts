@@ -6,6 +6,8 @@ export const SECCIONES = [
   { href: '/panel/prioridad', label: 'Prioridad' },
   { href: '/panel/leads', label: 'Leads' },
   { href: '/panel/instagram', label: 'Leads de Instagram' },
+  { href: '/panel/contenido', label: 'Simulador de contenido' },
+  { href: '/panel/chat', label: 'Chat del equipo' },
   { href: '/panel/kanban', label: 'Kanban' },
   { href: '/panel/agenda', label: 'Agenda' },
   { href: '/panel/actividad', label: 'Actividad' },

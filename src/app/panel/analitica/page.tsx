@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { EmptyState } from '@/components/EmptyState'
 import { Loader } from '@/components/Loader'
 import { CountUp } from '@/components/charts'
+import { PageHero } from '@/components/PageHero'
 import { Eye, Users, MousePointerClick, ArrowDownWideNarrow, Flame, Monitor, Smartphone, BarChart3, Radio, Filter, MapPin, Clock, Repeat } from 'lucide-react'
 
 type Evt = {
@@ -198,10 +199,7 @@ export default function AnaliticaPage() {
         .an-card { animation: anUp 0.45s ease both }
       `}</style>
 
-      <div style={{ marginBottom: 22 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: '#16201d', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Analítica de la web</h1>
-        <p style={{ fontSize: 13.5, color: '#9aaba5', margin: 0 }}>De dónde vienen, dónde hacen clic, hasta dónde bajan y cuántos acaban dejando sus datos. Solo cuenta a quien acepta cookies.</p>
-      </div>
+      <PageHero title="Analítica de la web" subtitle="De dónde vienen, dónde hacen clic, hasta dónde bajan y cuántos acaban dejando sus datos. Solo cuenta a quien acepta cookies." />
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
         {([[1, 'Hoy'], [7, '7 días'], [30, '30 días']] as [Rango, string][]).map(([r, l]) => (

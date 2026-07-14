@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
 import { puedeVer } from '@/lib/secciones'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift, CheckCircle2, QrCode
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift, CheckCircle2, QrCode, MessagesSquare, Images
 } from 'lucide-react'
 import { IgIcon } from '@/components/IgIcon'
 
@@ -15,6 +15,8 @@ const navItems = [
   { href: '/panel/prioridad', label: 'Prioridad', icon: Zap },
   { href: '/panel/leads', label: 'Leads', icon: Users },
   { href: '/panel/instagram', label: 'Instagram', icon: IgIcon },
+  { href: '/panel/contenido', label: 'Simulador de contenido', icon: Images },
+  { href: '/panel/chat', label: 'Chat del equipo', icon: MessagesSquare },
   { href: '/panel/kanban', label: 'Kanban', icon: Layers },
   { href: '/panel/agenda', label: 'Agenda', icon: CalendarCheck },
   { href: '/panel/actividad', label: 'Actividad', icon: Activity },
@@ -41,6 +43,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname()
   const router = useRouter()
   const [pendientes, setPendientes] = useState(0)
+  const [chatNuevos, setChatNuevos] = useState(0)
   const [permisos, setPermisos] = useState<string[] | null>(null) // null = acceso total (admin / sin restricción)
   const [perfil, setPerfil] = useState<{ nombre: string; rol: string } | null>(null)
 
@@ -68,6 +71,34 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
       .subscribe()
     return () => { supabase.removeChannel(ch) }
   }, [])
+
+  // Mensajes de chat nuevos (de otros asesores, desde la última visita al chat).
+  useEffect(() => {
+    // En el chat: marcamos todo como visto y ponemos el contador a cero.
+    if (pathname.startsWith('/panel/chat')) {
+      localStorage.setItem('chat-visto', new Date().toISOString())
+      setChatNuevos(0)
+      return
+    }
+    let uid: string | null = null
+    async function recount() {
+      const visto = localStorage.getItem('chat-visto') || '1970-01-01'
+      const { count } = await supabase.from('mensajes_chat')
+        .select('id', { count: 'exact', head: true })
+        .gt('created_at', visto)
+        .neq('usuario_id', uid ?? '00000000-0000-0000-0000-000000000000')
+      setChatNuevos(count ?? 0)
+    }
+    supabase.auth.getUser().then(({ data }) => { uid = data.user?.id ?? null; recount() })
+    const ch = supabase.channel('sidebar_chat')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'mensajes_chat' }, (payload) => {
+        const m = payload.new as { usuario_id?: string }
+        if (m.usuario_id && m.usuario_id === uid) return
+        setChatNuevos((n) => n + 1)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(ch) }
+  }, [pathname])
 
   async function handleLogout() {
     await logActividad('sesion_cierre', `Cerró sesión en el panel`)
@@ -130,7 +161,7 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 10px 6px', margin: 0 }}>Gestión</p>
-        {navItems.filter(i => puedeVer(permisos, i.href)).map(({ href, label, icon: Icon }) => navLink(href, label, Icon, href === '/panel/agenda' ? pendientes : undefined))}
+        {navItems.filter(i => puedeVer(permisos, i.href)).map(({ href, label, icon: Icon }) => navLink(href, label, Icon, href === '/panel/agenda' ? pendientes : href === '/panel/chat' ? chatNuevos : undefined))}
 
         <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '10px 0' }} />
         <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 10px 6px', margin: 0 }}>Acciones</p>

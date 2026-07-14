@@ -8,10 +8,10 @@ import { NextRequest, NextResponse } from 'next/server'
 // Configúralo en Resend → Webhooks apuntando a /api/resend-webhook.
 // ============================================================
 
-function supabaseAdmin() {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!key) return null
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key, { auth: { persistSession: false } })
+// Cliente anónimo: el webhook no tiene sesión. La escritura la hace una función
+// segura (SECURITY DEFINER) `registrar_evento_email`, así no hace falta la clave de servicio.
+function supabaseAnon() {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } })
 }
 
 // Verifica la firma Svix que usa Resend (si hay secreto configurado).
@@ -50,20 +50,9 @@ export async function POST(req: NextRequest) {
   const tipo = evt.type
   if (!emailId || !tipo) return NextResponse.json({ ok: true, ignored: true })
 
-  const admin = supabaseAdmin()
-  if (!admin) return NextResponse.json({ ok: true, sinDB: true })
-
-  // Cada tipo de evento actualiza su fecha. No se degrada: un clic también marca apertura.
-  const ahora = new Date().toISOString()
-  const campos: Record<string, string> = {}
-  if (tipo === 'email.delivered') campos.entregado_at = ahora
-  else if (tipo === 'email.opened') campos.abierto_at = ahora
-  else if (tipo === 'email.clicked') { campos.click_at = ahora; campos.abierto_at = ahora }
-  else if (tipo === 'email.bounced') campos.rebotado_at = ahora
-  else if (tipo === 'email.complained') campos.spam_at = ahora
-  else return NextResponse.json({ ok: true, ignored: tipo })
-
-  const { error } = await admin.from('email_envios').update(campos).eq('resend_id', emailId)
+  // La función segura decide qué fecha poner según el tipo de evento (no se degrada:
+  // un clic también marca apertura). No requiere clave de servicio.
+  const { error } = await supabaseAnon().rpc('registrar_evento_email', { p_resend_id: emailId, p_tipo: tipo })
   if (error) console.error('[resend-webhook] error actualizando:', error.message)
 
   return NextResponse.json({ ok: true })
