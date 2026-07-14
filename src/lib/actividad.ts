@@ -14,6 +14,7 @@ export type TipoActividad =
   | 'export_csv'
   | 'wallet_enviada'
   | 'wallet_actualizada'
+  | 'tarjeta_sello'
   | 'sorteo_realizado'
   | 'campania_enviada'
 

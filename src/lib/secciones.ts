@@ -16,6 +16,7 @@ export const SECCIONES = [
   { href: '/panel/marketing', label: 'Email Marketing' },
   { href: '/panel/campanias', label: 'Resultados de correos' },
   { href: '/panel/sorteo', label: 'Sorteos' },
+  { href: '/panel/fidelizacion', label: 'Tarjetas de fidelización' },
   { href: '/panel/usuarios', label: 'Asesores (gestión)' },
 ] as const
 

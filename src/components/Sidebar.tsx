@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { logActividad } from '@/lib/actividad'
 import { puedeVer } from '@/lib/secciones'
 import {
-  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift, CheckCircle2
+  LayoutDashboard, Users, PlusCircle, ExternalLink, LogOut, Activity, UserCog, Layers, Search, CalendarCheck, Trophy, Flame, Zap, TrendingUp, MapPin, Mail, MailOpen, Gift, CheckCircle2, QrCode
 } from 'lucide-react'
 import { IgIcon } from '@/components/IgIcon'
 
@@ -25,6 +25,7 @@ const navItems = [
   { href: '/panel/marketing', label: 'Email Marketing', icon: Mail },
   { href: '/panel/campanias', label: 'Resultados correos', icon: MailOpen },
   { href: '/panel/sorteo', label: 'Sorteos', icon: Gift },
+  { href: '/panel/fidelizacion', label: 'Fidelización', icon: QrCode },
 ]
 
 const configItems = [
